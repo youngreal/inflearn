@@ -38,4 +38,12 @@ public class Member {
         this.nickname = nickname;
         this.emailToken = emailToken;
     }
+
+    public void generateEmailToken() {
+        this.emailToken = UUID.randomUUID().toString();
+    }
+
+    public boolean isValidEmailToken(String emailToken) {
+        return this.emailToken.equals(emailToken);
+    }
 }
