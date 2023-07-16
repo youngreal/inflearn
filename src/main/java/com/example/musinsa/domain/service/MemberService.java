@@ -1,5 +1,9 @@
 package com.example.musinsa.domain.service;
 
+import com.example.musinsa.common.exception.AlreadyExistMemberException;
+import com.example.musinsa.common.exception.DoesNotExistEmailException;
+import com.example.musinsa.common.exception.DoesNotExistMemberException;
+import com.example.musinsa.common.exception.WrongEmailTokenException;
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
 import com.example.musinsa.infra.mail.MailService;
@@ -16,10 +20,10 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MailService mailService;
 
-    public Member save(Member member) {
-        //todo 예외처리 고도화
-        Member newMember = memberRepository.findById(member.getId()).orElseThrow(() -> new RuntimeException("이미 존재하는 회원입니다"));
-        newMember.generateEmailToken();
+    public Member signUp(Member member) {
+        if (memberRepository.existsById(member.getId())) {
+            throw new AlreadyExistMemberException("이미 존재하는 회원입니다");
+        }
 
         EmailMessage emailMessage = EmailMessage.builder()
                 .to(newMember.getEmail())
@@ -36,25 +40,23 @@ public class MemberService {
     //todo CQRS?
     @Transactional(readOnly = true)
     public Member emailCheck(String emailToken, String email) {
-        Member member = memberRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("잘못된 이메일 주소입니다."));
+        Member member = memberRepository.findByEmail(email).orElseThrow(() -> new DoesNotExistEmailException("잘못된 이메일 주소입니다."));
 
         if (!member.isValidEmailToken(emailToken)) {
-            throw new RuntimeException("잘못된 요청입니다.");
+            throw new WrongEmailTokenException("잘못된 이메일 토큰입니다.");
         }
 
         return member;
     }
 
     public String login(Member member) {
-        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(() -> new RuntimeException("존재하지않는 회원입니다."));
+        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(() -> new DoesNotExistMemberException("존재하지않는 회원입니다."));
         newMember.generateLoginToken();
         return newMember.getLoginToken();
     }
 
     public void logout(Long id) {
-        Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 유저입니다"));
-
+        Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
         member.invalidateToken();
     }
 }
