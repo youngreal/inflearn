@@ -25,16 +25,10 @@ public class MemberService {
             throw new AlreadyExistMemberException("이미 존재하는 회원입니다");
         }
 
-        EmailMessage emailMessage = EmailMessage.builder()
-                .to(newMember.getEmail())
-                .subject("[인프런] 회원가입을 위해 메일인증을 해주세요.")
-                .message("안녕하세요, 인프랩입니다. 아래 메일 인증 버튼을 눌러 회원가입을 완료해주세요.\n"
-                        + "/check-email-token?emailToken=" + newMember.getEmailToken() +
-                                "&email=" + newMember.getEmail())
-                .build();
+        member.generateEmailToken();
+        mailService.send(emailMessage(member));
 
-        mailService.send(emailMessage);
-        return memberRepository.save(newMember);
+        return memberRepository.save(member);
     }
 
     //todo CQRS?
@@ -58,5 +52,15 @@ public class MemberService {
     public void logout(Long id) {
         Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
         member.invalidateToken();
+    }
+
+    private EmailMessage emailMessage(Member member) {
+        return EmailMessage.builder()
+                .to(member.getEmail())
+                .subject("[인프런] 회원가입을 위해 메일인증을 해주세요.")
+                .message("안녕하세요, 인프랩입니다. 아래 메일 인증 버튼을 눌러 회원가입을 완료해주세요.\n"
+                        + "/check-email-token?emailToken=" + member.getEmailToken() +
+                        "&email=" + member.getEmail())
+                .build();
     }
 }

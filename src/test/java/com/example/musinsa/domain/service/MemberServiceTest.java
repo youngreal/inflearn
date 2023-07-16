@@ -3,12 +3,13 @@ package com.example.musinsa.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
+import com.example.musinsa.common.exception.AlreadyExistMemberException;
+import com.example.musinsa.common.exception.DoesNotExistEmailException;
+import com.example.musinsa.common.exception.DoesNotExistMemberException;
+import com.example.musinsa.common.exception.WrongEmailTokenException;
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
 import com.example.musinsa.infra.mail.MailService;
@@ -35,7 +36,7 @@ class MemberServiceTest {
     private MailService mailService;
 
     @Test
-    @DisplayName("회원가입 성공 : 이미 존재하는 멤버")
+    @DisplayName("회원가입 성공")
     void test() {
         Member member = Member.builder()
                 .id(1L)
@@ -44,11 +45,11 @@ class MemberServiceTest {
                 .build();
 
         // given
-        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+        given(memberRepository.existsById(member.getId())).willReturn(false);
 
         // when
         assertThat(member.getEmailToken()).isNull();
-        sut.save(member);
+        sut.signUp(member);
 
         // then
         assertThat(member.getEmailToken()).isNotNull();
@@ -60,15 +61,16 @@ class MemberServiceTest {
     @DisplayName("회원가입 실패 : 이미 존재하는 멤버")
     void test2() {
         Member member = Member.builder()
+                .id(1L)
                 .email("asdf1234@naver.com")
                 .password("12345678!!")
                 .build();
 
         // given
-        given(memberRepository.findById(anyLong())).willReturn(null);
+        given(memberRepository.existsById(member.getId())).willReturn(true);
 
         // when & then
-        assertThrows(RuntimeException.class, () -> sut.save(member));
+        assertThrows(AlreadyExistMemberException.class, () -> sut.signUp(member));
     }
 
     @Test
@@ -80,12 +82,10 @@ class MemberServiceTest {
                 .emailToken(UUID.randomUUID().toString())
                 .password("12345678!!")
                 .build();
-        given(memberRepository.findByEmail(member.getEmail())).willReturn(null);
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(RuntimeException.class,
-                () -> sut.emailCheck(member.getEmailToken(), member.getEmail()));
-        //todo 로그인 메서드가 실행되지않는다.
+        assertThrows(DoesNotExistEmailException.class, () -> sut.emailCheck(member.getEmailToken(), member.getEmail()));
     }
 
     @Test
@@ -105,9 +105,8 @@ class MemberServiceTest {
                         .build()));
 
         // when & then
-        assertThrows(RuntimeException.class,
+        assertThrows(WrongEmailTokenException.class,
                 () -> sut.emailCheck(member.getEmailToken(), member.getEmail()));
-        //todo 로그인 메서드가 실행되지않는다.
     }
 
     @Test
@@ -141,10 +140,10 @@ class MemberServiceTest {
                 .build();
 
         given(memberRepository.findByEmailAndPassword(member.getEmail(),
-                member.getPassword())).willReturn(null);
+                member.getPassword())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(RuntimeException.class, () -> sut.login(member));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.login(member));
     }
 
     @Test
@@ -181,7 +180,7 @@ class MemberServiceTest {
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(RuntimeException.class, () -> sut.logout(member.getId()));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.logout(member.getId()));
         assertThat(member.getLoginToken()).isEqualTo("UUID-12345678");
     }
 }
