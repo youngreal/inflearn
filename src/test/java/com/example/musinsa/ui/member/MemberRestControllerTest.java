@@ -46,12 +46,16 @@ class MemberRestControllerTest {
     @MockBean
     private MemberRepository memberRepository;
 
+    private static final String SESSION_TOKEN_NAME = "SESSION";
+    private static final int COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+    private static final String RANDOM_UUID = "RandomUUID-12345678";
+
     @Test
     @DisplayName("회원가입 성공")
     void join_success() throws Exception {
         //given
         MemberJoinRequest request = joinRequest("asdf1234@naver.com", "12345678");
-        given(memberService.save(any(Member.class))).willReturn(
+        given(memberService.signUp(any(Member.class))).willReturn(
                 member("asdf1234@naver.com", "12345678"));
 
         //when
@@ -63,7 +67,7 @@ class MemberRestControllerTest {
                 .andDo(print());
 
         //then
-        then(memberService).should().save(any(Member.class));
+        then(memberService).should().signUp(any(Member.class));
     }
 
 
@@ -88,22 +92,24 @@ class MemberRestControllerTest {
         //given
         String emailToken = "아무개";
         String email = "asdf1234@naver.com";
+
         Member member = Member.builder()
                 .id(1L)
                 .build();
+
         given(memberService.emailCheck(emailToken, email)).willReturn(member);
-        given(memberService.login(member)).willReturn("UUID-12345678");
+        given(memberService.login(member)).willReturn(RANDOM_UUID);
 
         //when
         mockMvc.perform(get("/check-email-token")
                         .param("emailToken", emailToken)
                         .param("email", email))
                 .andExpect(status().isOk())
-                .andExpect(cookie().httpOnly("SESSION", true)) //todo SESSION 상수로 처리?
-                .andExpect(cookie().secure("SESSION", true))
-                .andExpect(cookie().sameSite("SESSION", "Strict"))
-                .andExpect(cookie().domain("SESSION", "localhost"))
-                .andExpect(cookie().value("SESSION", "UUID-12345678"))
+                .andExpect(cookie().httpOnly(SESSION_TOKEN_NAME, true))
+                .andExpect(cookie().secure(SESSION_TOKEN_NAME, true))
+                .andExpect(cookie().sameSite(SESSION_TOKEN_NAME, "Strict"))
+                .andExpect(cookie().domain(SESSION_TOKEN_NAME, "localhost"))
+                .andExpect(cookie().value(SESSION_TOKEN_NAME, RANDOM_UUID))
                 .andDo(print());
 
         //then
@@ -139,19 +145,18 @@ class MemberRestControllerTest {
                 .build();
 
         Member member = memberLoginRequest.toEntity(memberLoginRequest);
-        String sessionToken = "UUID-12345678";
-        given(memberService.login(member)).willReturn(sessionToken);
+        given(memberService.login(member)).willReturn(RANDOM_UUID);
 
         //when & then
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(memberLoginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(cookie().httpOnly("SESSION", true)) //todo SESSION 상수로 처리?
-                .andExpect(cookie().secure("SESSION", true))
-                .andExpect(cookie().sameSite("SESSION", "Strict"))
-                .andExpect(cookie().domain("SESSION", "localhost"))
-                .andExpect(cookie().value("SESSION", sessionToken))
+                .andExpect(cookie().httpOnly(SESSION_TOKEN_NAME, true))
+                .andExpect(cookie().secure(SESSION_TOKEN_NAME, true))
+                .andExpect(cookie().sameSite(SESSION_TOKEN_NAME, "Strict"))
+                .andExpect(cookie().domain(SESSION_TOKEN_NAME, "localhost"))
+                .andExpect(cookie().value(SESSION_TOKEN_NAME, RANDOM_UUID))
                 .andDo(print());
     }
 
@@ -181,12 +186,9 @@ class MemberRestControllerTest {
         Member member = Member.builder()
                 .id(1L)
                 .build();
-        given(memberRepository.findByLoginToken("UUID-12345678")).willReturn(Optional.of(member));
 
-        Cookie cookie = new Cookie("SESSION", "UUID-12345678");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setMaxAge(30 * 24 * 60 * 60); // todo 상수관리
+        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/logout")
@@ -202,13 +204,13 @@ class MemberRestControllerTest {
         Member member = Member.builder()
                 .id(1L)
                 .build();
-        given(memberRepository.findByLoginToken("UUID-12345678")).willReturn(Optional.of(member));
+
+        given(memberRepository.findByLoginToken(RANDOM_UUID)).willReturn(Optional.of(member));
 
         //when & then
-        mockMvc.perform(post("/logout")) //todo 예외처리 고도화 후 status().isUnauthorized()추가하자
+        mockMvc.perform(post("/logout"))
+                .andExpect(status().isUnauthorized())
                 .andDo(print());
-
-        then(memberRepository.findByLoginToken(any(String.class))).shouldHaveNoInteractions();
     }
 
     @Test
@@ -218,39 +220,37 @@ class MemberRestControllerTest {
         Member member = Member.builder()
                 .id(1L)
                 .build();
-        given(memberRepository.findByLoginToken("UUID-12345678")).willReturn(Optional.of(member));
 
-        Cookie cookie = new Cookie("wrongName", "UUID-12345678");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setMaxAge(30 * 24 * 60 * 60); // todo 상수관리
+        Cookie cookie = makeCookie("wrongName");
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/logout")
-                        .cookie(cookie))   //todo 예외처리 고도화 후 status().isUnauthorized()추가하자
+                        .cookie(cookie))
+                .andExpect(status().isUnauthorized())
                 .andDo(print());
-
-        then(memberRepository.findByLoginToken(any(String.class))).shouldHaveNoInteractions();
     }
 
     @Test
     @DisplayName("로그아웃 실패 : 쿠키는 올바르지만 토큰에 일치하는 멤버 존재하지않음")
     void 로그아웃_실패_만료된_세션토큰() throws Exception {
         //given
-        Member member = Member.builder()
-                .id(1L)
-                .build();
-        given(memberRepository.findByLoginToken("UUID-12345678")).willReturn(Optional.empty());
-
-        Cookie cookie = new Cookie("SESSION", "UUID-12345678");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setMaxAge(30 * 24 * 60 * 60); // todo 상수관리
+        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
         //when & then
         mockMvc.perform(post("/logout")
-                        .cookie(cookie)) //todo 예외처리 고도화 후 status().isUnauthorized()추가하자
+                        .cookie(cookie))
+                .andExpect(status().isUnauthorized())
                 .andDo(print());
+    }
+
+    private Cookie makeCookie(String sessionTokenName) {
+        Cookie cookie = new Cookie(sessionTokenName, RANDOM_UUID);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setMaxAge(COOKIE_MAX_AGE);
+        return cookie;
     }
 
 
