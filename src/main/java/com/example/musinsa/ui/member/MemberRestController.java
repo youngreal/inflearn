@@ -29,8 +29,8 @@ public class MemberRestController {
     private final MemberService memberService;
 
     @PostMapping("/members")
-    public MemberJoinResponse join(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
-        Member member = memberService.save(memberJoinRequest.toEntity(memberJoinRequest));
+    public MemberJoinResponse signUp(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
+        Member member = memberService.signUp(memberJoinRequest.toEntity(memberJoinRequest));
         return MemberJoinResponse.from(member);
     }
 
@@ -43,24 +43,22 @@ public class MemberRestController {
     ) {
         Member member = memberService.emailCheck(emailToken, email);
         String sessionToken = memberService.login(member);
-
-        ResponseCookie cookie = ResponseCookie.from("SESSION", sessionToken)
-                .domain("localhost") //todo 개발할땐 localhost지만 개발,운영에서는 변경될수있다. (profile 설정값으로 설정파일에서 추가하면 좋을것이다)
-                .httpOnly(true)
-                .secure(true)
-                .maxAge(Duration.ofDays(30))
-                .sameSite("Strict")
-                .build();
-
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
+        return responseWithCookie(sessionToken);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
         //todo 로그인한 유저가 또 /login요청한다면 예외를 던지도록 해야할것이다.
-
         String sessionToken = memberService.login(memberLoginRequest.toEntity(memberLoginRequest));
+        return responseWithCookie(sessionToken);
+    }
 
+    @PostMapping("/logout")
+    public void logout(CurrentMember currentMember) {
+        memberService.logout(currentMember.id());
+    }
+
+    private ResponseEntity<Void> responseWithCookie(String sessionToken) {
         ResponseCookie cookie = ResponseCookie.from("SESSION", sessionToken)
                 .domain("localhost") //todo 개발할땐 localhost지만 개발,운영에서는 변경될수있다. (profile 설정값으로 설정파일에서 추가하면 좋을것이다)
                 .httpOnly(true)
@@ -70,10 +68,5 @@ public class MemberRestController {
                 .build();
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
-    }
-
-    @PostMapping("/logout")
-    public void logout(CurrentMember currentMember) {
-        memberService.logout(currentMember.id());
     }
 }
