@@ -4,10 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
@@ -91,7 +89,6 @@ class MemberServiceTest {
     @Test
     @DisplayName("이메일 체크 실패2 : 유효하지않은 이메일,토큰번호 ")
     void test4() {
-
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -111,5 +108,40 @@ class MemberServiceTest {
         //todo 로그인 메서드가 실행되지않는다.
     }
 
+    @Test
+    @DisplayName("로그인 성공후 토큰을 발급한다.")
+    void test5() {
+        // given
+        Member member = Member.builder()
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken(null)
+                .build();
 
+        given(memberRepository.findByEmailAndPassword(member.getEmail(),
+                member.getPassword())).willReturn(Optional.of(member));
+
+        // when
+        String loginToken = sut.login(member);
+
+        // then
+        assertThat(loginToken).isNotNull();
+    }
+
+    @Test
+    @DisplayName("로그인 실패 : 존재하지 않는 유저")
+    void test6() {
+        // given
+        Member member = Member.builder()
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken(null)
+                .build();
+
+        given(memberRepository.findByEmailAndPassword(member.getEmail(),
+                member.getPassword())).willReturn(null);
+
+        // when & then
+        assertThrows(RuntimeException.class, () -> sut.login(member));
+    }
 }
