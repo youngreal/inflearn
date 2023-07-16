@@ -35,14 +35,14 @@ public class MemberService {
 
     //todo CQRS?
     @Transactional(readOnly = true)
-    public void emailCheck(String emailToken, String email) {
+    public Member emailCheck(String emailToken, String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("잘못된 이메일 주소입니다."));
 
         if (!member.isValidEmailToken(emailToken)) {
             throw new RuntimeException("잘못된 요청입니다.");
         }
 
-        this.login(member);
+        return member;
     }
 
     public String login(Member member) {
