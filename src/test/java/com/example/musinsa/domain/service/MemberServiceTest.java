@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
@@ -143,5 +145,43 @@ class MemberServiceTest {
 
         // when & then
         assertThrows(RuntimeException.class, () -> sut.login(member));
+    }
+
+    @Test
+    @DisplayName("로그아웃 성공 후 토큰에 null을 입력한다.")
+    void test7() {
+        // given
+        Member member = Member.builder()
+                .id(1L)
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken(UUID.randomUUID().toString())
+                .build();
+
+        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+
+        // when
+        sut.logout(member.getId());
+
+        // then
+        assertThat(member.getLoginToken()).isNull();
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 : 존재하지 않는 유저")
+    void test8() {
+        // given
+        Member member = Member.builder()
+                .id(1L)
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken("UUID-12345678")
+                .build();
+
+        given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
+
+        // when & then
+        assertThrows(RuntimeException.class, () -> sut.logout(member.getId()));
+        assertThat(member.getLoginToken()).isEqualTo("UUID-12345678");
     }
 }

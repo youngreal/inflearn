@@ -56,4 +56,8 @@ public class Member {
     public void generateLoginToken() {
         this.loginToken = UUID.randomUUID().toString();
     }
+
+    public void invalidateToken() {
+        this.loginToken = null;
+    }
 }
