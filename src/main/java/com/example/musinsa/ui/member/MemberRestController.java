@@ -1,5 +1,6 @@
 package com.example.musinsa.ui.member;
 
+import com.example.musinsa.common.security.CurrentMember;
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.domain.service.MemberService;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
@@ -45,6 +46,8 @@ public class MemberRestController {
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
+        //todo 로그인한 유저가 또 /login요청한다면 예외를 던지도록 해야할것이다.
+
         String sessionToken = memberService.login(memberLoginRequest.toEntity(memberLoginRequest));
 
         ResponseCookie cookie = ResponseCookie.from("SESSION", sessionToken)
@@ -56,5 +59,10 @@ public class MemberRestController {
                 .build();
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
+    }
+
+    @PostMapping("/logout")
+    public void logout(CurrentMember currentMember) {
+        memberService.logout(currentMember.id());
     }
 }
