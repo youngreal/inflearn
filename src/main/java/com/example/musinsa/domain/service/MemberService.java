@@ -50,4 +50,11 @@ public class MemberService {
         newMember.generateLoginToken();
         return newMember.getLoginToken();
     }
+
+    public void logout(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 유저입니다"));
+
+        member.invalidateToken();
+    }
 }
