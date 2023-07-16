@@ -33,14 +33,21 @@ public class MemberService {
         return memberRepository.save(newMember);
     }
 
+    //todo CQRS?
     @Transactional(readOnly = true)
     public void emailCheck(String emailToken, String email) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("잘못된 이메일 주소입니다."));
+        Member member = memberRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("잘못된 이메일 주소입니다."));
 
         if (!member.isValidEmailToken(emailToken)) {
             throw new RuntimeException("잘못된 요청입니다.");
         }
-        //todo 로그인
+
+        this.login(member);
+    }
+
+    public String login(Member member) {
+        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(() -> new RuntimeException("존재하지않는 회원입니다."));
+        newMember.generateLoginToken();
+        return newMember.getLoginToken();
     }
 }

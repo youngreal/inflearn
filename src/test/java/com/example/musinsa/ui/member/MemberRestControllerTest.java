@@ -7,12 +7,14 @@ import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.musinsa.domain.Member;
 import com.example.musinsa.domain.service.MemberService;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
+import com.example.musinsa.ui.member.dto.request.MemberLoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +77,7 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 토큰 확인 성공")
+    @DisplayName("회원가입 성공 : 이메일 토큰 확인 성공")
     void 이메일_토큰_유효성_확인_성공() throws Exception {
         //given
         String emailToken = "아무개";
@@ -93,7 +95,7 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 토큰 확인 실패 : 잘못된 토큰, 이메일 파라미터입력")
+    @DisplayName("회원가입 실패 : 잘못된 토큰, 이메일 파라미터입력")
     void 이메일토큰_유효성확인_실패_잘못된토큰이메일() throws Exception {
         //given
         String emailToken = "";
@@ -108,6 +110,49 @@ class MemberRestControllerTest {
 
         //then
         then(memberService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("로그인 성공시 Set-Cookie 헤더에 토큰을 발급한다")
+    void 로그인_성공() throws Exception {
+        //given
+        MemberLoginRequest memberLoginRequest = MemberLoginRequest.builder()
+                .email("asdf1234@naver.com")
+                .password("12345678")
+                .build();
+
+        Member member = memberLoginRequest.toEntity(memberLoginRequest);
+        String sessionToken = "UUID-12345678";
+        given(memberService.login(member)).willReturn(sessionToken);
+
+        //when & then
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().httpOnly("SESSION", true)) //todo SESSION 상수로 처리?
+                .andExpect(cookie().secure("SESSION", true))
+                .andExpect(cookie().sameSite("SESSION", "Strict"))
+                .andExpect(cookie().domain("SESSION", "localhost"))
+                .andExpect(cookie().value("SESSION", sessionToken))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("로그인 실패 : 잘못된 로그인 요청 폼")
+    void 로그인_실패_잘못된_로그인요청_폼() throws Exception {
+        //given
+        MemberLoginRequest memberLoginRequest = MemberLoginRequest.builder()
+                .email("asdf1234@naver.com")
+                .password("")
+                .build();
+
+        //when & then
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(memberLoginRequest)))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
     }
 
     static Stream<Arguments> 형식에_맞지않는_회원가입_요청시_회원가입에_실패한다() {
