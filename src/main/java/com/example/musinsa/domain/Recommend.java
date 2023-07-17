@@ -16,6 +16,6 @@ public class Recommend {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "post_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "post_id")
     private Post post;
 }
