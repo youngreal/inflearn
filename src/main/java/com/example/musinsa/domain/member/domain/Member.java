@@ -1,4 +1,4 @@
-package com.example.musinsa.domain;
+package com.example.musinsa.domain.member.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

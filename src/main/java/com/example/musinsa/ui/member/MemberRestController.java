@@ -1,8 +1,8 @@
 package com.example.musinsa.ui.member;
 
 import com.example.musinsa.common.security.CurrentMember;
-import com.example.musinsa.domain.Member;
-import com.example.musinsa.domain.service.MemberService;
+import com.example.musinsa.domain.member.domain.Member;
+import com.example.musinsa.domain.member.service.MemberService;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
 import com.example.musinsa.ui.member.dto.request.MemberLoginRequest;
 import com.example.musinsa.ui.member.dto.response.MemberJoinResponse;

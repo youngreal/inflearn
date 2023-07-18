@@ -1,5 +1,8 @@
-package com.example.musinsa.domain;
+package com.example.musinsa.domain.post.domain;
 
+import com.example.musinsa.domain.Comment;
+import com.example.musinsa.domain.HashTag;
+import com.example.musinsa.domain.Recommend;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -29,7 +32,7 @@ public class Post {
     @Column(nullable = false)
     private String title; // 글 제목
 
-    @Column(nullable = false)
+    @Column(nullable = false) //todo @Lob?
     private String contents; // 글내용
 
     private int viewCount; // 조회수
@@ -44,7 +47,7 @@ public class Post {
     private List<Recommend> recommends = new ArrayList<>(); // 추천수
 
     @OneToMany
-    private Set<HashTag> tags = new LinkedHashSet<>(); //해시태그
+    private List<HashTag> tags = new ArrayList<>(); //해시태그
 
     @OneToMany
     private List<Comment> comments = new ArrayList<>();  // 댓글
@@ -52,7 +55,7 @@ public class Post {
     @Builder
     public Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
             LocalDateTime updatedAt, PostStatus postStatus, List<Recommend> recommends,
-            Set<HashTag> tags, List<Comment> comments) {
+            List<HashTag> tags, List<Comment> comments) {
         this.id = id;
         this.title = title;
         this.contents = contents;

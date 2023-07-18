@@ -1,6 +1,6 @@
-package com.example.musinsa.infra.repository;
+package com.example.musinsa.infra.repository.member;
 
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

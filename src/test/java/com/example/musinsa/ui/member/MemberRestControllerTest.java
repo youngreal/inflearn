@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.musinsa.domain.Member;
-import com.example.musinsa.domain.service.MemberService;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.domain.member.domain.Member;
+import com.example.musinsa.domain.member.service.MemberService;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
 import com.example.musinsa.ui.member.dto.request.MemberLoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;

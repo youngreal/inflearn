@@ -1,7 +1,7 @@
 package com.example.musinsa.common.config;
 
 import com.example.musinsa.common.security.CustomArgumentResolver;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
