@@ -1,13 +1,13 @@
-package com.example.musinsa.domain.service;
+package com.example.musinsa.domain.member.service;
 
 import com.example.musinsa.common.exception.AlreadyExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistEmailException;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
 import com.example.musinsa.infra.mail.MailService;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

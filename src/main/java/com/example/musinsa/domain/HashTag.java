@@ -1,8 +1,7 @@
 package com.example.musinsa.domain;
 
-import jakarta.persistence.ConstraintMode;
+import com.example.musinsa.domain.post.domain.Post;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
