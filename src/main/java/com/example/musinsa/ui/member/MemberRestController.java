@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 @RestController
 public class MemberRestController {
 
     private final MemberService memberService;
 
     @PostMapping("/members")
-    public MemberJoinResponse signUp(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
+    public MemberJoinResponse sendSignUpEmail(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
         Member member = memberService.signUp(memberJoinRequest.toEntity(memberJoinRequest));
         return MemberJoinResponse.from(member);
     }
@@ -41,9 +43,15 @@ public class MemberRestController {
             @RequestParam @NotBlank String emailToken,
             @RequestParam @NotBlank @Email String email
     ) {
-        Member member = memberService.emailCheck(emailToken, email);
+        Member member = memberService.checkEmail(emailToken, email);
         String sessionToken = memberService.login(member);
         return responseWithCookie(sessionToken);
+    }
+
+    @GetMapping("/resend-email")
+    public void resendEmail(CurrentMember currentMember) {
+        //todo 이메일 재전송 제한시간? 20분에1번 설정?
+        memberService.resendEmail(currentMember.id());
     }
 
     @PostMapping("/login")

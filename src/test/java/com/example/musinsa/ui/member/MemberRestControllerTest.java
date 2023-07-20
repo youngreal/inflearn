@@ -97,7 +97,7 @@ class MemberRestControllerTest {
                 .id(1L)
                 .build();
 
-        given(memberService.emailCheck(emailToken, email)).willReturn(member);
+        given(memberService.checkEmail(emailToken, email)).willReturn(member);
         given(memberService.login(member)).willReturn(RANDOM_UUID);
 
         //when
@@ -113,7 +113,7 @@ class MemberRestControllerTest {
                 .andDo(print());
 
         //then
-        then(memberService).should().emailCheck(emailToken,email);
+        then(memberService).should().checkEmail(emailToken,email);
         then(memberService).should().login(member);
     }
 
@@ -133,6 +133,24 @@ class MemberRestControllerTest {
 
         //then
         then(memberService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("이메일 재전송 성공")
+    void resendMail() throws Exception {
+        //given
+        Member member = Member.builder()
+                .id(1L)
+                .build();
+
+        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
+
+        //when & then
+        mockMvc.perform(get("/resend-email")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
     @Test
