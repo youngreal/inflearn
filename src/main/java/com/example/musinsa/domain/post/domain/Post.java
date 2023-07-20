@@ -1,21 +1,22 @@
 package com.example.musinsa.domain.post.domain;
 
-import com.example.musinsa.domain.Comment;
 import com.example.musinsa.domain.HashTag;
-import com.example.musinsa.domain.Recommend;
+import com.example.musinsa.domain.member.domain.Member;
 import jakarta.persistence.Column;
+import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +33,8 @@ public class Post {
     @Column(nullable = false)
     private String title; // 글 제목
 
-    @Column(nullable = false) //todo @Lob?
+    //todo @Lob?
+    @Column(nullable = false)
     private String contents; // 글내용
 
     private int viewCount; // 조회수
@@ -43,19 +45,22 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private PostStatus postStatus; // 글 해결 여부
 
-    @OneToMany
-    private List<Recommend> recommends = new ArrayList<>(); // 추천수
-
+//    @OneToMany
+//    private List<Recommend> recommends = new ArrayList<>(); // 추천수
+//
     @OneToMany
     private List<HashTag> tags = new ArrayList<>(); //해시태그
+//
+//    @OneToMany
+//    private List<Comment> comments = new ArrayList<>();  // 댓글
 
-    @OneToMany
-    private List<Comment> comments = new ArrayList<>();  // 댓글
+    @ManyToOne
+    @JoinColumn(name = "member_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private Member member;
 
     @Builder
     public Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
-            LocalDateTime updatedAt, PostStatus postStatus, List<Recommend> recommends,
-            List<HashTag> tags, List<Comment> comments) {
+            LocalDateTime updatedAt, PostStatus postStatus,Member member, List<HashTag> tags) {
         this.id = id;
         this.title = title;
         this.contents = contents;
@@ -63,8 +68,18 @@ public class Post {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
-        this.recommends = recommends;
+        this.member = member;
         this.tags = tags;
-        this.comments = comments;
+    }
+
+    public void create(Member member) {
+        this.member = member;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void update(Post post) {
+        this.title = post.title;
+        this.contents = post.contents;
+        this.updatedAt = LocalDateTime.now();
     }
 }
