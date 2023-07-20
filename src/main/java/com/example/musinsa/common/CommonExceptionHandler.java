@@ -82,10 +82,10 @@ public class CommonExceptionHandler {
                 .body("잘못된 폼 입력값 입니다");
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> runtimeException() {
+    @ExceptionHandler(DuplicatedHashtagException.class)
+    public ResponseEntity<String> duplicatedHashtagException(DuplicatedHashtagException e) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("server error");
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
     }
 }
