@@ -1,11 +1,8 @@
 package com.example.musinsa.ui.post.dto.request;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-
-import com.example.musinsa.domain.HashTag;
-import com.example.musinsa.domain.post.domain.Post;
+import com.example.musinsa.dto.PostDto;
 import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 
@@ -18,14 +15,19 @@ public record PostWriteRequest(
         String contents
 ) {
 
-    public Post toEntity(PostWriteRequest postWriteRequest) {
-        return Post.builder()
-                .title(postWriteRequest.title())
-                .contents(postWriteRequest.contents())
-                .tags(postWriteRequest.hashTags.stream()
-                        .map(tags -> HashTag.builder()
-                                .name(tags)
-                                .build()).toList())
+    public PostDto toDto() {
+        if (this.hashTags == null || this.hashTags.isEmpty()) {
+            return PostDto.builder()
+                    .title(this.title)
+                    .contents(this.contents)
+                    .hashTags(new ArrayList<>())
+                    .build();
+        }
+
+        return PostDto.builder()
+                .title(this.title)
+                .hashTags(this.hashTags)
+                .contents(this.contents)
                 .build();
     }
 }

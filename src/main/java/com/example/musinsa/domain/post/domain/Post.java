@@ -1,7 +1,8 @@
 package com.example.musinsa.domain.post.domain;
 
-import com.example.musinsa.domain.HashTag;
+import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.member.domain.Member;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
@@ -21,8 +22,10 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
 @Getter
 @Entity
 public class Post {
@@ -45,14 +48,8 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private PostStatus postStatus; // 글 해결 여부
 
-//    @OneToMany
-//    private List<Recommend> recommends = new ArrayList<>(); // 추천수
-//
-    @OneToMany
-    private List<HashTag> tags = new ArrayList<>(); //해시태그
-//
-//    @OneToMany
-//    private List<Comment> comments = new ArrayList<>();  // 댓글
+    @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
+    private List<PostHashtag> postHashtags = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
@@ -68,8 +65,8 @@ public class Post {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
+        this.postHashtags = postHashtags;
         this.member = member;
-        this.tags = tags;
     }
 
     public void create(Member member) {
@@ -81,5 +78,10 @@ public class Post {
         this.title = post.title;
         this.contents = post.contents;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addPostHashtag(PostHashtag postHashtag) {
+        this.postHashtags.add(postHashtag);
+        postHashtag.addPost(this);
     }
 }

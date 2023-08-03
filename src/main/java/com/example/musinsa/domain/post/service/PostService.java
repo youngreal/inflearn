@@ -3,29 +3,60 @@ package com.example.musinsa.domain.post.service;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistPostException;
 import com.example.musinsa.common.exception.UnAuthorizationException;
+import com.example.musinsa.domain.Hashtag;
+import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.member.domain.Member;
 import com.example.musinsa.domain.post.domain.Post;
+import com.example.musinsa.dto.PostDto;
 import com.example.musinsa.infra.repository.member.MemberRepository;
+import com.example.musinsa.infra.repository.post.HashtagRepository;
 import com.example.musinsa.infra.repository.post.PostRepository;
+import java.util.List;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class PostService {
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final HashtagRepository hashtagRepository;
 
-    public void write(Post post, long id) {
-        //todo 예외 메시지를 변경하는데 service를 확인해야할까? 리팩토링 해보자
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
+    public void write(PostDto dto, long id) {
+        Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
+        Post post = dto.toEntity();
 
-        post.create(member);
-        postRepository.save(post);
+        if (dto.hashTags() != null && !dto.hashTags().isEmpty()) {
+            List<String> inputStringHashtags = dto.hashTags(); // 입력받은 문자열 해시태그들
+            List<Hashtag> matchingHashtags = hashtagRepository.findByHashtagNameIn(inputStringHashtags); // 입력받은 문자열중 DB에서 가져온 해시태그들
+
+            List<Hashtag> hashtagResults;
+            if (matchingHashtags.isEmpty()) {
+                hashtagResults = inputStringHashtags.stream()
+                        .map(Hashtag::createHashtag)
+                        .toList();
+            } else {
+                hashtagResults = inputStringHashtags.stream()
+                        .filter(inputStringHashtag -> matchingHashtags.stream()
+                                .map(Hashtag::getHashtagName)
+                                .noneMatch(matchingStringHashtag -> matchingStringHashtag.equals(inputStringHashtag)))
+                        .map(Hashtag::createHashtag)
+                        .toList();
+            }
+            addPostHashtagsFromPostAndHashtag(post, hashtagResults);
+        }
+
+            post.addMember(member);
+            postRepository.save(post);
     }
 
     public void update(Post post, long id) {

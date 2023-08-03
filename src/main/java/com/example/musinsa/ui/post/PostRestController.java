@@ -25,14 +25,13 @@ public class PostRestController {
             CurrentMember currentMember,
             @RequestBody @Valid PostWriteRequest postWriteRequest
     ) {
-        Post post = postWriteRequest.toEntity(postWriteRequest);
 
-        if (post.getTags().size() != postWriteRequest.hashTags().stream().distinct().count()) {
+        if (hasDuplicatedHashtags(postWriteRequest)) {
             throw new DuplicatedHashtagException();
         }
 
-        postService.write(post,currentMember.id());
-    }
+        postService.write(postWriteRequest.toDto(), currentMember.id());
+ }
 
     @PutMapping("/posts/{postId}")
     public void update(CurrentMember currentMember,
