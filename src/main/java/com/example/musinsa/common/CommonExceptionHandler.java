@@ -3,6 +3,7 @@ package com.example.musinsa.common;
 import com.example.musinsa.common.exception.AlreadyExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistEmailException;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
+import com.example.musinsa.common.exception.DuplicatedHashtagException;
 import com.example.musinsa.common.exception.EmptyCookieRequestException;
 import com.example.musinsa.common.exception.UnAuthorizationException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
