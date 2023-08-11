@@ -1,9 +1,11 @@
 package com.example.musinsa.ui.post.dto.request;
 
-import com.example.musinsa.domain.HashTag;
-import com.example.musinsa.domain.post.domain.Post;
+import com.example.musinsa.dto.PostDto;
 import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 
 @Builder
@@ -14,15 +16,20 @@ public record PostUpdateRequest(
         @NotBlank
         String contents
 ) {
-    public Post toEntity(PostUpdateRequest postUpdateRequest, long postId) {
-        return Post.builder()
-                .id(postId)
-                .title(postUpdateRequest.title())
-                .contents(postUpdateRequest.contents())
-                .tags(postUpdateRequest.hashTags.stream()
-                        .map(tags -> HashTag.builder()
-                                .name(tags)
-                                .build()).toList())
+
+    public PostDto toDto() {
+        return PostDto.builder()
+                .title(this.title)
+                .hashTags(new HashSet<>())
+                .contents(this.contents)
+                .build();
+    }
+
+    public PostDto toDtoWithHashtag(Set<String> hashtags) {
+        return PostDto.builder()
+                .title(this.title)
+                .hashTags(hashtags)
+                .contents(this.contents)
                 .build();
     }
 }

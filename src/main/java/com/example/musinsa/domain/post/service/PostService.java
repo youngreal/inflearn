@@ -59,14 +59,15 @@ public class PostService {
             postRepository.save(post);
     }
 
-    public void update(Post post, long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
-        Post newPost = postRepository.findById(post.getId()).orElseThrow(() -> new DoesNotExistPostException("존재하지 않는 게시글입니다"));
+    public void update(PostDto dto, long memberId, long postId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
-        if (!member.getId().equals(newPost.getMember().getId())) {
+        if (!member.equals(post.getMember())) {
             throw new UnAuthorizationException("글 수정 권한이 없습니다");
         }
 
-        newPost.update(post);
+        post.update(dto.title(), dto.contents(), dto.hashTags());
+    }
     }
 }
