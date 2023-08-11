@@ -59,8 +59,9 @@ public class Post {
     private Member member;
 
     @Builder
-    public Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
-            LocalDateTime updatedAt, PostStatus postStatus,Member member, List<HashTag> tags) {
+    private Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
+            LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags,
+            Member member) {
         this.id = id;
         this.title = title;
         this.contents = contents;

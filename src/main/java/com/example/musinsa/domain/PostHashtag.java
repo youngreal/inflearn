@@ -25,8 +25,6 @@ public class PostHashtag {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-
     @ManyToOne
     @JoinColumn(name = "post_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Post post;
@@ -36,9 +34,8 @@ public class PostHashtag {
     private Hashtag hashtag;
 
     @Builder
-    private PostHashtag(Long id, String name, Post post, Hashtag hashtag) {
+    private PostHashtag(Long id, Post post, Hashtag hashtag) {
         this.id = id;
-        this.name = name;
         this.post = post;
         this.hashtag = hashtag;
     }
