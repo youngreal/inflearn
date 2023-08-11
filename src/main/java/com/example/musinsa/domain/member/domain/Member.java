@@ -44,7 +44,7 @@ public class Member {
 //    private List<Post> posts = new ArrayList<>();
 
     @Builder
-    public Member(Long id, String email, String password, String nickname, String emailToken,
+    private Member(Long id, String email, String password, String nickname, String emailToken,
             String loginToken, boolean isVerifiedEmail) {
         this.id = id;
         this.email = email;
