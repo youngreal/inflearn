@@ -2,12 +2,12 @@ package com.example.musinsa.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistPostException;
+import com.example.musinsa.common.exception.UnAuthorizationException;
 import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.member.domain.Member;
@@ -16,6 +16,7 @@ import com.example.musinsa.dto.PostDto;
 import com.example.musinsa.infra.repository.member.MemberRepository;
 import com.example.musinsa.infra.repository.post.HashtagRepository;
 import com.example.musinsa.infra.repository.post.PostRepository;
+import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -187,17 +188,18 @@ class PostServiceTest {
                 .member(member)
                 .build();
 
-        Post updatePost = Post.builder()
-                .id(1L)
+        PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
                 .contents("수정내용1")
                 .build();
 
+        long requestPostId = 1L;
+
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
-        given(postRepository.findById(updatePost.getId())).willReturn(Optional.of(post));
+        given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
 
         // when
-        sut.update(updatePost,member.getId());
+        sut.update(dto.toDto(),member.getId(), requestPostId);
 
         // then
         assertThat(post.getTitle()).isEqualTo("수정제목1");
@@ -214,15 +216,17 @@ class PostServiceTest {
                 .password("12345678")
                 .build();
 
-        Post updatePost = Post.builder()
+        PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
                 .contents("수정내용1")
                 .build();
 
+        long requestPostId = 1L;
+
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistMemberException.class, () -> sut.update(updatePost, member.getId()));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
     }
 
     @Test
@@ -235,15 +239,54 @@ class PostServiceTest {
                 .password("12345678")
                 .build();
 
-        Post updatePost = Post.builder()
+        PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
                 .contents("수정내용1")
                 .build();
 
+        long requestPostId = 1L;
+
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
-        given(postRepository.findById(updatePost.getId())).willReturn(Optional.empty());
+        given(postRepository.findById(requestPostId)).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistPostException.class, () -> sut.update(updatePost, member.getId()));
+        assertThrows(DoesNotExistPostException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+    }
+
+    @Test
+    @DisplayName("포스트 수정 실패 : 수정권한이 없는 유저")
+    void update_fail3() {
+        // given
+        Member member = Member.builder()
+                .id(1L)
+                .email("asdf1234@naver.com")
+                .password("12345678")
+                .build();
+
+        Member member2 = Member.builder()
+                .id(2L)
+                .email("qwer1234@naver.com")
+                .password("12345678")
+                .build();
+
+        Post post = Post.builder()
+                .id(1L)
+                .title("글제목1")
+                .contents("글내용1")
+                .member(member2)
+                .build();
+
+        PostUpdateRequest dto = PostUpdateRequest.builder()
+                .title("수정제목1")
+                .contents("수정내용1")
+                .build();
+
+        long requestPostId = 1L;
+
+        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+        given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
+
+        // when & then
+        assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
     }
 }
