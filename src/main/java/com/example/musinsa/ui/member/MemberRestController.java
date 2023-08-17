@@ -49,14 +49,13 @@ public class MemberRestController {
     }
 
     @GetMapping("/resend-email")
-    public void resendEmail(CurrentMember currentMember) {
+    public void resendEmail(@RequestParam String email) {
         //todo 이메일 재전송 제한시간? 20분에1번 설정?
-        memberService.resendEmail(currentMember.id());
+        memberService.resendEmail(email);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
-        //todo 로그인한 유저가 또 /login요청한다면 예외를 던지도록 해야할것이다.
         String sessionToken = memberService.login(memberLoginRequest.toEntity(memberLoginRequest));
         return responseWithCookie(sessionToken);
     }

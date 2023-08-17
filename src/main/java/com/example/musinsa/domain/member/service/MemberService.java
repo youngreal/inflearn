@@ -24,14 +24,13 @@ public class MemberService {
     private final MailService mailService;
 
     public Member signUp(Member member) {
-        if (memberRepository.existsById(member.getId())) {
-            throw new AlreadyExistMemberException("이미 존재하는 회원입니다");
+        if (memberRepository.existsByEmail(member.getEmail())) {
+            throw new AlreadyExistMemberException();
         }
 
         member.generateEmailToken();
         mailService.send(emailMessage(member));
 
-        //todo 비밀번호 암호화
         return memberRepository.save(member);
     }
     
@@ -47,7 +46,11 @@ public class MemberService {
     }
 
     public String login(Member member) {
-        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(() -> new DoesNotExistMemberException("존재하지않는 회원입니다."));
+        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(DoesNotExistMemberException::new);
+        if (newMember.isLogined()) {
+            throw new UnAuthorizationException("이미 로그인된 유저입니다");
+        }
+
         if (!newMember.isVerifiedEmail()) {
             throw new UnAuthorizationException("이메일 인증이 완료되지 않은 유저입니다");
         }
@@ -56,7 +59,7 @@ public class MemberService {
     }
 
     public void logout(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
+        Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
         member.invalidateToken();
     }
 
@@ -71,8 +74,8 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public void resendEmail(long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지않는 회원입니다."));
+    public void resendEmail(String email) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(DoesNotExistMemberException::new);
         mailService.send(emailMessage(member));
     }
 }

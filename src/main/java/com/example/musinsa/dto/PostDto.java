@@ -1,17 +1,16 @@
 package com.example.musinsa.dto;
 
-import com.example.musinsa.domain.PostHashtag;
-import com.example.musinsa.domain.member.domain.Member;
 import com.example.musinsa.domain.post.domain.Post;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 
 @Builder
 public record PostDto(
         String title,
-        List<String> hashTags,
+        Set<String> hashTags,
         String contents,
         LocalDateTime createdAt
 ) {

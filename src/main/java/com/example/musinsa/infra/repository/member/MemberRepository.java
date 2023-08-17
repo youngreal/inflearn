@@ -12,4 +12,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     //todo 인덱스 관련해서 문제가 없으려나?
     Optional<Member> findByLoginToken(String loginToken);
+
+    boolean existsByEmail(String email);
 }
