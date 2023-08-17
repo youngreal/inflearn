@@ -1,10 +1,14 @@
-package com.example.musinsa.domain;
+package com.example.musinsa.domain.member.domain;
 
+import com.example.musinsa.domain.post.domain.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +26,7 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -34,14 +38,21 @@ public class Member {
 
     private String loginToken;
 
+    private boolean isVerifiedEmail = false; // 이메일 인증여부
+
+    @OneToMany(mappedBy = "member")
+    private List<Post> posts = new ArrayList<>();
+
     @Builder
-    public Member(Long id, String email, String password, String nickname, String emailToken, String loginToken) {
+    private Member(Long id, String email, String password, String nickname, String emailToken,
+            String loginToken, boolean isVerifiedEmail) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.emailToken = emailToken;
         this.loginToken = loginToken;
+        this.isVerifiedEmail = isVerifiedEmail;
     }
 
 
@@ -59,5 +70,13 @@ public class Member {
 
     public void invalidateToken() {
         this.loginToken = null;
+    }
+
+    public void completeEmailVerify() {
+        this.isVerifiedEmail = true;
+    }
+
+    public boolean isLogined() {
+        return this.loginToken != null;
     }
 }

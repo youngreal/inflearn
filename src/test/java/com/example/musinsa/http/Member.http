@@ -1,0 +1,24 @@
+#### 회원 가입
+POST http://localhost:8200/members
+Content-Type: application/json
+
+{
+  "email": "asdf1234@naver.com",
+  "password": "12345678"
+}
+
+#### 이메일인증 완료하기
+GET http://localhost:8200/check-email-token?emailToken=1324e610-b8a1-438d-94f8-6963cf000b4d&email=asdf1234@naver.com
+
+#### 로그인
+POST http://localhost:8200/login
+Content-Type: application/json
+
+{
+  "email": "asdf1234@naver.com",
+  "password": "12345678"
+}
+
+#### 로그아웃
+POST http://localhost:8200/logout
+Cookie:e8635d7b-f13c-445a-885b-93253ed420b8

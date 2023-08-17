@@ -1,8 +1,8 @@
 package com.example.musinsa.ui.member;
 
 import com.example.musinsa.common.security.CurrentMember;
-import com.example.musinsa.domain.Member;
-import com.example.musinsa.domain.service.MemberService;
+import com.example.musinsa.domain.member.domain.Member;
+import com.example.musinsa.domain.member.service.MemberService;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
 import com.example.musinsa.ui.member.dto.request.MemberLoginRequest;
 import com.example.musinsa.ui.member.dto.response.MemberJoinResponse;
@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 @RestController
 public class MemberRestController {
 
     private final MemberService memberService;
 
     @PostMapping("/members")
-    public MemberJoinResponse signUp(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
+    public MemberJoinResponse sendSignUpEmail(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
         Member member = memberService.signUp(memberJoinRequest.toEntity(memberJoinRequest));
         return MemberJoinResponse.from(member);
     }
@@ -41,14 +43,19 @@ public class MemberRestController {
             @RequestParam @NotBlank String emailToken,
             @RequestParam @NotBlank @Email String email
     ) {
-        Member member = memberService.emailCheck(emailToken, email);
+        Member member = memberService.checkEmail(emailToken, email);
         String sessionToken = memberService.login(member);
         return responseWithCookie(sessionToken);
     }
 
+    @GetMapping("/resend-email")
+    public void resendEmail(@RequestParam String email) {
+        //todo 이메일 재전송 제한시간? 20분에1번 설정?
+        memberService.resendEmail(email);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
-        //todo 로그인한 유저가 또 /login요청한다면 예외를 던지도록 해야할것이다.
         String sessionToken = memberService.login(memberLoginRequest.toEntity(memberLoginRequest));
         return responseWithCookie(sessionToken);
     }

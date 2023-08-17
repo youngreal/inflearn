@@ -1,0 +1,40 @@
+#### 글 검색하기
+GET http://localhost:8200/posts/search?searchWord=자바
+
+#### 글 한개 조회하기
+GET http://localhost:8200/posts/1
+
+#### 글 전체 조회하기
+GET http://localhost:8200/posts
+
+#### 글 작성
+POST http://localhost:8200/posts
+Cookie:b1849531-b952-49a8-88e7-fb405c27db38
+
+Content-Type: application/json
+
+{
+  "title": "테스트글제목1",
+  "contents": "12345678"
+}
+
+#### 글 작성(해시태그 포함)
+POST http://localhost:8200/posts
+Cookie:SESSION=0ee063b2-2b57-4550-b65e-3761e3f9f36e
+Content-Type: application/json
+
+{
+  "title": "테스트글제목1",
+  "contents": "12345678"
+}
+
+#### 글 수정(해시태그 포함)
+PUT http://localhost:8200/posts/1
+Cookie:SESSION=71163469-1c10-4608-9a07-043adca35c0b
+Content-Type: application/json
+
+{
+  "title": "수정타이틀",
+  "hashTags":["수정자바","수정스프링","수정sql","수정aws"],
+  "contents": "수정본문"
+}

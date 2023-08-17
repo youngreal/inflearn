@@ -1,6 +1,6 @@
 package com.example.musinsa.ui.member.dto.request;
 
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

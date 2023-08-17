@@ -1,4 +1,4 @@
-package com.example.musinsa.domain.service;
+package com.example.musinsa.domain.service.member;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,10 +10,11 @@ import com.example.musinsa.common.exception.AlreadyExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistEmailException;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
+import com.example.musinsa.domain.member.service.MemberService;
 import com.example.musinsa.infra.mail.EmailMessage;
 import com.example.musinsa.infra.mail.MailService;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +46,7 @@ class MemberServiceTest {
                 .build();
 
         // given
-        given(memberRepository.existsById(member.getId())).willReturn(false);
+        given(memberRepository.existsByEmail(member.getEmail())).willReturn(false);
 
         // when
         assertThat(member.getEmailToken()).isNull();
@@ -67,10 +68,30 @@ class MemberServiceTest {
                 .build();
 
         // given
-        given(memberRepository.existsById(member.getId())).willReturn(true);
+        given(memberRepository.existsByEmail(member.getEmail())).willReturn(true);
 
         // when & then
         assertThrows(AlreadyExistMemberException.class, () -> sut.signUp(member));
+    }
+
+    @Test
+    @DisplayName("이메일 체크 성공하면 Member의 isVerify필드의 상태를 변경한다")
+    void email_check_success() {
+        // given
+        Member member = Member.builder()
+                .email("asdf1234@naver.com")
+                .emailToken(UUID.randomUUID().toString())
+                .isVerifiedEmail(false)
+                .password("12345678!!")
+                .build();
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
+
+        //when
+        sut.checkEmail(member.getEmailToken(), member.getEmail());
+
+        // then
+        assertThat(member.isVerifiedEmail()).isTrue();
     }
 
     @Test
@@ -85,7 +106,7 @@ class MemberServiceTest {
         given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistEmailException.class, () -> sut.emailCheck(member.getEmailToken(), member.getEmail()));
+        assertThrows(DoesNotExistEmailException.class, () -> sut.checkEmail(member.getEmailToken(), member.getEmail()));
     }
 
     @Test
@@ -106,7 +127,7 @@ class MemberServiceTest {
 
         // when & then
         assertThrows(WrongEmailTokenException.class,
-                () -> sut.emailCheck(member.getEmailToken(), member.getEmail()));
+                () -> sut.checkEmail(member.getEmailToken(), member.getEmail()));
     }
 
     @Test
@@ -117,6 +138,7 @@ class MemberServiceTest {
                 .email("asdf1234@naver.com")
                 .password("12345678!!")
                 .loginToken(null)
+                .isVerifiedEmail(true)
                 .build();
 
         given(memberRepository.findByEmailAndPassword(member.getEmail(),
@@ -182,5 +204,43 @@ class MemberServiceTest {
         // when & then
         assertThrows(DoesNotExistMemberException.class, () -> sut.logout(member.getId()));
         assertThat(member.getLoginToken()).isEqualTo("UUID-12345678");
+    }
+
+    @Test
+    @DisplayName("이메일 재전송 성공")
+    void reSendEmail_success() {
+        // given
+        Member member = Member.builder()
+                .id(1L)
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken(UUID.randomUUID().toString())
+                .build();
+
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
+
+        // when
+        sut.resendEmail(member.getEmail());
+
+        // then
+        then(mailService).should().send(any(EmailMessage.class));
+    }
+
+    @Test
+    @DisplayName("이메일 재전송 실패 : 존재하지 않는 유저")
+    void reSendEmail_fail() {
+        // given
+        Member member = Member.builder()
+                .id(1L)
+                .email("asdf1234@naver.com")
+                .password("12345678!!")
+                .loginToken(UUID.randomUUID().toString())
+                .build();
+
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.empty());
+
+        // when && then
+        assertThrows(DoesNotExistMemberException.class, () -> sut.resendEmail(member.getEmail()));
+        then(mailService).shouldHaveNoInteractions();
     }
 }

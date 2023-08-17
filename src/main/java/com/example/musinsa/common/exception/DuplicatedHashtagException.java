@@ -4,11 +4,11 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class AlreadyExistMemberException extends RuntimeException {
-    private static final String message = "이미 존재하는 회원입니다";
+public class DuplicatedHashtagException extends RuntimeException {
+    private static final String message = "중복된 해시태그가 존재합니다";
     private final HttpStatus httpStatus;
 
-    public AlreadyExistMemberException() {
+    public DuplicatedHashtagException() {
         super(message);
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }

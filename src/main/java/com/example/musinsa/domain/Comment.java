@@ -1,5 +1,6 @@
 package com.example.musinsa.domain;
 
+import com.example.musinsa.domain.post.domain.Post;
 import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -17,6 +18,6 @@ public class Comment {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "post_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Post post;
 }
