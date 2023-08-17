@@ -138,17 +138,9 @@ class MemberRestControllerTest {
     @Test
     @DisplayName("이메일 재전송 성공")
     void resendMail() throws Exception {
-        //given
-        Member member = Member.builder()
-                .id(1L)
-                .build();
-
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
-        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
-
         //when & then
         mockMvc.perform(get("/resend-email")
-                        .cookie(cookie))
+                        .param("email", "string1234"))
                 .andExpect(status().isOk())
                 .andDo(print());
     }
