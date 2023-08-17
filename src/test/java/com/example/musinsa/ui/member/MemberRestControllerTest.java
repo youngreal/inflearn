@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.musinsa.domain.Member;
-import com.example.musinsa.domain.service.MemberService;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.domain.member.domain.Member;
+import com.example.musinsa.domain.member.service.MemberService;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import com.example.musinsa.ui.member.dto.request.MemberJoinRequest;
 import com.example.musinsa.ui.member.dto.request.MemberLoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,7 +97,7 @@ class MemberRestControllerTest {
                 .id(1L)
                 .build();
 
-        given(memberService.emailCheck(emailToken, email)).willReturn(member);
+        given(memberService.checkEmail(emailToken, email)).willReturn(member);
         given(memberService.login(member)).willReturn(RANDOM_UUID);
 
         //when
@@ -113,7 +113,7 @@ class MemberRestControllerTest {
                 .andDo(print());
 
         //then
-        then(memberService).should().emailCheck(emailToken,email);
+        then(memberService).should().checkEmail(emailToken,email);
         then(memberService).should().login(member);
     }
 
@@ -133,6 +133,16 @@ class MemberRestControllerTest {
 
         //then
         then(memberService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("이메일 재전송 성공")
+    void resendMail() throws Exception {
+        //when & then
+        mockMvc.perform(get("/resend-email")
+                        .param("email", "string1234"))
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
     @Test

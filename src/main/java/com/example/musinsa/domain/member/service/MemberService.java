@@ -1,28 +1,31 @@
-package com.example.musinsa.domain.service;
+package com.example.musinsa.domain.member.service;
 
 import com.example.musinsa.common.exception.AlreadyExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistEmailException;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
+import com.example.musinsa.common.exception.UnAuthorizationException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
 import com.example.musinsa.infra.mail.EmailMessage;
 import com.example.musinsa.infra.mail.MailService;
-import com.example.musinsa.infra.repository.MemberRepository;
+import com.example.musinsa.infra.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
+@Service
 public class MemberService {
 
     private final MemberRepository memberRepository;
     private final MailService mailService;
 
     public Member signUp(Member member) {
-        if (memberRepository.existsById(member.getId())) {
-            throw new AlreadyExistMemberException("이미 존재하는 회원입니다");
+        if (memberRepository.existsByEmail(member.getEmail())) {
+            throw new AlreadyExistMemberException();
         }
 
         member.generateEmailToken();
@@ -30,27 +33,33 @@ public class MemberService {
 
         return memberRepository.save(member);
     }
-
-    //todo CQRS?
-    @Transactional(readOnly = true)
-    public Member emailCheck(String emailToken, String email) {
+    
+    public Member checkEmail(String emailToken, String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(() -> new DoesNotExistEmailException("잘못된 이메일 주소입니다."));
 
         if (!member.isValidEmailToken(emailToken)) {
             throw new WrongEmailTokenException("잘못된 이메일 토큰입니다.");
         }
 
+        member.completeEmailVerify();
         return member;
     }
 
     public String login(Member member) {
-        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(() -> new DoesNotExistMemberException("존재하지않는 회원입니다."));
+        Member newMember = memberRepository.findByEmailAndPassword(member.getEmail(), member.getPassword()).orElseThrow(DoesNotExistMemberException::new);
+        if (newMember.isLogined()) {
+            throw new UnAuthorizationException("이미 로그인된 유저입니다");
+        }
+
+        if (!newMember.isVerifiedEmail()) {
+            throw new UnAuthorizationException("이메일 인증이 완료되지 않은 유저입니다");
+        }
         newMember.generateLoginToken();
         return newMember.getLoginToken();
     }
 
     public void logout(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new DoesNotExistMemberException("존재하지 않는 유저입니다"));
+        Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
         member.invalidateToken();
     }
 
@@ -62,5 +71,11 @@ public class MemberService {
                         + "/check-email-token?emailToken=" + member.getEmailToken() +
                         "&email=" + member.getEmail())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public void resendEmail(String email) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(DoesNotExistMemberException::new);
+        mailService.send(emailMessage(member));
     }
 }

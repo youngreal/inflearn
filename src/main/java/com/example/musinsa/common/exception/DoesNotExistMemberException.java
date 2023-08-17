@@ -8,9 +8,9 @@ public class DoesNotExistMemberException extends RuntimeException {
     private final String message;
     private final HttpStatus httpStatus;
 
-    public DoesNotExistMemberException(String message) {
-       super(message);
-        this.message = message;
+    public DoesNotExistMemberException() {
+       super();
+        this.message = "존재하지 않는 유저입니다";
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 }

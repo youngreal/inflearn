@@ -1,6 +1,6 @@
-package com.example.musinsa.infra.repository;
+package com.example.musinsa.infra.repository.member;
 
-import com.example.musinsa.domain.Member;
+import com.example.musinsa.domain.member.domain.Member;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +12,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     //todo 인덱스 관련해서 문제가 없으려나?
     Optional<Member> findByLoginToken(String loginToken);
+
+    boolean existsByEmail(String email);
 }

@@ -3,6 +3,7 @@ package com.example.musinsa.common;
 import com.example.musinsa.common.exception.AlreadyExistMemberException;
 import com.example.musinsa.common.exception.DoesNotExistEmailException;
 import com.example.musinsa.common.exception.DoesNotExistMemberException;
+import com.example.musinsa.common.exception.DuplicatedHashtagException;
 import com.example.musinsa.common.exception.EmptyCookieRequestException;
 import com.example.musinsa.common.exception.UnAuthorizationException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
@@ -82,10 +83,10 @@ public class CommonExceptionHandler {
                 .body("잘못된 폼 입력값 입니다");
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> runtimeException() {
+    @ExceptionHandler(DuplicatedHashtagException.class)
+    public ResponseEntity<String> duplicatedHashtagException(DuplicatedHashtagException e) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("server error");
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
     }
 }
