@@ -2,6 +2,8 @@ package com.example.musinsa.ui.post;
 
 import com.example.musinsa.common.exception.DuplicatedHashtagException;
 import com.example.musinsa.common.security.CurrentMember;
+import com.example.musinsa.domain.post.service.PaginationService;
+import com.example.musinsa.domain.post.service.PostQueryService;
 import com.example.musinsa.domain.post.service.PostService;
 import com.example.musinsa.ui.post.dto.response.PostResponse;
 import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostRestController {
 
     private final PostService postService;
+    private final PostQueryService postQueryService;
+    private final PaginationService paginationService;
 
     @PostMapping("/posts")
     public void write(
@@ -48,7 +52,8 @@ public class PostRestController {
  }
 
     @PutMapping("/posts/{postId}")
-    public void update(CurrentMember currentMember,
+    public void update(
+            CurrentMember currentMember,
             @RequestBody @Valid PostUpdateRequest request,
             @PathVariable long postId
     ) {
@@ -60,8 +65,49 @@ public class PostRestController {
             Set<String> hashtags = validateDuplicateHashtag(request.hashTags());
             postService.update(request.toDtoWithHashtag(hashtags), currentMember.id(), postId);
         }
-
-        postService.update(post,currentMember.id());
     }
 
+    //todo 현재 쿼리 총 4번(member , post, tag, count쿼리)
+    @GetMapping("/posts")
+    public PostResponseWithPageNumbers allPosts(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable
+    ) {
+        Page<PostResponse> posts = postQueryService.allList(pageable).map(PostResponse::from);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(), posts.getTotalPages());
+
+        return new PostResponseWithPageNumbers(posts, pageNumbers);
+    }
+
+    // 현재 쿼리 member,post,tag 조인해서 한번에 쿼리에 가져온다.
+    @GetMapping("/posts/{postId}")
+    public PostResponse postDetail(@PathVariable long postId) {
+        return PostResponse.from(postQueryService.postDetail(postId));
+    }
+
+    //todo 현재 검색시 쿼리가 3번나간다(post 조건조회, member 조회, tag 조회)
+    @GetMapping("/posts/search")
+    public PostResponseWithPageNumbers searchedPosts(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable,
+            @RequestParam String searchWord
+    ) {
+        Page<PostResponse> posts = postQueryService.searchPost(searchWord, pageable)
+                .map(PostResponse::from);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(),
+                posts.getTotalPages());
+
+        return new PostResponseWithPageNumbers(posts, pageNumbers);
+    }
+
+    private Set<String> validateDuplicateHashtag(List<String> requestHashtag) {
+        Set<String> hashtags = new HashSet<>();
+        for (String hashtag : requestHashtag) {
+            if (hashtags.contains(hashtag)) {
+                throw new DuplicatedHashtagException();
+            }
+            hashtags.add(hashtag);
+        }
+
+        return hashtags;
+    }
+    //todo 삭제API
 }
