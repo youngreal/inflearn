@@ -26,7 +26,7 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -38,10 +38,10 @@ public class Member {
 
     private String loginToken;
 
-    private boolean isVerifiedEmail; // 이메일 인증여부
+    private boolean isVerifiedEmail = false; // 이메일 인증여부
 
-//    @OneToMany(mappedBy = "member")
-//    private List<Post> posts = new ArrayList<>();
+    @OneToMany(mappedBy = "member")
+    private List<Post> posts = new ArrayList<>();
 
     @Builder
     private Member(Long id, String email, String password, String nickname, String emailToken,
@@ -74,5 +74,9 @@ public class Member {
 
     public void completeEmailVerify() {
         this.isVerifiedEmail = true;
+    }
+
+    public boolean isLogined() {
+        return this.loginToken != null;
     }
 }
