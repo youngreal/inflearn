@@ -46,7 +46,7 @@ class MemberServiceTest {
                 .build();
 
         // given
-        given(memberRepository.existsById(member.getId())).willReturn(false);
+        given(memberRepository.existsByEmail(member.getEmail())).willReturn(false);
 
         // when
         assertThat(member.getEmailToken()).isNull();
@@ -68,7 +68,7 @@ class MemberServiceTest {
                 .build();
 
         // given
-        given(memberRepository.existsById(member.getId())).willReturn(true);
+        given(memberRepository.existsByEmail(member.getEmail())).willReturn(true);
 
         // when & then
         assertThrows(AlreadyExistMemberException.class, () -> sut.signUp(member));
@@ -217,10 +217,10 @@ class MemberServiceTest {
                 .loginToken(UUID.randomUUID().toString())
                 .build();
 
-        given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
 
         // when
-        sut.resendEmail(member.getId());
+        sut.resendEmail(member.getEmail());
 
         // then
         then(mailService).should().send(any(EmailMessage.class));
@@ -237,10 +237,10 @@ class MemberServiceTest {
                 .loginToken(UUID.randomUUID().toString())
                 .build();
 
-        given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.empty());
 
         // when && then
-        assertThrows(DoesNotExistMemberException.class, () -> sut.resendEmail(member.getId()));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.resendEmail(member.getEmail()));
         then(mailService).shouldHaveNoInteractions();
     }
 }

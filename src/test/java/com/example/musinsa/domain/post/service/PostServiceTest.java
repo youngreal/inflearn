@@ -20,6 +20,7 @@ import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,22 +44,12 @@ class PostServiceTest {
     @Mock
     private HashtagRepository hashtagRepository;
 
-
     @Test
     @DisplayName("포스트 작성 성공 : DB에 없는 새로운 해시태그를 입력받은경우")
     void write_success() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        PostDto postDto = PostDto.builder()
-                .title("글제목1")
-                .contents("글내용1")
-                .hashTags(List.of("새로운자바","새로운스프링"))
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","password12345678");
+        PostDto postDto = writeDto("글제목1", "글내용1", Set.of("새로운자바", "새로운스프링"));
 
         Post postEntity = postDto.toEntity();
         Hashtag hashtag = Hashtag.createHashtag("새로운자바");
@@ -85,17 +76,8 @@ class PostServiceTest {
     @DisplayName("포스트 작성 성공2 : 기존에 있던 해시태그를 입력받은경우")
     void write_success2() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        PostDto postDto = PostDto.builder()
-                .title("글제목1")
-                .contents("글내용1")
-                .hashTags(List.of("새로운자바","새로운스프링"))
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
+        PostDto postDto = writeDto("글제목1", "글내용1", Set.of("새로운자바", "새로운스프링"));
 
         Post postEntity = postDto.toEntity();
         Hashtag hashtag = Hashtag.createHashtag("기존에있던자바");
@@ -122,16 +104,8 @@ class PostServiceTest {
     @DisplayName("포스트 작성 성공3 : 글 제목, 본문만 있는경우")
     void write_success3() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        PostDto postDto = PostDto.builder()
-                .title("글제목1")
-                .contents("글내용1")
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
+        PostDto postDto = writeDto("글제목1", "글내용1", null);
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
@@ -152,16 +126,8 @@ class PostServiceTest {
     @DisplayName("포스트 작성 실패 : 존재하지 않는 유저")
     void write_fail() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        PostDto postDto = PostDto.builder()
-                .title("글제목1")
-                .contents("글내용1")
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
+        PostDto postDto = writeDto("글제목1", "글내용1", null);
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
@@ -175,18 +141,8 @@ class PostServiceTest {
     @DisplayName("포스트 수정 성공")
     void update_success() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("글제목1")
-                .contents("글내용1")
-                .member(member)
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
+        Post post = createPost(member);
 
         PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
@@ -210,19 +166,13 @@ class PostServiceTest {
     @DisplayName("포스트 수정 실패 : 존재하지 않는 유저")
     void update_fail() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
 
         PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
                 .contents("수정내용1")
                 .build();
-
         long requestPostId = 1L;
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
@@ -233,11 +183,7 @@ class PostServiceTest {
     @DisplayName("포스트 수정 실패 : 존재하지 않는 게시글")
     void update_fail2() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
 
         PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
@@ -257,24 +203,9 @@ class PostServiceTest {
     @DisplayName("포스트 수정 실패 : 수정권한이 없는 유저")
     void update_fail3() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-
-        Member member2 = Member.builder()
-                .id(2L)
-                .email("qwer1234@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("글제목1")
-                .contents("글내용1")
-                .member(member2)
-                .build();
+        Member member = createMember(1L, "asdf1234@naver.com","12345678");
+        Member member2 = createMember(2L, "qwer1234@naver.com","12345678");
+        Post post = createPost(member2);
 
         PostUpdateRequest dto = PostUpdateRequest.builder()
                 .title("수정제목1")
@@ -288,5 +219,30 @@ class PostServiceTest {
 
         // when & then
         assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+    }
+
+    private Post createPost(Member member) {
+        return Post.builder()
+                .id(1L)
+                .title("글제목1")
+                .contents("글내용1")
+                .member(member)
+                .build();
+    }
+
+    private Member createMember(long id, String email,String password) {
+        return Member.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .build();
+    }
+
+    private PostDto writeDto(String title, String contents, Set<String> hashtags) {
+        return PostDto.builder()
+                .title(title)
+                .contents(contents)
+                .hashTags(hashtags)
+                .build();
     }
 }
