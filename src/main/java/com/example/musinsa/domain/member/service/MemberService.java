@@ -6,22 +6,19 @@ import com.example.musinsa.common.exception.DoesNotExistMemberException;
 import com.example.musinsa.common.exception.UnAuthorizationException;
 import com.example.musinsa.common.exception.WrongEmailTokenException;
 import com.example.musinsa.domain.member.domain.Member;
-import com.example.musinsa.infra.mail.EmailMessage;
-import com.example.musinsa.infra.mail.MailService;
+import com.example.musinsa.event.Events;
+import com.example.musinsa.event.MailSentEvent;
 import com.example.musinsa.infra.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final MailService mailService;
 
     public Member signUp(Member member) {
         if (memberRepository.existsByEmail(member.getEmail())) {
@@ -29,8 +26,7 @@ public class MemberService {
         }
 
         member.generateEmailToken();
-        mailService.send(emailMessage(member));
-
+        Events.raise(new MailSentEvent(member));
         return memberRepository.save(member);
     }
     
@@ -63,19 +59,9 @@ public class MemberService {
         member.invalidateToken();
     }
 
-    private EmailMessage emailMessage(Member member) {
-        return EmailMessage.builder()
-                .to(member.getEmail())
-                .subject("[인프런] 회원가입을 위해 메일인증을 해주세요.")
-                .message("안녕하세요, 인프랩입니다. 아래 메일 인증 버튼을 눌러 회원가입을 완료해주세요.\n"
-                        + "/check-email-token?emailToken=" + member.getEmailToken() +
-                        "&email=" + member.getEmail())
-                .build();
-    }
-
     @Transactional(readOnly = true)
     public void resendEmail(String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(DoesNotExistMemberException::new);
-        mailService.send(emailMessage(member));
+        Events.raise(new MailSentEvent(member));
     }
 }
