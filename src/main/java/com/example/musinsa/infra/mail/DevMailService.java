@@ -1,5 +1,6 @@
 package com.example.musinsa.infra.mail;
 
+import com.example.musinsa.common.exception.CustomMessagingException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,9 @@ public class DevMailService implements MailService{
             javaMailSender.send(mimeMessage);
             log.info("sent email: {}", emailMessage.message());
         } catch (MessagingException e) {
-            log.error("failed to send email", e);
-            throw new RuntimeException(e);
+            log.error("messaging exception 발생", e);
+            // retry를 적용시키기위해 uncheckException을 던진다.
+            throw new CustomMessagingException();
         }
     }
 }
