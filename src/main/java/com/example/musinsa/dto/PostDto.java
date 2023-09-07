@@ -3,14 +3,13 @@ package com.example.musinsa.dto;
 import com.example.musinsa.domain.post.domain.Post;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import lombok.Builder;
 
 @Builder
 public record PostDto(
         String title,
-        Set<String> hashTags,
+        Set<String> hashtags,
         String contents,
         LocalDateTime createdAt
 ) {
