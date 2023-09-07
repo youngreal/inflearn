@@ -1,5 +1,6 @@
 package com.example.musinsa.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,10 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@ToString
 @Getter
+@EqualsAndHashCode(of = "hashtagName")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class Hashtag {
@@ -21,8 +26,10 @@ public class Hashtag {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "hashtag_name", unique = true)
     private String hashtagName;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "hashtag")
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
@@ -43,5 +50,16 @@ public class Hashtag {
                 .hashtagName(hashtagName)
                 .postHashtags(new ArrayList<>())
                 .build();
+    }
+
+    public boolean hasOnlyOnePostHashtag() {
+        return this.postHashtags.size() == 1;
+    }
+
+    public void deletePostHashtags() {
+        for (PostHashtag postHashtag : this.postHashtags) {
+            postHashtag.changeHashtag();
+        }
+        this.postHashtags = new ArrayList<>();
     }
 }

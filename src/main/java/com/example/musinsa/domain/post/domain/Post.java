@@ -1,9 +1,7 @@
 package com.example.musinsa.domain.post.domain;
 
-import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.member.domain.Member;
-import com.example.musinsa.dto.PostDto;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
@@ -20,15 +18,16 @@ import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
+@Slf4j
 @Getter
 @Entity
 public class Post {
@@ -51,6 +50,7 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private PostStatus postStatus; // 글 해결 여부
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
@@ -83,16 +83,9 @@ public class Post {
         member.getPosts().add(this);
     }
 
-    public void update(String title, String contents, Set<String> hashTags) {
+    public void updateTitleAndContents(String title, String contents) {
         this.title = title;
         this.contents = contents;
-        // 이미 존재하는 해시태그가 아닌 해시태그들만 추가로 저장
-        hashTags.forEach(hashTag -> this.postHashtags.stream()
-                .filter(postHashtag -> !postHashtag.getHashtag().getHashtagName().equals(hashTag))
-                .forEach(postHashtag -> {
-                    addPostHashtag(postHashtag);
-                    postHashtag.addHashtag(Hashtag.createHashtag(hashTag));
-                }));
         this.updatedAt = LocalDateTime.now();
     }
 }
