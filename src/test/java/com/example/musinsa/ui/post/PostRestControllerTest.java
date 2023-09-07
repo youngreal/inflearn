@@ -225,7 +225,7 @@ class PostRestControllerTest {
         return PostWriteRequest.builder()
                 .title(title)
                 .contents(contents)
-                .hashTags(hashtags)
+                .hashtags(hashtags)
                 .build();
     }
 
