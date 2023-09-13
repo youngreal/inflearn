@@ -49,15 +49,7 @@ public class PostHashtag {
                 .build();
     }
 
-    public void addPost(Post post) {
-        this.post = post;
-    }
-
-    public void addHashtag(Hashtag hashtag) {
-        this.hashtag = hashtag;
-    }
-
-    public void changeHashtag() {
+    public void deleteHashtag() {
         this.hashtag = null;
     }
 }

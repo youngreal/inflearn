@@ -20,35 +20,39 @@ public class HashtagService {
 
     private final HashtagRepository hashtagRepository;
 
-    public void saveNewHashtagsWhenPostWrite(Set<String> inputStringHashtags, Post post) {
+    public void saveNewHashtagsWhenPostWrite(Post post, Set<String> inputStringHashtags) {
         Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags); // 입력받은 문자열중 DB에 존재했던 해시태그들
-        Set<Hashtag> madeHashtags = createHashtags(inputStringHashtags, existingHashtagsInDB);
-        addPostHashtagsFromPostAndHashtag(post, madeHashtags);
+        Set<Hashtag> inputHashtags = stringToHashtag(inputStringHashtags);
+        Set<Hashtag> insertHashtags = createHashtagsForInsert(inputHashtags, existingHashtagsInDB);
+        addPostHashtagsFromPostAndHashtag(post, inputHashtags, insertHashtags, existingHashtagsInDB);
 
-        hashtagRepository.saveAll(madeHashtags);
+        hashtagRepository.saveAll(insertHashtags);
     }
 
-    public void saveNewHashtagsWhenPostUpdate(Post post, Set<String> inputStringHashtags) {
-        Set<Hashtag> hashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags);
-        Set<Hashtag> insertHashtags = getHashtagsForInsert(hashtagsInDB, createHashtag(inputStringHashtags));
-        addPostHashtagsFromPostAndHashtag(post, insertHashtags);
+    public void saveHashtagsWhenPostUpdate(Post post, Set<String> inputStringHashtags) {
+        Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags);
+        Set<Hashtag> insertHashtags = getHashtagsForInsert(existingHashtagsInDB, stringToHashtag(inputStringHashtags)); // java, kafka
+        addPostHashtagsWhenPostUpdate(post, stringToHashtag(inputStringHashtags), insertHashtags, existingHashtagsInDB);
 
         hashtagRepository.saveAll(insertHashtags); // DB에 없던 요청받은 해시태그 삽입
     }
 
-    public void deleteHashtags(List<PostHashtag> postHashtags, Set<String> inputStringHashtags) {
-        Set<Hashtag> hashtagsInPost = postHashtags.stream()
+    public void deleteHashtags(List<PostHashtag> beforePostHashtags, Set<String> inputStringHashtags) {
+        Set<Hashtag> hashtagsInPost = beforePostHashtags.stream()
                 .map(PostHashtag::getHashtag)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
 
-        hashtagRepository.deleteAll(getHashtagsForDelete(hashtagsInPost, stringToHashtag(inputStringHashtags)));
+        Set<Hashtag> deleteHashtags = getHashtagsForDelete(hashtagsInPost, stringToHashtag(inputStringHashtags)); // spring, aws
+        hashtagRepository.deleteAll(deleteHashtags);
     }
 
-    private Set<Hashtag> getHashtagsForInsert(Set<Hashtag> hashtagsInDB, Set<Hashtag> dtoHashtags) {
-        Set<Hashtag> hashtagsForInsert = new HashSet<>(dtoHashtags);
-        hashtagsForInsert.addAll(hashtagsInDB);
-        hashtagsForInsert.removeAll(hashtagsInDB);
+
+
+    private Set<Hashtag> getHashtagsForInsert(Set<Hashtag> existingHashtagsInDB, Set<Hashtag> inputStringHashtags) {
+        Set<Hashtag> hashtagsForInsert = new HashSet<>(inputStringHashtags);
+        hashtagsForInsert.addAll(existingHashtagsInDB);
+        hashtagsForInsert.removeAll(existingHashtagsInDB);
 
         return hashtagsForInsert.stream()
                 .map(Hashtag::getHashtagName)
@@ -56,50 +60,98 @@ public class HashtagService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    private Set<Hashtag> getHashtagsForDelete(Set<Hashtag> allHashtagsInDbSet, Set<Hashtag> dtoHashtags) {
-        Set<Hashtag> hashtagsForDelete = new HashSet<>(allHashtagsInDbSet);
-        hashtagsForDelete.addAll(dtoHashtags);
-        hashtagsForDelete.removeAll(dtoHashtags);
+    private Set<Hashtag> getHashtagsForDelete(Set<Hashtag> hashtagsInPost, Set<Hashtag> inputHashtags) {
+        Set<Hashtag> hashtagsForDelete = new HashSet<>(hashtagsInPost);
+        hashtagsForDelete.addAll(inputHashtags);
+        hashtagsForDelete.removeAll(inputHashtags);
 
-        hashtagsForDelete.stream()
+        return hashtagsForDelete.stream()
                 .filter(Hashtag::hasOnlyOnePostHashtag)
-                .forEach(Hashtag::deletePostHashtags);
-        return hashtagsForDelete;
-    }
-
-    private Set<Hashtag> createHashtags(Set<String> inputStringHashtags, Set<Hashtag> existingHashtagsInDB) {
-        if (existingHashtagsInDB.isEmpty()) {
-            return createHashtag(inputStringHashtags);
-        } else {
-            return inputStringHashtags.stream()
-                    .filter(inputStringHashtag -> existingHashtagsInDB.stream()
-                            .map(Hashtag::getHashtagName)
-                            .noneMatch(found -> found.equals(inputStringHashtag)))
-                    .map(Hashtag::createHashtag)
-                    .collect(Collectors.toUnmodifiableSet());
-        }
-    }
-
-    private Set<Hashtag> createHashtag(Set<String> inputStringHashtags) {
-        return inputStringHashtags.stream()
-                .map(Hashtag::createHashtag)
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    /**
-     * hashtag 에서 postHashtag 추가
-     * post에서 postHashtag 추가
-     */
-    private void addPostHashtagsFromPostAndHashtag(Post post, Set<Hashtag> madeHashtags) {
-        madeHashtags.stream()
-                .map(hashtag -> PostHashtag.createPostHashtag(post, hashtag))
-                .forEach(postHashtag -> {
-                    post.addPostHashtag(postHashtag);
-                    postHashtag.getHashtag().addPostHashtag(postHashtag);
-                });
+    private Set<Hashtag> createHashtagsForInsert(Set<Hashtag> inputHashtags, Set<Hashtag> existingHashtagsInDB) {
+        if (existingHashtagsInDB.isEmpty()) {
+            return inputHashtags;
+        } else {
+            //todo DB에 존재하지않는 태그들만 추가로 넣어야함
+            Set<Hashtag> hashtagsForInsert = new HashSet<>(inputHashtags);
+            hashtagsForInsert.addAll(existingHashtagsInDB);
+            hashtagsForInsert.removeAll(existingHashtagsInDB);
+
+            return hashtagsForInsert;
+        }
     }
 
-    private Set<Hashtag> stringToHashtag(Set<String> dtoHashtagsString) {
-        return new HashSet<>(createHashtag(dtoHashtagsString));
+    private void addPostHashtagsFromPostAndHashtag(Post post, Set<Hashtag> inputHashtags,
+            Set<Hashtag> insertHashtags, Set<Hashtag> existingHashtagsInDB) {
+
+        // 새로 삽입해야하는 해시태그가 없는경우
+        if (insertHashtags.isEmpty()) {
+            // 작성요청시 해시태그 입력 안한경우
+            if (inputHashtags.isEmpty()) {
+                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, null);
+                post.addPostHashtag(postHashtag);
+            }
+
+            // 작성요청시 해시태그 입력받았지만 이미 DB에 있는 해시태그 사용하는경우
+            for (Hashtag hashtagInDB : existingHashtagsInDB) {
+                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtagInDB);
+                post.addPostHashtag(postHashtag);
+                hashtagInDB.addPostHashtag(postHashtag);
+            }
+        } else {
+            // 새로 삽입해야하는 해시태그가 있는경우, DB에 있는 해시태그들은 먼저 기존에있던걸로 생성한다.
+            for (Hashtag hashtagInDB : existingHashtagsInDB) {
+                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtagInDB);
+                post.addPostHashtag(postHashtag);
+                hashtagInDB.addPostHashtag(postHashtag);
+            }
+
+            // 새로 삽입해야하는 해시태그들을 생성한다. DB에 없는 해시태그들은 새롭게 생성한다.
+            for (Hashtag insertHashtag : insertHashtags) {
+                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, insertHashtag);
+                post.addPostHashtag(postHashtag);
+                postHashtag.getHashtag().addPostHashtag(postHashtag);
+            }
+        }
+    }
+
+    private void addPostHashtagsWhenPostUpdate(Post post, Set<Hashtag> inputHashtags, Set<Hashtag> insertToDBHashtags, Set<Hashtag> existingHashtagsInDB) {
+        List<PostHashtag> beforePostHashtags = post.getPostHashtags();
+        beforePostHashtags.clear();
+
+        // DB에 새로넣을 해시태그가 존재하지 않는경우
+        if (insertToDBHashtags.isEmpty()) {
+            for (Hashtag inputHashtag : inputHashtags) {
+                if (existingHashtagsInDB.contains(inputHashtag)) {
+                    Hashtag hashtag = existingHashtagsInDB.stream()
+                            .filter(existInDBHashtag -> existInDBHashtag.equals(inputHashtag))
+                            .findAny()
+                            .orElseThrow();
+
+                    PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtag);
+                    post.addPostHashtag(postHashtag);
+                    hashtag.addPostHashtag(postHashtag);
+                }
+            }
+
+            if (post.getPostHashtags().isEmpty()) {
+                post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
+            }
+
+        } else {
+            for (Hashtag insertToDBHashtag : insertToDBHashtags) {
+                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, insertToDBHashtag);
+                post.addPostHashtag(postHashtag);
+                insertToDBHashtag.addPostHashtag(postHashtag);
+            }
+        }
+    }
+
+    private Set<Hashtag> stringToHashtag(Set<String> inputStringHashtags) {
+        return inputStringHashtags.stream()
+                .map(Hashtag::createHashtag)
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

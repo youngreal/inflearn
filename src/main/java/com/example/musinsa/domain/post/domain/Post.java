@@ -1,5 +1,6 @@
 package com.example.musinsa.domain.post.domain;
 
+import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.member.domain.Member;
 import jakarta.persistence.CascadeType;
@@ -75,7 +76,6 @@ public class Post {
 
     public void addPostHashtag(PostHashtag postHashtag) {
         this.postHashtags.add(postHashtag);
-        postHashtag.addPost(this);
     }
 
     public void addMember(Member member) {
