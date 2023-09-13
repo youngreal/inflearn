@@ -9,12 +9,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+@Slf4j
 @RequiredArgsConstructor
 public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -39,12 +41,16 @@ public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
         }
 
         Cookie[] cookies = servletRequest.getCookies();
+        for (Cookie cookie : cookies) {
+            log.info(">>>>> cookie.getName= {}", cookie.getName());
+            log.info(">>>>> cookie.getValue= {}", cookie.getValue());
+        }
         Cookie cookie = Arrays.stream(cookies)
                 .filter(cookie1 -> cookie1.getName().equals("SESSION"))
                 .findFirst()
-                .orElseThrow(() -> new UnAuthorizationException("유효하지않은 세션토큰"));
+                .orElseThrow(() -> new UnAuthorizationException("유효하지않은 세션토큰쿠키"));
 
-        Member member = memberRepository.findByLoginToken(cookie.getValue()).orElseThrow(() -> new UnAuthorizationException("유효하지 않은 세션토큰"));
+        Member member = memberRepository.findByLoginToken(cookie.getValue()).orElseThrow(() -> new UnAuthorizationException("존재하지 않은 세션토큰"));
         return new CurrentMember(member.getId());
     }
 }
