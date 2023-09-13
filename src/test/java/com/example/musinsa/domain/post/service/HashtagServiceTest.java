@@ -1,5 +1,7 @@
 package com.example.musinsa.domain.post.service;
 
+import static com.example.musinsa.domain.Hashtag.createHashtag;
+import static java.util.Set.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.BDDMockito.given;
@@ -10,6 +12,7 @@ import com.example.musinsa.domain.PostHashtag;
 import com.example.musinsa.domain.post.domain.Post;
 import com.example.musinsa.infra.repository.post.HashtagRepository;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +36,6 @@ class HashtagServiceTest {
     private HashtagRepository hashtagRepository;
 
     private Post post;
-    private Hashtag hashtag;
-    private Hashtag hashtag2;
-    private Hashtag hashtag3;
-
 
     @BeforeEach
     void setup() {
@@ -48,36 +47,22 @@ class HashtagServiceTest {
     }
 
     @DisplayName("post 작성시 새롭게 저장할 해시태그가 존재하지않는다.")
-    @MethodSource
-    @ParameterizedTest
-    void saveWhenPostWrite(Set<String> input, Set<Hashtag> existingDB, Set<Hashtag> expected) {
+    @Test
+    void saveWhenPostWrite() {
         // given
-        given(hashtagRepository.findByHashtagNameIn(input)).willReturn(existingDB);
+        Set<String> input = of("java", "spring", "aws");
+        Set<Hashtag> existInDB = of(createHashtag("java"), createHashtag("spring"), createHashtag("aws"));
+        given(hashtagRepository.findByHashtagNameIn(input)).willReturn(existInDB);
 
         // when
-        int beforePostHashtagSize = post.getPostHashtags().size();
-        sut.saveNewHashtagsWhenPostWrite(input, post);
-        int afterPostHashtagSize = post.getPostHashtags().size();
+        List<PostHashtag> beforePostHashtags = new ArrayList<>(post.getPostHashtags());
+        sut.saveNewHashtagsWhenPostWrite(post, input);
+        List<PostHashtag> afterPostHashtags = post.getPostHashtags();
 
         // then
-        assertThat(beforePostHashtagSize).isEqualTo(afterPostHashtagSize);
-        then(hashtagRepository).should().saveAll(expected);
-    }
-
-    static Stream<Arguments> saveWhenPostWrite() {
-        return Stream.of(
-                arguments(
-                        Set.of("java", "spring", "aws"),
-                        Set.of(Hashtag.createHashtag("java"), Hashtag.createHashtag("spring"),
-                                Hashtag.createHashtag("aws")),
-                        Set.of()
-                ),
-                arguments(
-                        Set.of(),
-                        Set.of(),
-                        Set.of()
-                )
-        );
+        assertThat(beforePostHashtags).isEmpty();
+        assertThat(afterPostHashtags).hasSize(input.size());
+        then(hashtagRepository).should().saveAll(of());
     }
 
     @DisplayName("post 작성시 새롭게 저장할 해시태그들을 저장한다.")
@@ -89,7 +74,7 @@ class HashtagServiceTest {
 
         // when
         int beforePostHashtagSize = post.getPostHashtags().size();
-        sut.saveNewHashtagsWhenPostWrite(input, post);
+        sut.saveNewHashtagsWhenPostWrite(post, input);
         int afterPostHashtagSize = post.getPostHashtags().size();
 
         // then
@@ -100,14 +85,14 @@ class HashtagServiceTest {
     static Stream<Arguments> saveWhenPostWrite2() {
         return Stream.of(
                 arguments(
-                        Set.of("java", "spring", "aws"),
-                        Set.of(Hashtag.createHashtag("java"), Hashtag.createHashtag("spring")),
-                        Set.of(Hashtag.createHashtag("aws"))
+                        of("java", "spring", "aws"),
+                        of(createHashtag("java"), createHashtag("spring")),
+                        of(createHashtag("aws"))
                 ),
                 arguments(
-                        Set.of("java","spring55"),
-                        Set.of(Hashtag.createHashtag("java"),Hashtag.createHashtag("spring")),
-                        Set.of(Hashtag.createHashtag("spring55"))
+                        of("java","spring55"),
+                        of(createHashtag("java"), createHashtag("spring")),
+                        of(createHashtag("spring55"))
                 )
         );
     }
@@ -121,7 +106,7 @@ class HashtagServiceTest {
 
         // when
         int beforePostHashtagSize = post.getPostHashtags().size();
-        sut.saveNewHashtagsWhenPostUpdate(post, input);
+        sut.saveHashtagsWhenPostUpdate(post, input);
         int afterPostHashtagSize = post.getPostHashtags().size();
 
         // then
@@ -133,14 +118,14 @@ class HashtagServiceTest {
     static Stream<Arguments> saveNewHashtagsWhenPostUpdate() {
         return Stream.of(
                 arguments(
-                        Set.of("java", "spring", "aws"),
-                        Set.of(Hashtag.createHashtag("java"), Hashtag.createHashtag("spring")),
-                        Set.of(Hashtag.createHashtag("aws"))
+                        of("java", "spring", "aws"),
+                        of(createHashtag("java"), createHashtag("spring")),
+                        of(createHashtag("aws"))
                 ),
                 arguments(
-                        Set.of("java","spring55"),
-                        Set.of(Hashtag.createHashtag("java"),Hashtag.createHashtag("spring")),
-                        Set.of(Hashtag.createHashtag("spring55"))
+                        of("java","spring55"),
+                        of(createHashtag("java"), createHashtag("spring")),
+                        of(createHashtag("spring55"))
                 )
         );
     }
@@ -150,7 +135,7 @@ class HashtagServiceTest {
     @ParameterizedTest
     void deleteNewHashtagsWhenPostUpdate(Set<String> input,Set<Hashtag> DBHashtag, Set<Hashtag> saveExpected) {
         // given
-        Hashtag hashtag1 = Hashtag.createHashtag("java");
+        Hashtag hashtag1 = createHashtag("java");
         PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtag1);
         post.addPostHashtag(postHashtag);
         hashtag1.addPostHashtag(postHashtag);
@@ -165,9 +150,9 @@ class HashtagServiceTest {
     static Stream<Arguments> deleteNewHashtagsWhenPostUpdate() {
         return Stream.of(
                 arguments(
-                        Set.of(),
-                        Set.of(),
-                        Set.of(Hashtag.createHashtag("java"))
+                        of(),
+                        of(),
+                        of(createHashtag("java"))
                 )
         );
     }

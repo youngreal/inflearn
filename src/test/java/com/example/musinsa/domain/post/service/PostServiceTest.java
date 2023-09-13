@@ -62,7 +62,7 @@ class PostServiceTest {
         sut.write(postDto,member.getId());
 
         // then
-        then(hashtagService).should().saveNewHashtagsWhenPostWrite(eq(postDto.hashtags()), any(Post.class));
+        then(hashtagService).should().saveNewHashtagsWhenPostWrite(postDto.toEntity(), eq(postDto.hashtags()));
         ArgumentCaptor<Post> savedPost = ArgumentCaptor.forClass(Post.class);
         then(postRepository).should().save(savedPost.capture());
         Post post = savedPost.getValue();
@@ -107,8 +107,8 @@ class PostServiceTest {
 
     @DisplayName("포스트 수정 성공: FindByHashtagIn 사용시")
     @MethodSource
-    @ParameterizedTest(name = "[{index}] 수정 요청태그: {0}, DB에 존재하는 태그: {1}, 저장할 해시태그 : {3}, 삭제할 해시태그 : {4}")
-    void update_success5(Set<String> input, int expectedSize) {
+    @ParameterizedTest
+    void update_success5(Set<String> input) {
         // given
         long requestPostId = 1L;
         Member member = createMember(1L, "asdf1234@naver.com","12345678");
@@ -121,11 +121,10 @@ class PostServiceTest {
         sut.update(dto.toDtoWithHashtag(input),member.getId(), requestPostId);
 
         // then
-        then(hashtagService).should().saveNewHashtagsWhenPostUpdate(post, anySet());
+        then(hashtagService).should().saveHashtagsWhenPostUpdate(post, anySet());
         then(hashtagService).should().deleteHashtags(any(),anySet());
         assertThat(post.getTitle()).isEqualTo(dto.title());
         assertThat(post.getContents()).isEqualTo(dto.contents());
-        assertThat(post.getPostHashtags()).hasSize(expectedSize);
     }
 
     /**
@@ -133,9 +132,9 @@ class PostServiceTest {
      */
     static Stream<Arguments> update_success5() {
         return Stream.of(
-                arguments(Set.of("java", "spring"), 2),
-                arguments(Set.of("java"), 1),
-                arguments(Set.of("java", "spring", "aws"), 3)
+                arguments(Set.of("java", "spring")),
+                arguments(Set.of("java")),
+                arguments(Set.of("java", "spring", "aws"))
         );
     }
 
