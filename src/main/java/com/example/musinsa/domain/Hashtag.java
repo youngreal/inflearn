@@ -1,5 +1,6 @@
 package com.example.musinsa.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,7 +31,7 @@ public class Hashtag {
     private String hashtagName;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "hashtag")
+    @OneToMany(mappedBy = "hashtag", cascade = CascadeType.REMOVE)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
     @Builder
@@ -42,7 +43,6 @@ public class Hashtag {
 
     public void addPostHashtag(PostHashtag postHashtag) {
         this.postHashtags.add(postHashtag);
-        postHashtag.addHashtag(this);
     }
 
     public static Hashtag createHashtag(String hashtagName) {
@@ -54,12 +54,5 @@ public class Hashtag {
 
     public boolean hasOnlyOnePostHashtag() {
         return this.postHashtags.size() == 1;
-    }
-
-    public void deletePostHashtags() {
-        for (PostHashtag postHashtag : this.postHashtags) {
-            postHashtag.changeHashtag();
-        }
-        this.postHashtags = new ArrayList<>();
     }
 }
