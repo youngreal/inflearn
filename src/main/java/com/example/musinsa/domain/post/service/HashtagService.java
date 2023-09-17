@@ -22,17 +22,17 @@ public class HashtagService {
 
     public void saveNewHashtagsWhenPostWrite(Post post, Set<String> inputStringHashtags) {
         Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags); // 입력받은 문자열중 DB에 존재했던 해시태그들
-        Set<Hashtag> inputHashtags = stringToHashtag(inputStringHashtags);
+        Set<Hashtag> inputHashtags = convertToHashtags(inputStringHashtags);
         Set<Hashtag> insertHashtags = createHashtagsForInsert(inputHashtags, existingHashtagsInDB);
-        addPostHashtagsFromPostAndHashtag(post, inputHashtags, insertHashtags, existingHashtagsInDB);
+        addPostHashtags(post, inputHashtags, insertHashtags, existingHashtagsInDB);
 
         hashtagRepository.saveAll(insertHashtags);
     }
 
     public void saveHashtagsWhenPostUpdate(Post post, Set<String> inputStringHashtags) {
         Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags);
-        Set<Hashtag> insertHashtags = getHashtagsForInsert(existingHashtagsInDB, stringToHashtag(inputStringHashtags)); // java, kafka
-        addPostHashtagsWhenPostUpdate(post, stringToHashtag(inputStringHashtags), insertHashtags, existingHashtagsInDB);
+        Set<Hashtag> insertHashtags = getHashtagsForInsert(existingHashtagsInDB, convertToHashtags(inputStringHashtags));
+        addPostHashtagsWhenPostUpdate(post, convertToHashtags(inputStringHashtags), insertHashtags, existingHashtagsInDB);
 
         hashtagRepository.saveAll(insertHashtags); // DB에 없던 요청받은 해시태그 삽입
     }
@@ -43,7 +43,7 @@ public class HashtagService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
 
-        Set<Hashtag> deleteHashtags = getHashtagsForDelete(hashtagsInPost, stringToHashtag(inputStringHashtags)); // spring, aws
+        Set<Hashtag> deleteHashtags = getHashtagsForDelete(hashtagsInPost, convertToHashtags(inputStringHashtags)); // spring, aws
         hashtagRepository.deleteAll(deleteHashtags);
     }
 
@@ -83,7 +83,7 @@ public class HashtagService {
         }
     }
 
-    private void addPostHashtagsFromPostAndHashtag(Post post, Set<Hashtag> inputHashtags,
+    private void addPostHashtags(Post post, Set<Hashtag> inputHashtags,
             Set<Hashtag> insertHashtags, Set<Hashtag> existingHashtagsInDB) {
 
         // 새로 삽입해야하는 해시태그가 없는경우
@@ -125,6 +125,7 @@ public class HashtagService {
         if (insertToDBHashtags.isEmpty()) {
             for (Hashtag inputHashtag : inputHashtags) {
                 if (existingHashtagsInDB.contains(inputHashtag)) {
+
                     Hashtag hashtag = existingHashtagsInDB.stream()
                             .filter(existInDBHashtag -> existInDBHashtag.equals(inputHashtag))
                             .findAny()
@@ -136,11 +137,14 @@ public class HashtagService {
                 }
             }
 
+            // 해시태그가 아무것도 추가되지않은경우 null인 PostHashtag 생성
             if (post.getPostHashtags().isEmpty()) {
                 post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
             }
 
-        } else {
+        }
+        // DB에 새로넣을 해시태그가 존재하는경우
+        else {
             for (Hashtag insertToDBHashtag : insertToDBHashtags) {
                 PostHashtag postHashtag = PostHashtag.createPostHashtag(post, insertToDBHashtag);
                 post.addPostHashtag(postHashtag);
@@ -149,7 +153,7 @@ public class HashtagService {
         }
     }
 
-    private Set<Hashtag> stringToHashtag(Set<String> inputStringHashtags) {
+    private Set<Hashtag> convertToHashtags(Set<String> inputStringHashtags) {
         return inputStringHashtags.stream()
                 .map(Hashtag::createHashtag)
                 .collect(Collectors.toUnmodifiableSet());
