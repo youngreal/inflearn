@@ -15,7 +15,9 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")
 @Getter
@@ -47,11 +49,7 @@ public class PostHashtag {
                 .build();
     }
 
-    public void addPost(Post post) {
-        this.post = post;
-    }
-
-    public void addHashtag(Hashtag hashtag) {
-        this.hashtag = hashtag;
+    public void deleteHashtag() {
+        this.hashtag = null;
     }
 }

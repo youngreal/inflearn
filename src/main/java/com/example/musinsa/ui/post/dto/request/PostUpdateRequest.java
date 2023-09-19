@@ -2,7 +2,6 @@ package com.example.musinsa.ui.post.dto.request;
 
 import com.example.musinsa.dto.PostDto;
 import jakarta.validation.constraints.NotBlank;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +11,7 @@ import lombok.Builder;
 public record PostUpdateRequest(
         @NotBlank
         String title,
-        List<String> hashTags,
+        List<String> hashtags,
         @NotBlank
         String contents
 ) {
@@ -20,7 +19,7 @@ public record PostUpdateRequest(
     public PostDto toDto() {
         return PostDto.builder()
                 .title(this.title)
-                .hashTags(new HashSet<>())
+                .hashtags(new HashSet<>())
                 .contents(this.contents)
                 .build();
     }
@@ -28,7 +27,7 @@ public record PostUpdateRequest(
     public PostDto toDtoWithHashtag(Set<String> hashtags) {
         return PostDto.builder()
                 .title(this.title)
-                .hashTags(hashtags)
+                .hashtags(hashtags)
                 .contents(this.contents)
                 .build();
     }

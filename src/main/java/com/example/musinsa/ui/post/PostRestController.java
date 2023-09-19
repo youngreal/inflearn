@@ -2,9 +2,11 @@ package com.example.musinsa.ui.post;
 
 import com.example.musinsa.common.exception.DuplicatedHashtagException;
 import com.example.musinsa.common.security.CurrentMember;
+import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.post.service.PaginationService;
 import com.example.musinsa.domain.post.service.PostQueryService;
 import com.example.musinsa.domain.post.service.PostService;
+import com.example.musinsa.infra.repository.post.HashtagRepository;
 import com.example.musinsa.ui.post.dto.response.PostResponse;
 import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
 import com.example.musinsa.ui.post.dto.request.PostWriteRequest;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,11 +45,11 @@ public class PostRestController {
             @RequestBody @Valid PostWriteRequest request
     ) {
 
-        if (request.hashTags() == null || request.hashTags().isEmpty()) {
+        if (request.hashtags() == null || request.hashtags().isEmpty()) {
             postService.write(request.toDto(), currentMember.id());
 
         } else {
-            Set<String> hashtags = validateDuplicateHashtag(request.hashTags());
+            Set<String> hashtags = validateDuplicateHashtag(request.hashtags());
             postService.write(request.toDtoWithHashtag(hashtags), currentMember.id());
         }
  }
@@ -58,11 +61,11 @@ public class PostRestController {
             @PathVariable long postId
     ) {
 
-        if (request.hashTags() == null || request.hashTags().isEmpty()) {
+        if (request.hashtags() == null || request.hashtags().isEmpty()) {
             postService.update(request.toDto(), currentMember.id(), postId);
 
         } else {
-            Set<String> hashtags = validateDuplicateHashtag(request.hashTags());
+            Set<String> hashtags = validateDuplicateHashtag(request.hashtags());
             postService.update(request.toDtoWithHashtag(hashtags), currentMember.id(), postId);
         }
     }
@@ -72,8 +75,10 @@ public class PostRestController {
     public PostResponseWithPageNumbers allPosts(
             @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable
     ) {
+
         Page<PostResponse> posts = postQueryService.allList(pageable).map(PostResponse::from);
-        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(), posts.getTotalPages());
+        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(),
+                posts.getTotalPages());
 
         return new PostResponseWithPageNumbers(posts, pageNumbers);
     }
