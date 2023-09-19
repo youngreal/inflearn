@@ -1,6 +1,5 @@
 package com.example.musinsa.ui.post.dto.response;
 
-import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.post.domain.Post;
 import com.example.musinsa.domain.post.domain.PostStatus;
 import java.time.LocalDateTime;
