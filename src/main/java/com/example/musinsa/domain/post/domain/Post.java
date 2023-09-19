@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
-@Slf4j
 @Getter
 @Entity
 public class Post {
