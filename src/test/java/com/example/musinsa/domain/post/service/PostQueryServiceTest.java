@@ -2,13 +2,16 @@ package com.example.musinsa.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.musinsa.common.exception.DoesNotExistPostException;
 import com.example.musinsa.domain.post.domain.Post;
 import com.example.musinsa.infra.repository.post.PostRepository;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,22 +31,6 @@ class PostQueryServiceTest {
 
     @Mock
     private PostRepository postRepository;
-
-
-    @DisplayName("모든 게시글을 조회한다")
-    @Test
-    void 모든_게시글을_조회한다() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.desc("createdAt")));
-        given(postRepository.findAll(pageable)).willReturn(Page.empty());
-
-        // when
-        Page<Post> actual = sut.allList(pageable);
-
-        // then
-        assertThat(actual).isEmpty();
-        then(postRepository).should().findAll(pageable);
-    }
 
     @DisplayName("게시글 상세정보를 조회한다")
     @Test
@@ -82,7 +69,7 @@ class PostQueryServiceTest {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.desc("createdAt")));
 
         // when
-        Page<Post> actual = sut.searchPost(searchWord, pageable);
+        List<Post> actual = sut.searchPost(searchWord, pageable);
 
         // then
         assertThat(actual).isEmpty();
@@ -95,10 +82,10 @@ class PostQueryServiceTest {
         // given
         String searchWord = "자바";
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.desc("createdAt")));
-        given(postRepository.findByTitleOrContentsContaining(searchWord, searchWord, pageable)).willReturn(Page.empty());
+        given(postRepository.findByTitleOrContentsContaining(searchWord, searchWord, pageable)).willReturn(List.of());
 
         // when
-        Page<Post> actual = sut.searchPost(searchWord, pageable);
+        List<Post> actual = sut.searchPost(searchWord, pageable);
 
         // then
         assertThat(actual).isEmpty();

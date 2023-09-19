@@ -34,16 +34,16 @@ class PaginationServiceTest {
 
     static Stream<Arguments> 페이지에_표시될_페이지번호를_반환한다() {
         return Stream.of(
-                arguments(0, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(1, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(2, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(3, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(4, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(5, 13, List.of(0, 1, 2, 3, 4,5,6,7,8,9)),
-                arguments(6, 13, List.of(1, 2, 3, 4,5,6,7,8,9,10)),
-                arguments(10, 13, List.of(5,6,7,8, 9, 10, 11, 12)),
-                arguments(11, 13, List.of(6,7,8, 9, 10, 11, 12)),
-                arguments(12, 13, List.of(7,8, 9, 10, 11, 12))
+                arguments(1, 13, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(2, 13, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(3, 13, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(4, 13, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(5, 50, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(6, 0, List.of(1)),
+                arguments(10, 13, List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                arguments(11, 13, List.of(1, 1, 11, 12, 13)),
+                arguments(12, 50, List.of(1, 1, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)),
+                arguments(21, 50, List.of(1, 11, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31))
         );
     }
 
