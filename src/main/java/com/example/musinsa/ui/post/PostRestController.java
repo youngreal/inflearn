@@ -2,11 +2,9 @@ package com.example.musinsa.ui.post;
 
 import com.example.musinsa.common.exception.DuplicatedHashtagException;
 import com.example.musinsa.common.security.CurrentMember;
-import com.example.musinsa.domain.Hashtag;
 import com.example.musinsa.domain.post.service.PaginationService;
 import com.example.musinsa.domain.post.service.PostQueryService;
 import com.example.musinsa.domain.post.service.PostService;
-import com.example.musinsa.infra.repository.post.HashtagRepository;
 import com.example.musinsa.ui.post.dto.response.PostResponse;
 import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
 import com.example.musinsa.ui.post.dto.request.PostWriteRequest;
@@ -70,15 +68,66 @@ public class PostRestController {
         }
     }
 
-    //todo 현재 쿼리 총 4번(member , post, tag, count쿼리)
+    /**
+     * select * from post order by id desc limit 0,20;
+     * select count(*)가 70초 이상걸리는 성능..
+     * page는 파라미터로 받는다.
+     */
+
+    /*
+    방법 1. 서브쿼리를 이용한 방법
+
+    503페이지를 준다
+    503 - 1의자리 + 1 = 500
+    503 + 10 - 503의 1의자리 = 510
+
+    select * from post order by id desc limit page*10,size(20개씩);
+    select count(*)
+    from (
+            select *
+            from post
+            order by id desc
+            limit page*10,size
+        ) As subquery;
+
+    위의쿼리 결과가 0 인경우 => 찾으시는 페이지가 없습니다.
+    위의 쿼리의 결과 < size 인경우 => 마지막 페이지임. 즉 얘가 endPage가 되어야함
+    위의 쿼리의 결과 == size 인경우 => 해당 페이지의 마지막 페이지(page+10 - page의1의자리)로 query를 한번더 실행하고
+        마지막페이지마저 size랑 결과가같다면 endpage가 (page+10-page의1의자리)가 맞음
+        마지막페이지 < size
+
+    select count(*) from post where
+
+    방법 2. 게시글의 전체 개수를 관리하는 테이블을 하나 만들고 관리하는방법
+    totalCount가 필요할때마다 해당 테이블에서 select해서 개수를 가져온다.
+    => 게시글의 수정/삭제 발생할때마다 업데이트 발생
+
+    방법 3.
+    select count(*)
+    from (
+    select * from post
+    order by id desc
+     limit 10000
+     ) As subquery;
+
+    count쿼리가 최대 10000개를 넘지않고 최대 개수가 12000개라고 가정하고 12000개 이상의 게시글을 조회할때는 검색엔진에 맡기는방법?
+
+    단점
+    - 검색엔진에 DB데이터가 최신화가 안될수가있다.
+    - DB와 검색엔진간 대기시간이 생길수있다.
+    12000 개 기준으로 0.016~0.032초 나와서 더 가져올수도 있을것같다. 어느정도 수치까지가 괜찮을지는 조금더 생각해봐야한다.
+
+     */
     @GetMapping("/posts")
     public PostResponseWithPageNumbers allPosts(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable
+            @PageableDefault(page = 1, size = 20, direction = Direction.DESC) Pageable pageable
     ) {
-
-        Page<PostResponse> posts = postQueryService.allList(pageable).map(PostResponse::from);
-        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(),
-                posts.getTotalPages());
+        //20개의 데이터
+        if (pageable.getPageNumber() == 0) {
+            throw new RuntimeException("페이지는 1부터 입력해야합니다.");
+        }
+        List<PostResponse> posts = postQueryService.allList(pageable).stream().map(PostResponse::from).toList();
+        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(), postQueryService.getTotalCount());
 
         return new PostResponseWithPageNumbers(posts, pageNumbers);
     }
