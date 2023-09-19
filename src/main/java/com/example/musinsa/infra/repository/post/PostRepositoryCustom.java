@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface PostRepositoryCustom {
 
-    List<Post> getPostPerPage(int page, int pageNumber);
+    List<Post> getPostsPerPage(int size, int page);
 
     List<Post> totalCount();
 }

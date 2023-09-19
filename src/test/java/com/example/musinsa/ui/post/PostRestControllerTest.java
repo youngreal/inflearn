@@ -12,16 +12,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.musinsa.domain.member.domain.Member;
 import com.example.musinsa.domain.member.service.MemberService;
+import com.example.musinsa.domain.post.domain.Post;
 import com.example.musinsa.domain.post.service.PaginationService;
 import com.example.musinsa.domain.post.service.PostQueryService;
 import com.example.musinsa.domain.post.service.PostService;
 import com.example.musinsa.dto.PostDto;
 import com.example.musinsa.infra.repository.member.MemberRepository;
+import com.example.musinsa.ui.post.dto.request.PostPaging;
 import com.example.musinsa.ui.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +32,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 @WebMvcTest(PostRestController.class)
 class PostRestControllerTest {
 
@@ -54,11 +56,16 @@ class PostRestControllerTest {
     @MockBean
     private MemberRepository memberRepository;
 
+    private Cookie cookie;
     private static final int COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
     private static final String RANDOM_UUID = "RandomUUID-12345678";
     private static final String SESSION_TOKEN_NAME = "SESSION";
 
     //todo 쿠키인증부분이 모든 테스트 클래스에서 반복되는 느낌이있는데 리팩토링이 필요해보인다. 반복작업이다.
+    @BeforeEach
+    void setup() {
+        cookie = makeCookie(SESSION_TOKEN_NAME);
+    }
 
     @Test
     @DisplayName("포스트 작성 성공: 중복없는 해시태그 존재")
@@ -66,7 +73,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -89,7 +95,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of());
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -112,7 +117,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -135,7 +139,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -158,7 +161,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -181,7 +183,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -204,7 +205,6 @@ class PostRestControllerTest {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        Cookie cookie = makeCookie(SESSION_TOKEN_NAME);
 
         given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
