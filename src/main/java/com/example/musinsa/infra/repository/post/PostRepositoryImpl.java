@@ -12,11 +12,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
 
     private final JPAQueryFactory jpaQueryFactory;
 
+    //todo fetch가 무엇인가
     @Override
-    public List<Post> getPostPerPage(int pageSize, int pageNumber) {
+    public List<Post> getPostsPerPage(int size, int page) {
         return jpaQueryFactory.selectFrom(post)
-                .offset((pageNumber * 20L))
-                .limit(pageSize)
+                .limit(size)
+                .offset((long) (page - 1) * size)
                 .orderBy(post.id.desc())
                 .fetch();
     }

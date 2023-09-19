@@ -5,6 +5,7 @@ import com.example.musinsa.common.security.CurrentMember;
 import com.example.musinsa.domain.post.service.PaginationService;
 import com.example.musinsa.domain.post.service.PostQueryService;
 import com.example.musinsa.domain.post.service.PostService;
+import com.example.musinsa.ui.post.dto.request.PostPaging;
 import com.example.musinsa.ui.post.dto.response.PostResponse;
 import com.example.musinsa.ui.post.dto.request.PostUpdateRequest;
 import com.example.musinsa.ui.post.dto.request.PostWriteRequest;
@@ -13,14 +14,13 @@ import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -119,15 +119,10 @@ public class PostRestController {
 
      */
     @GetMapping("/posts")
-    public PostResponseWithPageNumbers allPosts(
-            @PageableDefault(page = 1, size = 20, direction = Direction.DESC) Pageable pageable
-    ) {
+    public PostResponseWithPageNumbers getPosts(@ModelAttribute @Valid PostPaging postPaging) {
         //20개의 데이터
-        if (pageable.getPageNumber() == 0) {
-            throw new RuntimeException("페이지는 1부터 입력해야합니다.");
-        }
-        List<PostResponse> posts = postQueryService.allList(pageable).stream().map(PostResponse::from).toList();
-        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(), postQueryService.getTotalCount());
+        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.size(), postPaging.page()).stream().map(PostResponse::from).toList();
+        List<Integer> pageNumbers = paginationService.getPageNumbers(postPaging.page(), postQueryService.getTotalCount());
 
         return new PostResponseWithPageNumbers(posts, pageNumbers);
     }

@@ -62,7 +62,7 @@ class PostServiceTest {
         sut.write(postDto,member.getId());
 
         // then
-        then(hashtagService).should().saveNewHashtagsWhenPostWrite(postDto.toEntity(), eq(postDto.hashtags()));
+        then(hashtagService).should().saveNewHashtagsWhenPostWrite(any(Post.class), eq(postDto.hashtags()));
         ArgumentCaptor<Post> savedPost = ArgumentCaptor.forClass(Post.class);
         then(postRepository).should().save(savedPost.capture());
         Post post = savedPost.getValue();
@@ -121,7 +121,7 @@ class PostServiceTest {
         sut.update(dto.toDtoWithHashtag(input),member.getId(), requestPostId);
 
         // then
-        then(hashtagService).should().saveHashtagsWhenPostUpdate(post, anySet());
+        then(hashtagService).should().saveHashtagsWhenPostUpdate(any(Post.class), anySet());
         then(hashtagService).should().deleteHashtags(any(),anySet());
         assertThat(post.getTitle()).isEqualTo(dto.title());
         assertThat(post.getContents()).isEqualTo(dto.contents());

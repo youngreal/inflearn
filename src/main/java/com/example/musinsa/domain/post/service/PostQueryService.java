@@ -5,7 +5,6 @@ import com.example.musinsa.domain.post.domain.Post;
 import com.example.musinsa.infra.repository.post.PostRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +29,8 @@ public class PostQueryService {
     }
 
     //todo 해당 테스트는 SpringBootTest? dataJpaTest? 아니면 작성안한다?
-    public List<Post> allList(Pageable pageable) {
-        return postRepository.getPostPerPage(pageable.getPageSize(), pageable.getPageNumber());
+    public List<Post> getPostsPerPage(int size, int page) {
+        return postRepository.getPostsPerPage(size, page);
     }
 
     public int getTotalCount() {
