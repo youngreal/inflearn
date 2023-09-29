@@ -27,13 +27,20 @@ public record PostDto(
     }
 
     public static PostDto from(Post post) {
+        if (post.getPostHashtags() != null) {
+            return PostDto.builder()
+                    .title(post.getTitle())
+                    .contents(post.getContents())
+                    .hashtags(post.getPostHashtags().stream()
+                            .filter(postHashtag -> postHashtag.getHashtag() != null)
+                            .map(postHashtag -> postHashtag.getHashtag().getHashtagName())
+                            .collect(Collectors.toUnmodifiableSet()))
+                    .build();
+        }
+
         return PostDto.builder()
                 .title(post.getTitle())
                 .contents(post.getContents())
-                .hashtags(post.getPostHashtags().stream()
-                        .filter(postHashtag -> postHashtag.getHashtag() != null)
-                        .map(postHashtag -> postHashtag.getHashtag().getHashtagName())
-                        .collect(Collectors.toUnmodifiableSet()))
                 .build();
     }
 

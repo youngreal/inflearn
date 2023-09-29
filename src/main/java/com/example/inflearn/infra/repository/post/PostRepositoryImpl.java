@@ -13,12 +13,22 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
     private final JPAQueryFactory jpaQueryFactory;
 
     //todo fetch가 무엇인가
-    //todo 커버링 인덱스로 변환?
+    //todo 몇초 걸리는지 확인.
     @Override
     public List<Post> getPostsPerPage(int page, int size) {
-        return jpaQueryFactory.selectFrom(post)
+        return jpaQueryFactory.select(post)
                 .orderBy(post.id.desc())
-                .offset((long) (page - 1) * size)
+                .offset(page)
+                .limit(size)
+                .fetch();
+    }
+
+    @Override
+    public List<Long> getPageCount(int page, int size) {
+        return jpaQueryFactory.select(post.id)
+                .from(post)
+                .orderBy(post.id.desc())
+                .offset(page)
                 .limit(size)
                 .fetch();
     }
