@@ -1,9 +1,9 @@
 package com.example.inflearn.ui.post.dto.response;
 
-import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostStatus;
+import com.example.inflearn.dto.PostDto;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 
 @Builder
@@ -11,20 +11,21 @@ public record PostResponse(
         String title,
         String contents,
         int viewCount,
-        List<String> hashtags,
+        Set<String> hashtags,
         LocalDateTime createdAt,
         LocalDateTime updateAt,
         PostStatus postStatus
 ){
 
-    public static PostResponse from(Post post) {
+    public static PostResponse from(PostDto postDto) {
         return PostResponse.builder()
-                .title(post.getTitle())
-                .contents(post.getContents())
-                .viewCount(post.getViewCount())
-                .createdAt(post.getCreatedAt())
-                .updateAt(post.getUpdatedAt())
-                .postStatus(post.getPostStatus())
+                .title(postDto.title())
+                .contents(postDto.contents())
+                .viewCount(postDto.viewCount())
+                .hashtags(postDto.hashtags())
+                .createdAt(postDto.createdAt())
+                .updateAt(postDto.updateAt())
                 .build();
     }
 }
+
