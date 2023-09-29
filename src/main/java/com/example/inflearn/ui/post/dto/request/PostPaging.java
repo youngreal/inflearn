@@ -9,4 +9,7 @@ public record PostPaging(
         int size
 ) {
 
+    public static PostPaging create(int page, int size) {
+        return new PostPaging(page, size);
+    }
 }

@@ -21,18 +21,23 @@ public class PostQueryService {
     }
 
     public List<PostDto> searchPost(String searchWord, int page, int size) {
-        return postRepository.search(searchWord, paginationService.offSetWhenSearchPost(page), size).stream()
+        return postRepository.search(searchWord, paginationService.calculateOffSet(page), size).stream()
                 .map(PostDto::from)
                 .toList();
     }
 
     public List<PostDto> getPostsPerPage(int page, int size) {
-        return postRepository.getPostsPerPage(page, size).stream()
+        return postRepository.getPostsPerPage(paginationService.calculateOffSet(page), size).stream()
                 .map(PostDto::from)
                 .toList();
     }
 
-    public Long getPageCount(String searchWord, int page, int size) {
-        return postRepository.countPage(searchWord, paginationService.offsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+    public Long getPageCountWithSearchWord(String searchWord, int page, int size) {
+        return postRepository.countPageWithSearchWord(searchWord, paginationService.calculateOffsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+    }
+
+    public long getPageCount(int page, int size) {
+        List<Long> pageCount = postRepository.getPageCount(paginationService.calculateOffsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+        return pageCount.size();
     }
 }

@@ -121,11 +121,13 @@ public class PostRestController {
     @GetMapping("/posts")
     public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
         //20개의 데이터
-        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.size(), postPaging.page()).stream().map(PostResponse::from).toList();
-//        List<Integer> pageCount = paginationService.getPageNumbers(postPaging.page(), postQueryService.getTotalCount());
+        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size()).stream()
+                .map(PostResponse::from)
+                .toList();
 
-//        return new PostResponseWithPageNumbers(posts, pageCount);
-        return null;
+        long pageCount = postQueryService.getPageCount(postPaging.page(), postPaging.size());
+
+        return new PostResponseWithPageCount(posts, pageCount);
     }
 
     // 현재 쿼리 member,post,tag 조인해서 한번에 쿼리에 가져온다.
@@ -151,7 +153,7 @@ public class PostRestController {
                 .map(PostResponse::from)
                 .toList();
 
-        Long pageCount = postQueryService.getPageCount(postsearch.searchWord(), postsearch.page(), postsearch.size());
+        long pageCount = postQueryService.getPageCountWithSearchWord(postsearch.searchWord(), postsearch.page(), postsearch.size());
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
