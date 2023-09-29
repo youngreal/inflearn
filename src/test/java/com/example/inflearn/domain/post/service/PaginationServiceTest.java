@@ -25,7 +25,7 @@ class PaginationServiceTest {
     @ParameterizedTest
     void offset_when_searchPost(int input, int expected) {
         // given& when
-        int actual = sut.offSetWhenSearchPost(input);
+        int actual = sut.calculateOffSet(input);
 
         // then
         assertThat(actual).isEqualTo(expected);
@@ -60,7 +60,7 @@ class PaginationServiceTest {
     @ParameterizedTest
     void offset_when_getPageNumbers(int input, int expected) {
         // given & when
-        int actual = sut.offsetWhenGetPageNumbers(input);
+        int actual = sut.calculateOffsetWhenGetPageNumbers(input);
 
         // then
         assertThat(actual).isEqualTo(expected);

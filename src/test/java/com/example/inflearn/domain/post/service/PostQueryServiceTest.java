@@ -6,6 +6,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
+import com.example.inflearn.domain.PostHashtag;
+import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.dto.PostDto;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
@@ -60,6 +62,31 @@ class PostQueryServiceTest {
         assertThrows(DoesNotExistPostException.class, () -> sut.postDetail(postId));
     }
 
+
+    @DisplayName("페이지당 게시글 조회 성공")
+    @Test
+    void post_view_per_page_success () {
+        // given
+        Post post = createPost("게시글제목1", "게시글본문1");
+        Post post2 = createPost("게시글제목2", "게시글본문2");
+        Post post3 = createPost("게시글제목3", "게시글본문3");
+        int page = 1;
+        int size = 20;
+
+        given(paginationService.calculateOffSet(page)).willReturn(0);
+        given(postRepository.getPostsPerPage(paginationService.calculateOffSet(page),size)).willReturn(List.of(post,post2,post3));
+
+        // when
+        List<PostDto> actual = sut.getPostsPerPage(page, size);
+
+        // then
+        assertThat(actual).hasSize(3);
+        assertThat(actual.get(0)).isEqualTo(PostDto.from(post));
+        assertThat(actual.get(1)).isEqualTo(PostDto.from(post2));
+        assertThat(actual.get(2)).isEqualTo(PostDto.from(post3));
+    }
+
+
     @DisplayName("검색어를 포함해 게시글을 검색하면 해당 검색어를 포함하고있는 게시글들을 반환한다")
     @Test
     void 검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글목록을_반환한다() {
@@ -72,8 +99,8 @@ class PostQueryServiceTest {
                 .build();
 
         // when
-        given(paginationService.offSetWhenSearchPost(postSearch.page())).willReturn(0);
-        given(postRepository.search(postSearch.searchWord(),paginationService.offSetWhenSearchPost(postSearch.page()), postSearch.size())).willReturn(List.of(postDto.toEntity()));
+        given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
+        given(postRepository.search(postSearch.searchWord(),paginationService.calculateOffSet(postSearch.page()), postSearch.size())).willReturn(List.of(postDto.toEntity()));
 
         // when
         List<PostDto> actual = sut.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size());
@@ -90,15 +117,23 @@ class PostQueryServiceTest {
         PostSearch postSearch = new PostSearch(1, 20, "자바");
 
         // when
-        given(paginationService.offsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
         given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPage(postSearch.searchWord(),paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
-        Long actual = sut.getPageCount(postSearch.searchWord(), postSearch.page(), postSearch.size());
+        Long actual = sut.getPageCountWithSearchWord(postSearch.searchWord(), postSearch.page(), postSearch.size());
 
         // then
-        then(postRepository).should().countPage(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
+
+    private Post createPost(String title, String contents) {
+        return Post.builder()
+                .title(title)
+                .contents(contents)
+                .build();
+    }
+
 }

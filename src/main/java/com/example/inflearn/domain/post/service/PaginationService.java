@@ -8,7 +8,7 @@ public class PaginationService {
     private static final int COUNT_PER_PAGE = 20;
     private static final int NUMBER_OF_PAGE = 10;
 
-    public int offSetWhenSearchPost(int page) {
+    public int calculateOffSet(int page) {
         return (page - 1) * COUNT_PER_PAGE;
     }
 
@@ -16,7 +16,7 @@ public class PaginationService {
         return size * NUMBER_OF_PAGE;
     }
 
-    public int offsetWhenGetPageNumbers(int page) {
+    public int calculateOffsetWhenGetPageNumbers(int page) {
         int offset;
 
         if (page % NUMBER_OF_PAGE == 0) {
