@@ -18,6 +18,7 @@ import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
 import com.example.inflearn.dto.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
+import com.example.inflearn.ui.post.dto.request.PostPaging;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -219,26 +220,58 @@ class PostRestControllerTest {
         then(postService).shouldHaveNoInteractions();
     }
 
+    @Test
+    @DisplayName("포스트 조회 성공")
+    void post_view_success() throws Exception {
+        //given
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
+        PostDto postDto2 = createDto("게시글제목2", "게시글본문2");
+        PostDto postDto3 = createDto("게시글제목3", "게시글본문3");
+
+        PostPaging paging = PostPaging.create(1, 20);
+        given(postQueryService.getPostsPerPage(paging.page(), paging.size())).willReturn(List.of(postDto,postDto2,postDto3));
+        given(postQueryService.getPageCount(paging.page(), paging.size())).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts?page=1&size=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
+                .andExpect(jsonPath("$.posts[1].title").value("게시글제목2"))
+                .andExpect(jsonPath("$.posts[2].title").value("게시글제목3"))
+                .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andExpect(jsonPath("$.posts[1].contents").value("게시글본문2"))
+                .andExpect(jsonPath("$.posts[2].contents").value("게시글본문3"))
+                .andExpect(jsonPath("$.pageCount").value(3L))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 조회 실패 : page or size값이 1보다 적을때")
+    void post_view_fail() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts?page=-1&size=-1"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+
 
     @Test
     @DisplayName("포스트 검색 성공 : 특정 검색어 입력")
     void post_search_success() throws Exception {
         //given
-        PostDto postDto = PostDto.builder()
-                .title("게시글제목1")
-                .contents("게시글본문1")
-                .build();
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
 
         PostSearch postSearch = new PostSearch(3, 20, "자바");
         given(postQueryService.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(List.of(postDto));
-        given(postQueryService.getPageCount(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(3L);
+        given(postQueryService.getPageCountWithSearchWord(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.pageNumbers").value(3L))
                 .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
                 .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andExpect(jsonPath("$.pageCount").value(3L))
                 .andDo(print());
     }
 
@@ -249,6 +282,13 @@ class PostRestControllerTest {
         mockMvc.perform(get("/posts/search?page=-1&size=-1&searchWord=자바"))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
+    }
+
+    private PostDto createDto(String title, String contents) {
+        return PostDto.builder()
+                .title(title)
+                .contents(contents)
+                .build();
     }
 
     private PostWriteRequest postRequest(String title, String contents, List<String> hashtags) {

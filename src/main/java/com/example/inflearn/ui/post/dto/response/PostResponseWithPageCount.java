@@ -4,7 +4,7 @@ import java.util.List;
 
 public record PostResponseWithPageCount(
         List<PostResponse> posts,
-        Long pageCount
+        long pageCount
 ) {
 
 }
