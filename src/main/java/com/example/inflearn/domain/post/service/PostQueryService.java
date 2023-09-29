@@ -1,11 +1,10 @@
 package com.example.inflearn.domain.post.service;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.domain.post.domain.Post;
+import com.example.inflearn.dto.PostDto;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,27 +13,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PostQueryService {
 
+    private final PaginationService paginationService;
     private final PostRepository postRepository;
 
-    public Post postDetail(long postId) {
-        return postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+    public PostDto postDetail(long postId) {
+        return PostDto.from(postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new));
     }
 
-    public List<Post> searchPost(String searchWord, Pageable pageable) {
-        if (searchWord == null || searchWord.isBlank()) {
-            return List.of();
-        }
-
-        return postRepository.findByTitleContainingOrContentsContaining(searchWord,searchWord, pageable);
+    public List<PostDto> searchPost(String searchWord, int page, int size) {
+        return postRepository.search(searchWord, paginationService.offSetWhenSearchPost(page), size).stream()
+                .map(PostDto::from)
+                .toList();
     }
 
-    //todo 해당 테스트는 SpringBootTest? dataJpaTest? 아니면 작성안한다?
-    public List<Post> getPostsPerPage(int size, int page) {
-        return postRepository.getPostsPerPage(size, page);
+    public List<PostDto> getPostsPerPage(int page, int size) {
+        return postRepository.getPostsPerPage(page, size).stream()
+                .map(PostDto::from)
+                .toList();
     }
 
-    public int getTotalCount() {
-        List<Post> posts = postRepository.totalCount();
-        return posts.size();
+    public Long getPageCount(String searchWord, int page, int size) {
+        return postRepository.countPage(searchWord, paginationService.offsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
     }
 }

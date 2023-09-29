@@ -1,31 +1,28 @@
 package com.example.inflearn.ui.post;
 
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
+import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.security.CurrentMember;
-import com.example.inflearn.domain.post.service.PaginationService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
+import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
 import com.example.inflearn.ui.post.dto.response.PostResponse;
 import com.example.inflearn.ui.post.dto.request.PostUpdateRequest;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
-import com.example.inflearn.ui.post.dto.response.PostResponseWithPageNumbers;
+import com.example.inflearn.ui.post.dto.response.PostResponseWithPageCount;
 import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -33,9 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PostRestController {
 
+    private static final int SEARCH_WORD_MIN_LENGTH = 2;
     private final PostService postService;
     private final PostQueryService postQueryService;
-    private final PaginationService paginationService;
 
     @PostMapping("/posts")
     public void write(
@@ -122,12 +119,13 @@ public class PostRestController {
      */
     //todo 좋아요, 조회수, 댓글 추가
     @GetMapping("/posts")
-    public PostResponseWithPageNumbers getPosts(@ModelAttribute @Valid PostPaging postPaging) {
+    public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
         //20개의 데이터
         List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.size(), postPaging.page()).stream().map(PostResponse::from).toList();
-        List<Integer> pageNumbers = paginationService.getPageNumbers(postPaging.page(), postQueryService.getTotalCount());
+//        List<Integer> pageCount = paginationService.getPageNumbers(postPaging.page(), postQueryService.getTotalCount());
 
-        return new PostResponseWithPageNumbers(posts, pageNumbers);
+//        return new PostResponseWithPageNumbers(posts, pageCount);
+        return null;
     }
 
     // 현재 쿼리 member,post,tag 조인해서 한번에 쿼리에 가져온다.
@@ -136,16 +134,25 @@ public class PostRestController {
         return PostResponse.from(postQueryService.postDetail(postId));
     }
 
+    - 댓글많은순으로 조회한다(지금못함)
+    - 좋아요순으로 조회한다(지금못함)
+     */
 //    todo 현재 검색시 쿼리가 3번나간다(post 조건조회, member 조회, tag 조회)
     @GetMapping("/posts/search")
-    public PostResponseWithPageNumbers searchedPosts(
-            @PageableDefault(size = 20, sort = "id", direction = Direction.DESC) Pageable pageable,
-            @RequestParam String searchWord
+    public PostResponseWithPageCount searchedPosts(
+            @ModelAttribute @Valid PostSearch postsearch
     ) {
-        List<PostResponse> posts = postQueryService.searchPost(searchWord, pageable).stream().map(PostResponse::from).toList();
-        List<Integer> pageNumbers = paginationService.getPageNumbers(pageable.getPageNumber(), 1);
+        if (postsearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+            throw new SearchWordLengthException();
+        }
 
-        return new PostResponseWithPageNumbers(posts, pageNumbers);
+        List<PostResponse> posts = postQueryService.searchPost(postsearch.searchWord(), postsearch.page(), postsearch.size())
+                .stream()
+                .map(PostResponse::from)
+                .toList();
+
+        Long pageCount = postQueryService.getPageCount(postsearch.searchWord(), postsearch.page(), postsearch.size());
+        return new PostResponseWithPageCount(posts, pageCount);
     }
 
     private Set<String> validateDuplicatedHashtag(List<String> requestHashtag) {
