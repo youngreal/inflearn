@@ -5,18 +5,20 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
-import com.example.inflearn.domain.post.service.PaginationService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
 import com.example.inflearn.dto.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
+import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -45,9 +47,6 @@ class PostRestControllerTest {
 
     @MockBean
     private PostQueryService postQueryService;
-
-    @MockBean
-    private PaginationService paginationService;
 
     @MockBean
     private MemberService memberService;
@@ -220,23 +219,37 @@ class PostRestControllerTest {
         then(postService).shouldHaveNoInteractions();
     }
 
-//    @Test
-//    @DisplayName("포스트 전제 조회 성공")
-//    void post_get_success() throws Exception {
-//        //given
-//        int page = 1;
-//        int size = 20;
-//
-//        given(postQueryService.getPostsPerPage(page,size)).willReturn()
-//
-//
-//        //when
-//        mockMvc.perform(post("/posts?page=1&size=20"))
-//                .andExpect(status().isOk())
-//                .andDo(print());
-//
-//        //then
-//    }
+
+    @Test
+    @DisplayName("포스트 검색 성공 : 특정 검색어 입력")
+    void post_search_success() throws Exception {
+        //given
+        PostDto postDto = PostDto.builder()
+                .title("게시글제목1")
+                .contents("게시글본문1")
+                .build();
+
+        PostSearch postSearch = new PostSearch(3, 20, "자바");
+        given(postQueryService.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(List.of(postDto));
+        given(postQueryService.getPageCount(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageNumbers").value(3L))
+                .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
+                .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 검색 실패 : page or size값이 1보다 적을때")
+    void post_search_fail() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts/search?page=-1&size=-1&searchWord=자바"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
 
     private PostWriteRequest postRequest(String title, String contents, List<String> hashtags) {
         return PostWriteRequest.builder()
