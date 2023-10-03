@@ -6,11 +6,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class CustomMessagingException extends RuntimeException {
     private final HttpStatus httpStatus;
-    private final String message;
+    private static final String RESPONSE_MESSAGE = "custom messaging event";
 
     public CustomMessagingException() {
-        super();
-        this.message = "custom messaging event";
+        super(RESPONSE_MESSAGE);
         this.httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public class UnAuthorizationException extends RuntimeException {
-
     private final String message;
     private final HttpStatus httpStatus;
 

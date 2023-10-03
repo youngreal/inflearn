@@ -13,4 +13,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 
     @Query(value = "select count(id) from(select id from post where match(title,contents) against(?) limit ?,?) as subquery ", nativeQuery = true)
     Long countPageWithSearchWord(String searchWord, int offset, int limit);
+    @Override
+    @Query("select p from Post p join fetch p.member where p.id = :postId")
+    Optional<Post> findById(Long postId);
 }

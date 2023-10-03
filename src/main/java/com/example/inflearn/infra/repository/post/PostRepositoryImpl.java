@@ -1,5 +1,6 @@
 package com.example.inflearn.infra.repository.post;
 
+import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 
 import com.example.inflearn.domain.post.domain.Post;
@@ -16,7 +17,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
     //todo 몇초 걸리는지 확인.
     @Override
     public List<Post> getPostsPerPage(int page, int size) {
-        return jpaQueryFactory.select(post)
+        return jpaQueryFactory.selectFrom(post)
+                .join(post.member, member).fetchJoin()
                 .orderBy(post.id.desc())
                 .offset(page)
                 .limit(size)

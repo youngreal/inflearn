@@ -7,25 +7,28 @@ import java.util.Set;
 import lombok.Builder;
 
 @Builder
-public record PostResponse(
+public record PostDetailPageResponse(
         String nickname,
+        LocalDateTime createdAt,
+        LocalDateTime updateAt,
+        int viewCount,
         String title,
         String contents,
-        int viewCount,
         Set<String> hashtags,
-        LocalDateTime createdAt,
         PostStatus postStatus
-){
+) {
 
-    public static PostResponse from(PostDto postDto) {
-        return PostResponse.builder()
+    public static PostDetailPageResponse from(PostDto postDto) {
+        return PostDetailPageResponse.builder()
                 .nickname(postDto.nickname())
+                .createdAt(postDto.createdAt())
+                .updateAt(postDto.updateAt())
+                .viewCount(postDto.viewCount())
                 .title(postDto.title())
                 .contents(postDto.contents())
-                .viewCount(postDto.viewCount())
                 .hashtags(postDto.hashtags())
-                .createdAt(postDto.createdAt())
+                .postStatus(postDto.postStatus())
                 .build();
     }
-}
 
+}
