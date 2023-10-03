@@ -5,12 +5,11 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public class DoesNotExistMemberException extends RuntimeException {
-    private final String message;
+    private static final String RESPONSE_MESSAGE = "존재하지 않는 유저입니다";
     private final HttpStatus httpStatus;
 
     public DoesNotExistMemberException() {
-       super();
-        this.message = "존재하지 않는 유저입니다";
+       super(RESPONSE_MESSAGE);
         this.httpStatus = HttpStatus.BAD_REQUEST;
     }
 }

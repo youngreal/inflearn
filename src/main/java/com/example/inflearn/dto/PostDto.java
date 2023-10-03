@@ -1,6 +1,7 @@
 package com.example.inflearn.dto;
 
 import com.example.inflearn.domain.post.domain.Post;
+import com.example.inflearn.domain.post.domain.PostStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Set;
@@ -9,12 +10,14 @@ import lombok.Builder;
 
 @Builder
 public record PostDto(
+        String nickname,
         String title,
         String contents,
         int viewCount,
         Set<String> hashtags,
         LocalDateTime createdAt,
-        LocalDateTime updateAt
+        LocalDateTime updateAt,
+        PostStatus postStatus
 ) {
 
     public Post toEntity() {
@@ -27,21 +30,18 @@ public record PostDto(
     }
 
     public static PostDto from(Post post) {
-        if (post.getPostHashtags() != null) {
-            return PostDto.builder()
-                    .title(post.getTitle())
-                    .contents(post.getContents())
-                    .hashtags(post.getPostHashtags().stream()
-                            .filter(postHashtag -> postHashtag.getHashtag() != null)
-                            .map(postHashtag -> postHashtag.getHashtag().getHashtagName())
-                            .collect(Collectors.toUnmodifiableSet()))
-                    .build();
-        }
-
         return PostDto.builder()
+                .nickname(post.getMember().getNickname())
+                .createdAt(post.getCreatedAt())
+                .updateAt(post.getUpdatedAt())
+                .viewCount(post.getViewCount())
                 .title(post.getTitle())
                 .contents(post.getContents())
+                .hashtags(post.getPostHashtags().stream()
+                        .filter(postHashtag -> postHashtag.getHashtag() != null)
+                        .map(postHashtag -> postHashtag.getHashtag().getHashtagName())
+                        .collect(Collectors.toUnmodifiableSet()))
+                .postStatus(post.getPostStatus())
                 .build();
     }
-
 }
