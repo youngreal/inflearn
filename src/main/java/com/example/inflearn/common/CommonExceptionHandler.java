@@ -6,6 +6,7 @@ import com.example.inflearn.common.exception.DoesNotExistEmailException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.EmptyCookieRequestException;
+import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
 import com.example.inflearn.common.exception.WrongEmailTokenException;
 import com.example.inflearn.common.exception.WrongServletRequestException;
@@ -96,6 +97,13 @@ public class CommonExceptionHandler {
     @ExceptionHandler(CustomMessagingException.class)
     public ResponseEntity<String> customMessagingException(CustomMessagingException e) {
         log.info("custom ex 핸들링");
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(SearchWordLengthException.class)
+    public ResponseEntity<String> searchWordLengthException(SearchWordLengthException e) {
         return ResponseEntity
                 .status(e.getHttpStatus())
                 .body(e.getMessage());
