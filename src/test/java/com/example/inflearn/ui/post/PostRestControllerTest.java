@@ -284,6 +284,15 @@ class PostRestControllerTest {
                 .andDo(print());
     }
 
+    @Test
+    @DisplayName("포스트 검색 실패 : 검색어 길이가 2보다 작을때")
+    void post_search_fail2() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts/search?page=1&size=20&searchWord=자"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
     private PostDto createDto(String title, String contents) {
         return PostDto.builder()
                 .title(title)

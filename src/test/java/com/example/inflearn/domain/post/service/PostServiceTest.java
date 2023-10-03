@@ -101,10 +101,7 @@ class PostServiceTest {
         then(hashtagService).shouldHaveNoInteractions();
         then(postRepository).shouldHaveNoInteractions();
     }
-
-
-
-
+    
     @DisplayName("포스트 수정 성공: FindByHashtagIn 사용시")
     @MethodSource
     @ParameterizedTest
