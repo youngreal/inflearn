@@ -120,26 +120,21 @@ public class PostRestController {
     //todo 좋아요, 조회수, 댓글 추가
     @GetMapping("/posts")
     public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
-        //20개의 데이터
         List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size()).stream()
                 .map(PostResponse::from)
                 .toList();
-
         long pageCount = postQueryService.getPageCount(postPaging.page(), postPaging.size());
-
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
-    // 현재 쿼리 member,post,tag 조인해서 한번에 쿼리에 가져온다.
     @GetMapping("/posts/{postId}")
-    public PostResponse postDetail(@PathVariable long postId) {
-        return PostResponse.from(postQueryService.postDetail(postId));
+    public PostDetailPageResponse postDetail(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postQueryService.postDetail(postId));
     }
 
     - 댓글많은순으로 조회한다(지금못함)
     - 좋아요순으로 조회한다(지금못함)
      */
-//    todo 현재 검색시 쿼리가 3번나간다(post 조건조회, member 조회, tag 조회)
     @GetMapping("/posts/search")
     public PostResponseWithPageCount searchedPosts(
             @ModelAttribute @Valid PostSearch postsearch
