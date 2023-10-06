@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.inflearn.domain.like.service.LikeService;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
 import com.example.inflearn.domain.post.service.PostQueryService;
@@ -54,6 +56,9 @@ class PostRestControllerTest {
 
     @MockBean
     private MemberRepository memberRepository;
+
+    @MockBean
+    private LikeService likeService;
 
     private Cookie cookie;
     private static final int COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
@@ -290,6 +295,42 @@ class PostRestControllerTest {
         //when & then
         mockMvc.perform(get("/posts/search?page=1&size=20&searchWord=자"))
                 .andExpect(status().isBadRequest())
+                .andDo(print());
+
+
+    }
+
+    @Test
+    @DisplayName("게시글 좋아요 성공")
+    void post_like_success() throws Exception {
+        //given
+        Member member = member(1L, "asdf1234@naver.com", "12345678");
+        given(memberService.signUp(any(Member.class))).willReturn(member);
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
+
+        //when & then
+        mockMvc.perform(post("/posts/1/likes")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 좋아요 취소 성공")
+    void post_unlike_success() throws Exception {
+        //given
+        Member member = member(1L, "asdf1234@naver.com", "12345678");
+        given(memberService.signUp(any(Member.class))).willReturn(member);
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
+
+        //when & then
+        mockMvc.perform(delete("/posts/1/likes")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
                 .andDo(print());
     }
 

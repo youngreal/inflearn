@@ -3,10 +3,12 @@ package com.example.inflearn.ui.post;
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.security.CurrentMember;
+import com.example.inflearn.domain.like.service.LikeService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
+import com.example.inflearn.ui.post.dto.response.PostDetailPageResponse;
 import com.example.inflearn.ui.post.dto.response.PostResponse;
 import com.example.inflearn.ui.post.dto.request.PostUpdateRequest;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +36,7 @@ public class PostRestController {
     private static final int SEARCH_WORD_MIN_LENGTH = 2;
     private final PostService postService;
     private final PostQueryService postQueryService;
+    private final LikeService likeService;
 
     @PostMapping("/posts")
     public void write(
@@ -150,6 +154,17 @@ public class PostRestController {
 
         long pageCount = postQueryService.getPageCountWithSearchWord(postsearch.searchWord(), postsearch.page(), postsearch.size());
         return new PostResponseWithPageCount(posts, pageCount);
+    }
+
+
+    @PostMapping("/posts/{postId}/likes")
+    public void like(CurrentMember currentMember,@PathVariable long postId) {
+        likeService.likePost(currentMember.id(), postId);
+    }
+
+    @DeleteMapping("/posts/{postId}/likes")
+    public void unLike(CurrentMember currentMember,@PathVariable long postId) {
+        likeService.unlikePost(currentMember.id(), postId);
     }
 
     private Set<String> validateDuplicatedHashtag(List<String> requestHashtag) {
