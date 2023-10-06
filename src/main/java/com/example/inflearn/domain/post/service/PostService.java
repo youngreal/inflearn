@@ -31,10 +31,10 @@ public class PostService {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
         Post post = dto.toEntity();
 
-        if (dto.hashtags().isEmpty()) {
+        if (dto.getHashtags().isEmpty()) {
             post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
         } else {
-            hashtagService.saveNewHashtagsWhenPostWrite(post, dto.hashtags());
+            hashtagService.saveNewHashtagsWhenPostWrite(post, dto.getHashtags());
         }
 
         post.addMember(member);
@@ -50,8 +50,8 @@ public class PostService {
         }
 
         List<PostHashtag> beforePostHashtags = new ArrayList<>(post.getPostHashtags());
-        hashtagService.saveHashtagsWhenPostUpdate(post, dto.hashtags());
-        hashtagService.deleteHashtags(beforePostHashtags, dto.hashtags());
-        post.updateTitleAndContents(dto.title(), dto.contents());
+        hashtagService.saveHashtagsWhenPostUpdate(post, dto.getHashtags());
+        hashtagService.deleteHashtags(beforePostHashtags, dto.getHashtags());
+        post.updateTitleAndContents(dto.getTitle(), dto.getContents());
     }
 }
