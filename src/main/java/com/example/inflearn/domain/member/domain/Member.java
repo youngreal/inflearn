@@ -1,6 +1,6 @@
 package com.example.inflearn.domain.member.domain;
 
-import com.example.inflearn.domain.like.domain.PostLike;
+import com.example.inflearn.domain.like.domain.Like;
 import com.example.inflearn.domain.post.domain.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,7 +48,7 @@ public class Member {
 
     @ToString.Exclude
     @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
-    private List<PostLike> postLikes = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     @Builder
     private Member(Long id, String email, String password, String nickname, String emailToken,

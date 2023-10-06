@@ -1,6 +1,6 @@
 package com.example.inflearn.ui.member;
 
-import com.example.inflearn.common.security.CurrentMember;
+import com.example.inflearn.common.security.LoginedMember;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
 import com.example.inflearn.ui.member.dto.request.MemberJoinRequest;
@@ -61,8 +61,8 @@ public class MemberRestController {
     }
 
     @PostMapping("/logout")
-    public void logout(CurrentMember currentMember) {
-        memberService.logout(currentMember.id());
+    public void logout(LoginedMember loginedMember) {
+        memberService.logout(loginedMember.id());
     }
 
     private ResponseEntity<Void> responseWithCookie(String sessionToken) {

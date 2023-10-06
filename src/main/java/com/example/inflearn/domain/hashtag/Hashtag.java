@@ -1,5 +1,6 @@
-package com.example.inflearn.domain;
+package com.example.inflearn.domain.hashtag;
 
+import com.example.inflearn.domain.PostHashtag;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

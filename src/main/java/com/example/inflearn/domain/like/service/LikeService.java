@@ -4,7 +4,7 @@ import com.example.inflearn.common.exception.AlreadyLikeException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.DoesNotLikeException;
-import com.example.inflearn.domain.like.domain.PostLike;
+import com.example.inflearn.domain.like.domain.Like;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.like.LikeRepository;
@@ -24,27 +24,27 @@ public class LikeService {
     private final LikeRepository likeRepository;
 
     //todo 동시성 문제
-    public void likePost(long memberId, long postId) {
+    public void saveLike(long memberId, long postId) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        PostLike byMemberAndPost = likeRepository.findByMemberAndPost(member, post);
+        Like byMemberAndPost = likeRepository.findByMemberAndPost(member, post);
         if (byMemberAndPost != null) {
             throw new AlreadyLikeException();
         }
 
-        PostLike postLike = PostLike.create(member, post);
-        postLike.addMemberAndPost();
-        likeRepository.save(postLike);
+        Like like = Like.create(member, post);
+        like.addMemberAndPost();
+        likeRepository.save(like);
     }
 
-    public void unlikePost(long memberId, long postId) {
+    public void unLike(long memberId, long postId) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        PostLike postLike = likeRepository.findByMemberAndPost(member, post);
-        if (postLike == null) {
+        Like like = likeRepository.findByMemberAndPost(member, post);
+        if (like == null) {
             throw new DoesNotLikeException();
         }
 
-        likeRepository.delete(postLike);
+        likeRepository.delete(like);
     }
 }

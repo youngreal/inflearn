@@ -2,10 +2,12 @@ package com.example.inflearn.ui.post;
 
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.SearchWordLengthException;
-import com.example.inflearn.common.security.CurrentMember;
+import com.example.inflearn.common.security.LoginedMember;
+import com.example.inflearn.domain.comment.service.CommentService;
 import com.example.inflearn.domain.like.service.LikeService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
+import com.example.inflearn.ui.post.dto.request.CommentContents;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
 import com.example.inflearn.ui.post.dto.response.PostDetailPageResponse;
@@ -37,19 +39,20 @@ public class PostRestController {
     private final PostService postService;
     private final PostQueryService postQueryService;
     private final LikeService likeService;
+    private final CommentService commentService;
 
     @PostMapping("/posts")
     public void write(
-            CurrentMember currentMember,
+            LoginedMember loginedMember,
             @RequestBody @Valid PostWriteRequest request
     ) {
 
         if (request.hashtags() == null || request.hashtags().isEmpty()) {
-            postService.write(request.toDto(), currentMember.id());
+            postService.write(request.toDto(), loginedMember.id());
 
         } else {
             Set<String> hashtags = validateDuplicatedHashtag(request.hashtags());
-            postService.write(request.toDtoWithHashtag(hashtags), currentMember.id());
+            postService.write(request.toDtoWithHashtag(hashtags), loginedMember.id());
         }
  }
 
@@ -57,17 +60,17 @@ public class PostRestController {
     //todo 글 수정시 해시태그를 삭제해야해서 삭제하는순간에 조회하는 요청이 온다면?
     @PutMapping("/posts/{postId}")
     public void update(
-            CurrentMember currentMember,
+            LoginedMember loginedMember,
             @RequestBody @Valid PostUpdateRequest request,
             @PathVariable long postId
     ) {
 
         if (request.hashtags() == null || request.hashtags().isEmpty()) {
-            postService.update(request.toDto(), currentMember.id(), postId);
+            postService.update(request.toDto(), loginedMember.id(), postId);
 
         } else {
             Set<String> hashtags = validateDuplicatedHashtag(request.hashtags());
-            postService.update(request.toDtoWithHashtag(hashtags), currentMember.id(), postId);
+            postService.update(request.toDtoWithHashtag(hashtags), loginedMember.id(), postId);
         }
     }
 
@@ -158,13 +161,19 @@ public class PostRestController {
 
 
     @PostMapping("/posts/{postId}/likes")
-    public void like(CurrentMember currentMember,@PathVariable long postId) {
-        likeService.likePost(currentMember.id(), postId);
+    public void like(LoginedMember loginedMember,@PathVariable long postId) {
+        likeService.saveLike(loginedMember.id(), postId);
     }
 
     @DeleteMapping("/posts/{postId}/likes")
-    public void unLike(CurrentMember currentMember,@PathVariable long postId) {
-        likeService.unlikePost(currentMember.id(), postId);
+    public void unLike(LoginedMember loginedMember,@PathVariable long postId) {
+        likeService.unLike(loginedMember.id(), postId);
+    }
+
+    @PostMapping("/posts/{postId}/comments")
+    public void comment(LoginedMember loginedMember, CommentContents commentContents,
+            @PathVariable long postId) {
+        commentService.saveComment(loginedMember.id(), postId, commentContents.contents());
     }
 
     private Set<String> validateDuplicatedHashtag(List<String> requestHashtag) {

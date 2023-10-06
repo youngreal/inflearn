@@ -24,7 +24,7 @@ public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(CurrentMember.class);
+        return parameter.getParameterType().equals(LoginedMember.class);
     }
 
     @Override
@@ -51,6 +51,6 @@ public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
                 .orElseThrow(() -> new UnAuthorizationException("유효하지않은 세션토큰쿠키"));
 
         Member member = memberRepository.findByLoginToken(cookie.getValue()).orElseThrow(() -> new UnAuthorizationException("존재하지 않은 세션토큰"));
-        return new CurrentMember(member.getId());
+        return new LoginedMember(member.getId());
     }
 }

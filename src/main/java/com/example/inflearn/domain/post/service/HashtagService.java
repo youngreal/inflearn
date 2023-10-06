@@ -1,6 +1,6 @@
 package com.example.inflearn.domain.post.service;
 
-import com.example.inflearn.domain.Hashtag;
+import com.example.inflearn.domain.hashtag.Hashtag;
 import com.example.inflearn.domain.PostHashtag;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.post.HashtagRepository;
