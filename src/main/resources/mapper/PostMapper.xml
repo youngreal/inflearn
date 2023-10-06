@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.inflearn.infra.mapper.post.PostMapper">
+
+  <select id="search" resultType="com.example.inflearn.dto.PostDto">
+    select p.id as postId,
+           m.nickname,
+           p.title,
+           p.contents,
+           p.view_count as viewCount,
+           (select count(post_like.id) from post_like where p.id = post_like.post_id) as likeCount,
+           p.created_at as createdAt,
+           p.post_status as postStatus
+    from post p left join member m on p.member_id = m.id
+    where match(title,contents) against(#{searchWord})
+    order by p.id desc
+    limit #{offset},#{limit}
+  </select>
+
+</mapper>

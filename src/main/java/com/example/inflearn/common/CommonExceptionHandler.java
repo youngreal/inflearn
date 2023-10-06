@@ -1,9 +1,11 @@
 package com.example.inflearn.common;
 
 import com.example.inflearn.common.exception.AlreadyExistMemberException;
+import com.example.inflearn.common.exception.AlreadyLikeException;
 import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.common.exception.DoesNotExistEmailException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
+import com.example.inflearn.common.exception.DoesNotLikeException;
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.EmptyCookieRequestException;
 import com.example.inflearn.common.exception.SearchWordLengthException;
@@ -104,6 +106,20 @@ public class CommonExceptionHandler {
 
     @ExceptionHandler(SearchWordLengthException.class)
     public ResponseEntity<String> searchWordLengthException(SearchWordLengthException e) {
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(AlreadyLikeException.class)
+    public ResponseEntity<String> alreadyLikeException(AlreadyLikeException e) {
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(DoesNotLikeException.class)
+    public ResponseEntity<String> doesNotLikeException(DoesNotLikeException e) {
         return ResponseEntity
                 .status(e.getHttpStatus())
                 .body(e.getMessage());
