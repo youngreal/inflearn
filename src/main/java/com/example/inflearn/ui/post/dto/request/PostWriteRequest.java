@@ -6,14 +6,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 
 @Builder
 public record PostWriteRequest(
         @NotBlank
         String title,
-        List<String> hashtags,
         @NotBlank
-        String contents
+        String contents,
+        List<String> hashtags
 ) {
 
     public PostDto toDto() {
@@ -27,8 +28,8 @@ public record PostWriteRequest(
     public PostDto toDtoWithHashtag(Set<String> hashtags) {
         return PostDto.builder()
                 .title(this.title)
-                .hashtags(hashtags)
                 .contents(this.contents)
+                .hashtags(hashtags)
                 .build();
     }
 }

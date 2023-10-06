@@ -171,7 +171,7 @@ public class PostRestController {
     }
 
     @PostMapping("/posts/{postId}/comments")
-    public void comment(LoginedMember loginedMember, CommentContents commentContents,
+    public void comment(LoginedMember loginedMember, @RequestBody @Valid CommentContents commentContents,
             @PathVariable long postId) {
         commentService.saveComment(loginedMember.id(), postId, commentContents.contents());
     }
