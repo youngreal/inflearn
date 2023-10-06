@@ -8,10 +8,12 @@ import lombok.Builder;
 
 @Builder
 public record PostResponse(
+        Long postId,
         String nickname,
         String title,
         String contents,
         int viewCount,
+        Long likeCount,
         Set<String> hashtags,
         LocalDateTime createdAt,
         PostStatus postStatus
@@ -19,12 +21,14 @@ public record PostResponse(
 
     public static PostResponse from(PostDto postDto) {
         return PostResponse.builder()
-                .nickname(postDto.nickname())
-                .title(postDto.title())
-                .contents(postDto.contents())
-                .viewCount(postDto.viewCount())
-                .hashtags(postDto.hashtags())
-                .createdAt(postDto.createdAt())
+                .postId(postDto.getPostId())
+                .nickname(postDto.getNickname())
+                .title(postDto.getTitle())
+                .contents(postDto.getContents())
+                .viewCount(postDto.getViewCount())
+                .likeCount(postDto.getLikeCount())
+                .hashtags(postDto.getHashtags())
+                .createdAt(postDto.getCreatedAt())
                 .build();
     }
 }

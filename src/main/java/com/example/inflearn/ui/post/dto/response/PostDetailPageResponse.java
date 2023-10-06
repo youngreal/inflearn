@@ -9,25 +9,27 @@ import lombok.Builder;
 @Builder
 public record PostDetailPageResponse(
         String nickname,
-        LocalDateTime createdAt,
-        LocalDateTime updateAt,
-        int viewCount,
         String title,
         String contents,
+        int viewCount,
+        Long likeCount,
         Set<String> hashtags,
+        LocalDateTime createdAt,
+        LocalDateTime updateAt,
         PostStatus postStatus
 ) {
 
     public static PostDetailPageResponse from(PostDto postDto) {
         return PostDetailPageResponse.builder()
-                .nickname(postDto.nickname())
-                .createdAt(postDto.createdAt())
-                .updateAt(postDto.updateAt())
-                .viewCount(postDto.viewCount())
-                .title(postDto.title())
-                .contents(postDto.contents())
-                .hashtags(postDto.hashtags())
-                .postStatus(postDto.postStatus())
+                .nickname(postDto.getNickname())
+                .title(postDto.getTitle())
+                .contents(postDto.getContents())
+                .viewCount(postDto.getViewCount())
+                .likeCount(postDto.getLikeCount())
+                .hashtags(postDto.getHashtags())
+                .createdAt(postDto.getCreatedAt())
+                .updateAt(postDto.getUpdatedAt())
+                .postStatus(postDto.getPostStatus())
                 .build();
     }
 

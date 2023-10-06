@@ -62,7 +62,7 @@ class PostServiceTest {
         sut.write(postDto,member.getId());
 
         // then
-        then(hashtagService).should().saveNewHashtagsWhenPostWrite(any(Post.class), eq(postDto.hashtags()));
+        then(hashtagService).should().saveNewHashtagsWhenPostWrite(any(Post.class), eq(postDto.getHashtags()));
         ArgumentCaptor<Post> savedPost = ArgumentCaptor.forClass(Post.class);
         then(postRepository).should().save(savedPost.capture());
         Post post = savedPost.getValue();
