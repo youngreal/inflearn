@@ -2,15 +2,19 @@ package com.example.inflearn.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.domain.PostHashtag;
-import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.dto.PostHashtagDto;
+import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -33,6 +37,9 @@ class PostQueryServiceTest {
     @Mock
     private PostRepository postRepository;
 
+    @Mock
+    private PostMapper postMapper;
+
     @DisplayName("게시글 상세정보를 조회한다")
     @Test
     void 게시글_상세정보를_조회한다 () {
@@ -43,11 +50,14 @@ class PostQueryServiceTest {
                 .contents("글내용")
                 .build();
         given(postRepository.findById(postId)).willReturn(Optional.of(postDto.toEntity()));
+        given(postRepository.postDetail(postId)).willReturn(postDto);
 
         // when
+        assertThat(postDto.getHashtags()).isNullOrEmpty();
         PostDto actual = sut.postDetail(postId);
 
         // then
+        assertThat(postDto.getHashtags()).isNotNull();
         assertThat(actual).isEqualTo(postDto);
     }
 
@@ -67,9 +77,21 @@ class PostQueryServiceTest {
     @Test
     void post_view_per_page_success () {
         // given
-        Post post = createPost("게시글제목1", "게시글본문1");
-        Post post2 = createPost("게시글제목2", "게시글본문2");
-        Post post3 = createPost("게시글제목3", "게시글본문3");
+        PostDto post = PostDto.builder()
+                .title("게시글제목1")
+                .contents("게시글본문1")
+                .build();
+
+        PostDto post2 = PostDto.builder()
+                .title("게시글제목2")
+                .contents("게시글본문2")
+                .build();
+
+        PostDto post3 = PostDto.builder()
+                .title("게시글제목3")
+                .contents("게시글본문3")
+                .build();
+
         int page = 1;
         int size = 20;
 
@@ -81,9 +103,9 @@ class PostQueryServiceTest {
 
         // then
         assertThat(actual).hasSize(3);
-        assertThat(actual.get(0)).isEqualTo(PostDto.from(post));
-        assertThat(actual.get(1)).isEqualTo(PostDto.from(post2));
-        assertThat(actual.get(2)).isEqualTo(PostDto.from(post3));
+        assertThat(actual.get(0)).isEqualTo(post);
+        assertThat(actual.get(1)).isEqualTo(post2);
+        assertThat(actual.get(2)).isEqualTo(post3);
     }
 
 
@@ -98,15 +120,20 @@ class PostQueryServiceTest {
                 .hashtags(Set.of())
                 .build();
 
+        List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(new PostHashtagDto(1L, "자바")));
+        List<PostDto> postDto1 = List.of(postDto);
+
         // when
         given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
-        given(postRepository.search(postSearch.searchWord(),paginationService.calculateOffSet(postSearch.page()), postSearch.size())).willReturn(List.of(postDto.toEntity()));
+        given(postMapper.search(eq(postSearch.searchWord()), anyInt(), anyInt())).willReturn(postDto1);
+        given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
 
         // when
         List<PostDto> actual = sut.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size());
 
         // then
         assertThat(actual).isEqualTo(List.of(postDto));
+        assertThat(actual.get(0).getHashtags()).isNotNull();
         assertThat(actual).hasSize(1);
     }
 
@@ -128,12 +155,4 @@ class PostQueryServiceTest {
         then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
-
-    private Post createPost(String title, String contents) {
-        return Post.builder()
-                .title(title)
-                .contents(contents)
-                .build();
-    }
-
 }

@@ -1,19 +1,15 @@
 package com.example.inflearn.infra.repository.post;
 
 import com.example.inflearn.domain.post.domain.Post;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-
+/*
+네이티브 쿼리 사용이유
+- mysql 의 fulltext search 와 querydsl 버전호환문제로 도입.
+- 문제를 좀더 간단하게 해결하는 방법이라고 판단하여 선택
+ */
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
-
-    //todo 엔티티 반환말고 DTO로 반환하는걸로 변경하기
-    @Query(value = "select * from post where match(title,contents) against(?) limit ?,?", nativeQuery = true)
-    List<Post> search(String searchWord, int offset, int limit);
 
     @Query(value = "select count(id) from(select id from post where match(title,contents) against(?) limit ?,?) as subquery ", nativeQuery = true)
     Long countPageWithSearchWord(String searchWord, int offset, int limit);
-    @Override
-    @Query("select p from Post p join fetch p.member where p.id = :postId")
-    Optional<Post> findById(Long postId);
 }
