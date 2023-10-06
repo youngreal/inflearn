@@ -1,6 +1,8 @@
 package com.example.inflearn.domain.member.domain;
 
+import com.example.inflearn.domain.like.domain.PostLike;
 import com.example.inflearn.domain.post.domain.Post;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +17,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -42,6 +45,10 @@ public class Member {
 
     @OneToMany(mappedBy = "member")
     private List<Post> posts = new ArrayList<>();
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "member", cascade = CascadeType.PERSIST)
+    private List<PostLike> postLikes = new ArrayList<>();
 
     @Builder
     private Member(Long id, String email, String password, String nickname, String emailToken,
