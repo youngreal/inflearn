@@ -1,7 +1,7 @@
 package com.example.inflearn.domain.post.domain;
 
 import com.example.inflearn.domain.PostHashtag;
-import com.example.inflearn.domain.like.domain.PostLike;
+import com.example.inflearn.domain.like.domain.Like;
 import com.example.inflearn.domain.member.domain.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -57,7 +57,7 @@ public class Post {
 
     @ToString.Exclude
     @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
-    private List<PostLike> postLikes = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
@@ -65,7 +65,7 @@ public class Post {
 
     @Builder
     private Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
-            LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags, List<PostLike> postLikes,
+            LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags, List<Like> likes,
             Member member) {
         this.id = id;
         this.title = title;
@@ -75,7 +75,7 @@ public class Post {
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
         this.postHashtags = postHashtags;
-        this.postLikes = postLikes;
+        this.likes = likes;
         this.member = member;
     }
 

@@ -1,6 +1,6 @@
 package com.example.inflearn.infra.repository.post;
 
-import com.example.inflearn.domain.Hashtag;
+import com.example.inflearn.domain.hashtag.Hashtag;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 

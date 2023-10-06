@@ -1,8 +1,8 @@
 package com.example.inflearn.infra.repository.post;
 
-import static com.example.inflearn.domain.QHashtag.hashtag;
 import static com.example.inflearn.domain.QPostHashtag.postHashtag;
-import static com.example.inflearn.domain.like.domain.QPostLike.postLike;
+import static com.example.inflearn.domain.hashtag.QHashtag.hashtag;
+import static com.example.inflearn.domain.like.domain.QLike.like;
 import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 
@@ -31,9 +31,9 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                         post.contents,
                         post.viewCount,
                         ExpressionUtils.as(JPAExpressions
-                                .select(postLike.id.count())
-                                .from(postLike)
-                                .where(post.id.eq(postLike.post.id)), "likeCount"),
+                                .select(like.id.count())
+                                .from(like)
+                                .where(post.id.eq(like.post.id)), "likeCount"),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)
@@ -80,9 +80,9 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                         post.contents,
                         post.viewCount,
                         ExpressionUtils.as(JPAExpressions
-                                .select(postLike.id.count())
-                                .from(postLike)
-                                .where(postLike.post.id.eq(postId)), "likeCount"),
+                                .select(like.id.count())
+                                .from(like)
+                                .where(like.post.id.eq(postId)), "likeCount"),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)
