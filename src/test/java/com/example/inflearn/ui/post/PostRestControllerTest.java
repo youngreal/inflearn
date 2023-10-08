@@ -21,8 +21,9 @@ import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
 import com.example.inflearn.dto.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
-import com.example.inflearn.ui.post.dto.request.CommentContents;
+import com.example.inflearn.ui.post.dto.request.PostCommentContents;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
+import com.example.inflearn.ui.post.dto.request.PostReplyContents;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +38,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-//todo 컨트롤러 코드는 코드라인수 대비 역할을 잘 모르겠다.. 추가하는게 좋을까?
+
 @WebMvcTest(PostRestController.class)
 class PostRestControllerTest {
 
@@ -64,6 +65,7 @@ class PostRestControllerTest {
 
     @MockBean
     private CommentService commentService;
+
 
     private Cookie cookie;
     private static final int COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
@@ -124,7 +126,6 @@ class PostRestControllerTest {
     void post_write_fail1() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
-        Member member = member(1L, "asdf1234@naver.com", "12345678");
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
@@ -251,8 +252,6 @@ class PostRestControllerTest {
     void post_update_fail3() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
-        Member member = member(1L, "asdf1234@naver.com", "12345678");
-
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
         //when
@@ -357,7 +356,6 @@ class PostRestControllerTest {
     @DisplayName("게시글 좋아요 실패: 로그인하지 않은 회원")
     void post_like_fail() throws Exception {
         //given
-        Member member = member(1L, "asdf1234@naver.com", "12345678");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
         //when & then
@@ -405,14 +403,14 @@ class PostRestControllerTest {
     void post_comment_success() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        CommentContents commentContents = new CommentContents("이 스터디 어떻게 진행되는건가요?");
+        PostCommentContents postCommentContents = new PostCommentContents("이 스터디 어떻게 진행되는건가요?");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/posts/1/comments")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentContents))
+                        .content(objectMapper.writeValueAsString(postCommentContents))
                 )
                 .andExpect(status().isOk())
                 .andDo(print());
@@ -422,14 +420,14 @@ class PostRestControllerTest {
     @DisplayName("게시글 댓글 작성 실패 : 로그인하지않은 회원의 댓글작성요청")
     void post_comment_fail() throws Exception {
         //given
-        CommentContents commentContents = new CommentContents("이 스터디 어떻게 진행되는건가요?");
+        PostCommentContents postCommentContents = new PostCommentContents("이 스터디 어떻게 진행되는건가요?");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
         //when & then
         mockMvc.perform(post("/posts/1/comments")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(commentContents))
+                        .content(objectMapper.writeValueAsString(postCommentContents))
                 )
                 .andExpect(status().isUnauthorized())
                 .andDo(print());
@@ -440,11 +438,61 @@ class PostRestControllerTest {
     void post_comment_fail2() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
-        String commentContents = "이 스터디 어떻게 진행되는건가요?";
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/posts/1/comments")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 답글 작성 성공")
+    void post_reply_success() throws Exception {
+        //given
+        Member member = member(1L, "asdf1234@naver.com", "12345678");
+        PostReplyContents postReplyContents = new PostReplyContents("이 스터디 어떻게 진행되는건가요?");
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
+
+        //when & then
+        mockMvc.perform(post("/comments/1/reply")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postReplyContents))
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 답글 작성 실패 : 로그인하지않은 회원의 답글작성요청")
+    void post_reply_fail() throws Exception {
+        //given
+        PostReplyContents postReplyContents = new PostReplyContents("이 스터디 어떻게 진행되는건가요?");
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
+
+        //when & then
+        mockMvc.perform(post("/comments/1/reply")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postReplyContents))
+                )
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("게시글 답글 작성 실패 : 댓글 내용을 입력하지 않음")
+    void post_reply_fail2() throws Exception {
+        //given
+        Member member = member(1L, "asdf1234@naver.com", "12345678");
+        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
+
+        //when & then
+        mockMvc.perform(post("/comments/1/reply")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
                 )

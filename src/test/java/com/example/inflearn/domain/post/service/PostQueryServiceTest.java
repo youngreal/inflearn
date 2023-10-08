@@ -10,7 +10,7 @@ import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.dto.PostDto;
-import com.example.inflearn.dto.PostHashtagDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.ui.post.dto.request.PostSearch;
