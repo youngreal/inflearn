@@ -1,7 +1,8 @@
 package com.example.inflearn.infra.repository.post;
 
 import com.example.inflearn.dto.PostDto;
-import com.example.inflearn.dto.PostHashtagDto;
+import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import java.util.List;
 
 public interface PostRepositoryCustom {
@@ -15,4 +16,6 @@ public interface PostRepositoryCustom {
     List<PostHashtagDto> postHashtagsByPostDtos(List<PostDto> postDtos);
 
     PostDto postDetail(long postId);
+
+    List<PostCommentDto> commentBy(PostDto postDto);
 }

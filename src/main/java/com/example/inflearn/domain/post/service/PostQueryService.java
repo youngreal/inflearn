@@ -2,7 +2,7 @@ package com.example.inflearn.domain.post.service;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.dto.PostDto;
-import com.example.inflearn.dto.PostHashtagDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import java.util.List;
@@ -26,7 +26,8 @@ public class PostQueryService {
     public PostDto postDetail(long postId) {
         postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
         PostDto postDetail = postRepository.postDetail(postId);
-        postDetail.setHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentBy(postDetail));
         return postDetail;
     }
 
@@ -65,6 +66,6 @@ public class PostQueryService {
         Map<Long, List<PostHashtagDto>> postHashtagMap = postHashtagDtos.stream()
                 .collect(Collectors.groupingBy(PostHashtagDto::postId));
 
-        postDtos.forEach(postDto -> postDto.setHashtags(postHashtagMap.get(postDto.getPostId())));
+        postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
     }
 }
