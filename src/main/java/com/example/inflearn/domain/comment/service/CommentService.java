@@ -1,5 +1,7 @@
 package com.example.inflearn.domain.comment.service;
 
+import com.example.inflearn.common.exception.CannotCreateReplyException;
+import com.example.inflearn.common.exception.DoesNotExistCommentException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.comment.domain.Comment;
@@ -25,7 +27,18 @@ public class CommentService {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
-        Comment comment = Comment.create(member, post, contents);
+        Comment comment = Comment.createComment(member, post, contents);
         commentRepository.save(comment);
+    }
+
+    public void saveReply(long memberId, long commentId, String contents) {
+        Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
+        Comment parentComment = commentRepository.findById(commentId).orElseThrow(DoesNotExistCommentException::new);
+        if (parentComment.getParentComment() != null) {
+            throw new CannotCreateReplyException();
+        }
+
+        Comment reply = Comment.createComment(member, parentComment.getPost(), contents);
+        parentComment.addReply(reply);
     }
 }

@@ -2,7 +2,9 @@ package com.example.inflearn.common;
 
 import com.example.inflearn.common.exception.AlreadyExistMemberException;
 import com.example.inflearn.common.exception.AlreadyLikeException;
+import com.example.inflearn.common.exception.CannotCreateReplyException;
 import com.example.inflearn.common.exception.CustomMessagingException;
+import com.example.inflearn.common.exception.DoesNotExistCommentException;
 import com.example.inflearn.common.exception.DoesNotExistEmailException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotLikeException;
@@ -120,6 +122,20 @@ public class CommonExceptionHandler {
 
     @ExceptionHandler(DoesNotLikeException.class)
     public ResponseEntity<String> doesNotLikeException(DoesNotLikeException e) {
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(CannotCreateReplyException.class)
+    public ResponseEntity<String> cannotCreateReplyException(CannotCreateReplyException e) {
+        return ResponseEntity
+                .status(e.getHttpStatus())
+                .body(e.getMessage());
+    }
+
+    @ExceptionHandler(DoesNotExistCommentException.class)
+    public ResponseEntity<String> doesNotExistCommentException(DoesNotExistCommentException e) {
         return ResponseEntity
                 .status(e.getHttpStatus())
                 .body(e.getMessage());
