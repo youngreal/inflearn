@@ -14,6 +14,7 @@ public record PostResponse(
         String contents,
         int viewCount,
         Long likeCount,
+        Long commentCount,
         Set<String> hashtags,
         LocalDateTime createdAt,
         PostStatus postStatus
@@ -27,6 +28,7 @@ public record PostResponse(
                 .contents(postDto.getContents())
                 .viewCount(postDto.getViewCount())
                 .likeCount(postDto.getLikeCount())
+                .commentCount(postDto.getCommentCount())
                 .hashtags(postDto.getHashtags())
                 .createdAt(postDto.getCreatedAt())
                 .build();

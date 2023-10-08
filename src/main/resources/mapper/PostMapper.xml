@@ -9,7 +9,8 @@
            p.title,
            p.contents,
            p.view_count as viewCount,
-           (select count(post_like.id) from post_like where p.id = post_like.post_id) as likeCount,
+           (select count(likes.id) from likes where p.id = likes.post_id) as likeCount,
+           (select count(comment.id) from comment where p.id = comment.post_id) as commentCount,
            p.created_at as createdAt,
            p.post_status as postStatus
     from post p left join member m on p.member_id = m.id

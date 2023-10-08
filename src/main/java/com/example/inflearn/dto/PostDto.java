@@ -2,8 +2,11 @@ package com.example.inflearn.dto;
 
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostStatus;
+import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -27,15 +30,18 @@ public class PostDto {
     private String contents;
     private int viewCount;
     private Long likeCount;
-    private Set<String> hashtags;
+    private Long commentCount;
+    private Set<String> hashtags = new HashSet<>();
+    private List<CommentDto> comments = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private PostStatus postStatus;
 
     @Builder
-    public PostDto(Long postId, String nickname, String title, String contents, int viewCount,
-            Long likeCount, Set<String> hashtags, LocalDateTime createdAt, LocalDateTime updatedAt,
-            PostStatus postStatus) {
+    private PostDto(Long postId, String nickname, String title, String contents, int viewCount,
+            Long likeCount, Set<String> hashtags, List<CommentDto> comments,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt, PostStatus postStatus) {
         this.postId = postId;
         this.nickname = nickname;
         this.title = title;
@@ -43,6 +49,7 @@ public class PostDto {
         this.viewCount = viewCount;
         this.likeCount = likeCount;
         this.hashtags = hashtags;
+        this.comments = comments;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
@@ -57,12 +64,27 @@ public class PostDto {
                 .build();
     }
 
-    public void setHashtags(List<PostHashtagDto> postHashtagDtos) {
+    public void inputHashtags(List<PostHashtagDto> postHashtagDtos) {
         if (postHashtagDtos != null) {
             this.hashtags = postHashtagDtos.stream()
                     .map(PostHashtagDto::hashtagName)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toUnmodifiableSet());
+        }
+    }
+
+    public void inputComments(List<PostCommentDto> postCommentDtos) {
+        if (postCommentDtos != null) {
+            for (PostCommentDto postCommentDto : postCommentDtos) {
+                if (postCommentDto.parentCommentId() == null) {
+                    CommentDto commentDto = CommentDto.create(postCommentDto.commentId(),postCommentDto.contents());
+                    this.comments.add(commentDto);
+                } else {
+                    for (CommentDto comment : comments) {
+                        comment.addReply(postCommentDto.parentCommentId(), postCommentDto.contents());
+                    }
+                }
+            }
         }
     }
 }

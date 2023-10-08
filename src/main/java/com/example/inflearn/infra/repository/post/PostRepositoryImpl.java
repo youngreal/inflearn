@@ -1,13 +1,15 @@
 package com.example.inflearn.infra.repository.post;
 
 import static com.example.inflearn.domain.QPostHashtag.postHashtag;
+import static com.example.inflearn.domain.comment.domain.QComment.comment;
 import static com.example.inflearn.domain.hashtag.QHashtag.hashtag;
 import static com.example.inflearn.domain.like.domain.QLike.like;
 import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 
 import com.example.inflearn.dto.PostDto;
-import com.example.inflearn.dto.PostHashtagDto;
+import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
@@ -34,6 +36,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                                 .select(like.id.count())
                                 .from(like)
                                 .where(post.id.eq(like.post.id)), "likeCount"),
+                        ExpressionUtils.as(JPAExpressions
+                                .select(comment.id.count())
+                                .from(comment)
+                                .where(post.id.eq(comment.post.id)), "commentCount"),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)
@@ -54,6 +60,20 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                 .from(postHashtag)
                 .join(postHashtag.hashtag)
                 .where(postHashtag.post.id.eq(postDto.getPostId()))
+                .fetch();
+    }
+
+    @Override
+    public List<PostCommentDto> commentBy(PostDto postDto) {
+        return jpaQueryFactory.select(
+                        Projections.constructor(PostCommentDto.class,
+                                comment.id,
+                                comment.parentComment.id,
+                                comment.contents
+                        ))
+                .from(comment)
+                .join(comment.post)
+                .where(comment.post.id.eq(postDto.getPostId()))
                 .fetch();
     }
 

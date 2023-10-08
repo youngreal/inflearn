@@ -1,8 +1,10 @@
 package com.example.inflearn.ui.post.dto.response;
 
 import com.example.inflearn.domain.post.domain.PostStatus;
+import com.example.inflearn.dto.CommentDto;
 import com.example.inflearn.dto.PostDto;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import lombok.Builder;
 
@@ -14,6 +16,7 @@ public record PostDetailPageResponse(
         int viewCount,
         Long likeCount,
         Set<String> hashtags,
+        List<CommentDto> commentDtoList,
         LocalDateTime createdAt,
         LocalDateTime updateAt,
         PostStatus postStatus
@@ -27,6 +30,7 @@ public record PostDetailPageResponse(
                 .viewCount(postDto.getViewCount())
                 .likeCount(postDto.getLikeCount())
                 .hashtags(postDto.getHashtags())
+                .commentDtoList(postDto.getComments())
                 .createdAt(postDto.getCreatedAt())
                 .updateAt(postDto.getUpdatedAt())
                 .postStatus(postDto.getPostStatus())
