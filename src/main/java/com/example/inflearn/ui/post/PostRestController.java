@@ -171,9 +171,14 @@ public class PostRestController {
     }
 
     @PostMapping("/posts/{postId}/comments")
-    public void comment(LoginedMember loginedMember, @RequestBody @Valid CommentContents commentContents,
+    public void comment(LoginedMember loginedMember, @RequestBody @Valid PostCommentContents postCommentContents,
             @PathVariable long postId) {
-        commentService.saveComment(loginedMember.id(), postId, commentContents.contents());
+        commentService.saveComment(loginedMember.id(), postId, postCommentContents.contents());
+    }
+
+    @PostMapping("/comments/{parentCommentId}/reply")
+    public void reply(LoginedMember loginedMember, @RequestBody @Valid PostReplyContents postReplyContents, @PathVariable long parentCommentId) {
+        commentService.saveReply(loginedMember.id(), parentCommentId, postReplyContents.contents());
     }
 
     private Set<String> validateDuplicatedHashtag(List<String> requestHashtag) {
