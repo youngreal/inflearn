@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.hashtag;
+package com.example.inflearn.domain.hashtag.domain;
 
 import com.example.inflearn.domain.PostHashtag;
 import jakarta.persistence.CascadeType;

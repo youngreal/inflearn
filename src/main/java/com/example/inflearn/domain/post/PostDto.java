@@ -1,7 +1,8 @@
-package com.example.inflearn.dto;
+package com.example.inflearn.domain.post;
 
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostStatus;
+import com.example.inflearn.dto.CommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import java.time.LocalDateTime;
