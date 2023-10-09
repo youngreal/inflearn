@@ -11,6 +11,6 @@ Mybatis 도입이유
  */
 @Mapper
 public interface PostMapper {
-
-    List<PostDto> search(String searchWord, int offset, int limit);
+//todo 정렬 조건에 따른 동적쿼리 작성을 mybatis에서 하는게 맞을까? 아니면 서비스레이어에서 해줘야할까? 전자로 선택했는데 어떤단점이있을까?
+    List<PostDto> search(String searchWord, int offset, int limit, String sort);
 }

@@ -7,11 +7,14 @@ import static com.example.inflearn.domain.like.domain.QLike.like;
 import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -25,7 +28,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public List<PostDto> getPostsPerPage(int page, int size) {
+    public List<PostDto> getPostsPerPage(int page, int size, String sortCondition) {
+        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
+        NumberPath<Long> commentCount = Expressions.numberPath(Long.class, "commentCount");
+
         return jpaQueryFactory.select(Projections.fields(PostDto.class,
                         post.id.as("postId"),
                         member.nickname,
@@ -35,22 +41,35 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                         ExpressionUtils.as(JPAExpressions
                                 .select(like.id.count())
                                 .from(like)
-                                .where(post.id.eq(like.post.id)), "likeCount"),
+                                .where(post.id.eq(like.post.id)), likeCount),
                         ExpressionUtils.as(JPAExpressions
                                 .select(comment.id.count())
                                 .from(comment)
-                                .where(post.id.eq(comment.post.id)), "commentCount"),
+                                .where(post.id.eq(comment.post.id)), commentCount),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)
                 )
                 .from(post)
                 .join(post.member, member)
-                .orderBy(post.id.desc())
+                .orderBy(sort(sortCondition, likeCount, commentCount))
                 .limit(size)
                 .offset(page)
                 .fetch();
     }
+
+    //todo Enum으로 개선?
+    private OrderSpecifier<?> sort(String sortCondition, NumberPath<Long> likeCount, NumberPath<Long> commentCount) {
+        if (sortCondition == null) {
+            return post.id.desc();
+        } else if (sortCondition.equalsIgnoreCase("like")) {
+            return likeCount.desc();
+        } else if (sortCondition.equalsIgnoreCase("comment")) {
+            return commentCount.desc();
+        }
+        return post.id.desc();
+    }
+
     @Override
     public List<PostHashtagDto> postHashtagsBy(PostDto postDto) {
         return jpaQueryFactory.select(
@@ -64,7 +83,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
     }
 
     @Override
-    public List<PostCommentDto> commentBy(PostDto postDto) {
+    public List<PostCommentDto> commentsBy(PostDto postDto) {
         return jpaQueryFactory.select(
                         Projections.constructor(PostCommentDto.class,
                                 comment.id,

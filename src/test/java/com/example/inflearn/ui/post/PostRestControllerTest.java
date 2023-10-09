@@ -19,12 +19,12 @@ import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.ui.post.dto.request.PostCommentContents;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
 import com.example.inflearn.ui.post.dto.request.PostReplyContents;
-import com.example.inflearn.ui.post.dto.request.PostSearch;
+import com.example.inflearn.domain.post.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -274,8 +274,8 @@ class PostRestControllerTest {
         PostDto postDto2 = createDto("게시글제목2", "게시글본문2");
         PostDto postDto3 = createDto("게시글제목3", "게시글본문3");
 
-        PostPaging paging = PostPaging.create(1, 20);
-        given(postQueryService.getPostsPerPage(paging.page(), paging.size())).willReturn(List.of(postDto,postDto2,postDto3));
+        PostPaging paging = new PostPaging(1, 20, null);
+        given(postQueryService.getPostsPerPage(eq(paging.page()), eq(paging.size()), any())).willReturn(List.of(postDto,postDto2,postDto3));
         given(postQueryService.getPageCount(paging.page(), paging.size())).willReturn(3L);
 
         //when & then
@@ -305,9 +305,9 @@ class PostRestControllerTest {
     void post_search_success() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
-        PostSearch postSearch = new PostSearch(3, 20, "자바");
-        given(postQueryService.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithSearchWord(postSearch.searchWord(), postSearch.page(), postSearch.size())).willReturn(3L);
+        PostSearch postSearch = PostSearch.of(3,20,"자바");
+        given(postQueryService.searchPost(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.getPageCountWithSearchWord(postSearch)).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바"))
@@ -319,8 +319,41 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 실패 : page or size값이 1보다 적을때")
+    @DisplayName("포스트 검색 성공 : 특정 정렬조건 입력")
+    void post_search_success2() throws Exception {
+        //given
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
+        PostSearch postSearch = PostSearch.of(3,20,"자바", "like");
+        given(postQueryService.searchPost(any(PostSearch.class))).willReturn(List.of(postDto));
+        given(postQueryService.getPageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바&sort=like"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
+                .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andExpect(jsonPath("$.pageCount").value(3L))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 검색 실패 : 존재하지 않는 정렬조건 입력")
     void post_search_fail() throws Exception {
+        //given
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
+        PostSearch postSearch = PostSearch.of(3,20,"자바");
+        given(postQueryService.searchPost(any(PostSearch.class))).willReturn(List.of(postDto));
+        given(postQueryService.getPageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바&sort=12345"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 검색 실패 : page or size값이 1보다 적을때")
+    void post_search_fail2() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search?page=-1&size=-1&searchWord=자바"))
                 .andExpect(status().isBadRequest())
@@ -329,7 +362,7 @@ class PostRestControllerTest {
 
     @Test
     @DisplayName("포스트 검색 실패 : 검색어 길이가 2보다 작을때")
-    void post_search_fail2() throws Exception {
+    void post_search_fail3() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search?page=1&size=20&searchWord=자"))
                 .andExpect(status().isBadRequest())
