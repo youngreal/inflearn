@@ -60,7 +60,7 @@ class PaginationServiceTest {
     @ParameterizedTest
     void offset_when_getPageNumbers(int input, int expected) {
         // given & when
-        int actual = sut.calculateOffsetWhenGetPageNumbers(input);
+        int actual = sut.OffsetWhenGetPageNumbers(input);
 
         // then
         assertThat(actual).isEqualTo(expected);

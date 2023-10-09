@@ -1,6 +1,6 @@
 package com.example.inflearn.ui.post.dto.request;
 
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import jakarta.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.List;

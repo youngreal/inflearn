@@ -1,6 +1,6 @@
 package com.example.inflearn.infra.mapper.post;
 
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 

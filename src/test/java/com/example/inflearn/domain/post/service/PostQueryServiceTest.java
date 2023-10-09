@@ -4,16 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
-import com.example.inflearn.ui.post.dto.request.PostSearch;
+import com.example.inflearn.domain.post.PostSearch;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -94,12 +95,13 @@ class PostQueryServiceTest {
 
         int page = 1;
         int size = 20;
+        String sort = "like";
 
         given(paginationService.calculateOffSet(page)).willReturn(0);
-        given(postRepository.getPostsPerPage(paginationService.calculateOffSet(page),size)).willReturn(List.of(post,post2,post3));
+        given(postRepository.getPostsPerPage(paginationService.calculateOffSet(page),size,sort)).willReturn(List.of(post,post2,post3));
 
         // when
-        List<PostDto> actual = sut.getPostsPerPage(page, size);
+        List<PostDto> actual = sut.getPostsPerPage(page, size,sort);
 
         // then
         assertThat(actual).hasSize(3);
@@ -113,7 +115,7 @@ class PostQueryServiceTest {
     @Test
     void 검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글목록을_반환한다() {
         // given
-        PostSearch postSearch = new PostSearch(1, 20, "자바");
+        PostSearch postSearch = PostSearch.of(1,20,"자바");
         PostDto postDto = PostDto.builder()
                 .title("자바스터디1")
                 .contents("자바스터디구합니다")
@@ -125,11 +127,11 @@ class PostQueryServiceTest {
 
         // when
         given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
-        given(postMapper.search(eq(postSearch.searchWord()), anyInt(), anyInt())).willReturn(postDto1);
+        given(postMapper.search(eq(postSearch.searchWord()), anyInt(), anyInt(), anyString())).willReturn(postDto1);
         given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
 
         // when
-        List<PostDto> actual = sut.searchPost(postSearch.searchWord(), postSearch.page(), postSearch.size());
+        List<PostDto> actual = sut.searchPost(postSearch);
 
         // then
         assertThat(actual).isEqualTo(List.of(postDto));
@@ -141,18 +143,18 @@ class PostQueryServiceTest {
     @Test
     void page_count_success() {
         // given
-        PostSearch postSearch = new PostSearch(1, 20, "자바");
+        PostSearch postSearch = PostSearch.of(1,20,"자바");
 
         // when
-        given(paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.OffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
         given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
-        Long actual = sut.getPageCountWithSearchWord(postSearch.searchWord(), postSearch.page(), postSearch.size());
+        Long actual = sut.getPageCountWithSearchWord(postSearch);
 
         // then
-        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.calculateOffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 }

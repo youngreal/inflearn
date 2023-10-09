@@ -1,7 +1,7 @@
 package com.example.inflearn.ui.post.dto.response;
 
 import com.example.inflearn.domain.post.domain.PostStatus;
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.Builder;

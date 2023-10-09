@@ -1,12 +1,11 @@
 package com.example.inflearn.ui.post.dto.request;
 
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import jakarta.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 
 @Builder
 public record PostWriteRequest(

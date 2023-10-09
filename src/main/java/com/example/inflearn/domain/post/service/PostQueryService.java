@@ -1,10 +1,11 @@
 package com.example.inflearn.domain.post.service;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
+import com.example.inflearn.domain.post.PostSearch;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,24 +28,24 @@ public class PostQueryService {
         postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
         PostDto postDetail = postRepository.postDetail(postId);
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
-        postDetail.inputComments(postRepository.commentBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
         return postDetail;
     }
 
-    public List<PostDto> searchPost(String searchWord, int page, int size) {
-        List<PostDto> postDtos = postMapper.search(searchWord, paginationService.calculateOffSet(page), size);
+    public List<PostDto> searchPost(PostSearch postSearch) {
+        List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
-    public List<PostDto> getPostsPerPage(int page, int size) {
-        List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(page), size);
+    public List<PostDto> getPostsPerPage(int page, int size, String sort) {
+        List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(page), size, sort);
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
-    public Long getPageCountWithSearchWord(String searchWord, int page, int size) {
-        return postRepository.countPageWithSearchWord(searchWord, paginationService.calculateOffsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+    public Long getPageCountWithSearchWord(PostSearch postSearch) {
+        return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
     }
 
     // page 1 , size = 20
@@ -52,7 +53,7 @@ public class PostQueryService {
     // page 11 , size = 20 size = x 10
     // offset 200, 20
     public long getPageCount(int page, int size) {
-        List<Long> pageCount = postRepository.getPageCount(paginationService.calculateOffsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+        List<Long> pageCount = postRepository.getPageCount(paginationService.OffsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
         return pageCount.size();
     }
 
