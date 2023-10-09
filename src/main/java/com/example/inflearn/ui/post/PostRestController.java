@@ -7,8 +7,9 @@ import com.example.inflearn.domain.comment.service.CommentService;
 import com.example.inflearn.domain.like.service.LikeService;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
-import com.example.inflearn.ui.post.dto.request.CommentContents;
-import com.example.inflearn.ui.post.dto.request.PostSearch;
+import com.example.inflearn.ui.post.dto.request.PostCommentContents;
+import com.example.inflearn.ui.post.dto.request.PostReplyContents;
+import com.example.inflearn.domain.post.PostSearch;
 import com.example.inflearn.ui.post.dto.request.PostPaging;
 import com.example.inflearn.ui.post.dto.response.PostDetailPageResponse;
 import com.example.inflearn.ui.post.dto.response.PostResponse;
@@ -74,12 +75,6 @@ public class PostRestController {
         }
     }
 
-    /**
-     * select * from post order by id desc limit 0,20;
-     * select count(*)가 70초 이상걸리는 성능..
-     * page는 파라미터로 받는다.
-     */
-
     /*
     방법 1. 서브쿼리를 이용한 방법
 
@@ -124,12 +119,43 @@ public class PostRestController {
     12000 개 기준으로 0.016~0.032초 나와서 더 가져올수도 있을것같다. 어느정도 수치까지가 괜찮을지는 조금더 생각해봐야한다.
 
      */
-    //todo 좋아요, 조회수, 댓글 추가
+
+   /*
+    todo
+    - 최신순으로 조회한다(ㅇ)
+    - 해시태그로 검색한다
+    - 댓글많은순으로 조회한다(ㅇ)
+    - 좋아요순으로 조회한다(ㅇ)
+     */
+
+    /*
+     ## Eager일때
+     select post offset limit
+     select member in
+     select post,hashtag from post_hashtag left join hashtag
+     where post id in
+     select post offset limit
+
+     ## Lazy일때
+     select post offset limit
+     select * from post_hashtag where post_id in
+     select hashtag * from hashtag where hashtag_id in
+     select post offset limit
+
+     ## Lazy + fetch join 일때
+     select post from post join member order by id desc offset limit
+     select * from post_hashtag where post_id in
+     select * from hashtag where hashtag_id in
+     select post offset limit
+     */
+    //todo 조인이 13초 걸리는데 이유가 뭘까? 인덱스를 태워야한다..
+    //todo PostPaging으로 Service에 넘겨야할까? primitive type으로 변경해서 넘겨야할까.. postPaging은 ui에서 요청받는 dto인데..?
     @GetMapping("/posts")
     public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
-        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size()).stream()
+        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size(), postPaging.sort()).stream()
                 .map(PostResponse::from)
                 .toList();
+
         long pageCount = postQueryService.getPageCount(postPaging.page(), postPaging.size());
         return new PostResponseWithPageCount(posts, pageCount);
     }
@@ -142,20 +168,21 @@ public class PostRestController {
     - 댓글많은순으로 조회한다(지금못함)
     - 좋아요순으로 조회한다(지금못함)
      */
+
     @GetMapping("/posts/search")
-    public PostResponseWithPageCount searchedPosts(
-            @ModelAttribute @Valid PostSearch postsearch
-    ) {
-        if (postsearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+    public PostResponseWithPageCount searchedPosts(@ModelAttribute @Valid PostSearch postSearch) {
+        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
             throw new SearchWordLengthException();
         }
-
-        List<PostResponse> posts = postQueryService.searchPost(postsearch.searchWord(), postsearch.page(), postsearch.size())
-                .stream()
+        /*
+        파라미터 타입을 풀어서쓸까, 객체로 넘길까 고민하다가 파라미터로 넘기게되면 PostSearch가 변경되는경우 아래의 레이어에도 변경의 영향이 미칠수있으며
+         객체로 넘기게되면 PostSearch에 추가요구사항(필드추가)이 생기더라도 이 아래의 레이어에선 코드변경이 없을수도 있는경우가 있기때문에 우선 객체로 넘기는 방식을 선택해본다.
+         */
+        List<PostResponse> posts = postQueryService.searchPost(postSearch).stream()
                 .map(PostResponse::from)
                 .toList();
 
-        long pageCount = postQueryService.getPageCountWithSearchWord(postsearch.searchWord(), postsearch.page(), postsearch.size());
+        long pageCount = postQueryService.getPageCountWithSearchWord(postSearch);
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
