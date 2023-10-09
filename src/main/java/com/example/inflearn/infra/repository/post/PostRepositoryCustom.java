@@ -1,6 +1,6 @@
 package com.example.inflearn.infra.repository.post;
 
-import com.example.inflearn.dto.PostDto;
+import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import java.util.List;

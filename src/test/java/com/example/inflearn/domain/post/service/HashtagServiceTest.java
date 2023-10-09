@@ -1,14 +1,15 @@
 package com.example.inflearn.domain.post.service;
 
-import static com.example.inflearn.domain.hashtag.Hashtag.createHashtag;
+import static com.example.inflearn.domain.hashtag.domain.Hashtag.createHashtag;
 import static java.util.Set.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.example.inflearn.domain.hashtag.Hashtag;
+import com.example.inflearn.domain.hashtag.domain.Hashtag;
 import com.example.inflearn.domain.PostHashtag;
+import com.example.inflearn.domain.hashtag.service.HashtagService;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.post.HashtagRepository;
 import java.util.ArrayList;
