@@ -127,7 +127,7 @@ class PostQueryServiceTest {
 
         // when
         given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
-        given(postMapper.search(eq(postSearch.searchWord()), anyInt(), anyInt(), anyString())).willReturn(postDto1);
+        given(postMapper.search(eq(postSearch.searchWord()), anyInt(), eq(postSearch.size()), eq(postSearch.sort()))).willReturn(postDto1);
         given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
 
         // when
@@ -155,6 +155,53 @@ class PostQueryServiceTest {
 
         // then
         then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        assertThat(actual).isEqualTo(1L);
+    }
+
+    @DisplayName("검색어를 포함해 게시글을 검색하면 해당 검색어를 포함하고있는 게시글들을 반환한다")
+    @Test
+    void 해시태그_검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글목록을_반환한다() {
+        // given
+        PostSearch postSearch = PostSearch.of(1,20,"자바");
+        PostDto postDto = PostDto.builder()
+                .title("자바스터디1")
+                .contents("자바스터디구합니다")
+                .hashtags(Set.of())
+                .build();
+
+        List<Long> postIds = new ArrayList<>(List.of(1L, 2L, 3L));
+        List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(new PostHashtagDto(1L, "자바")));
+        List<PostDto> searchResults = List.of(postDto);
+        given(postRepository.findPostIdsByHashtagSearchWord(postSearch.searchWord())).willReturn(postIds);
+        given(postRepository.searchWithHashtag(eq(postSearch.searchWord()), anyInt(), eq(postSearch.size()), eq(postSearch.sort()), eq(postIds))).willReturn(searchResults);
+        given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
+        given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
+
+        // when
+        List<PostDto> actual = sut.searchPostWithHashtag(postSearch);
+
+        // then
+        assertThat(actual).isEqualTo(List.of(postDto));
+        assertThat(actual.get(0).getHashtags()).isNotNull();
+        assertThat(actual).hasSize(1);
+    }
+
+    @DisplayName("해시태그 검색어를 포함해 게시글을 검색하면 해당 페이지에 표시될 페이지 개수를 계산할수있도록 total을 전해준다")
+    @Test
+    void page_count_success_with_hashtag_search() {
+        // given
+        PostSearch postSearch = PostSearch.of(1,20,"자바");
+
+        // when
+        given(paginationService.OffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
+        given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+
+        // when
+        Long actual = sut.getPageCountWithHashtagSearchWord(postSearch);
+
+        // then
+        then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 }

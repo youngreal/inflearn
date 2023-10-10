@@ -6,6 +6,7 @@ import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.domain.post.PostSearch;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,6 +39,13 @@ public class PostQueryService {
         return postDtos;
     }
 
+    public List<PostDto> searchPostWithHashtag(PostSearch postSearch) {
+        List<Long> postIds = postRepository.findPostIdsByHashtagSearchWord(postSearch.searchWord());
+        List<PostDto> postDtos = postRepository.searchWithHashtag(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort(), postIds);
+        setHashtagsWithJoin(postDtos);
+        return postDtos;
+    }
+
     public List<PostDto> getPostsPerPage(int page, int size, String sort) {
         List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(page), size, sort);
         setHashtagsWithJoin(postDtos);
@@ -46,6 +54,10 @@ public class PostQueryService {
 
     public Long getPageCountWithSearchWord(PostSearch postSearch) {
         return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+    }
+
+    public Long getPageCountWithHashtagSearchWord(PostSearch postSearch) {
+        return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
     }
 
     // page 1 , size = 20

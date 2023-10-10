@@ -18,4 +18,10 @@ public interface PostRepositoryCustom {
     PostDto postDetail(long postId);
 
     List<PostCommentDto> commentsBy(PostDto postDto);
+
+    List<PostDto> searchWithHashtag(String searchWord, int page, int size, String sort, List<Long> postIds);
+
+    List<Long> findPostIdsByHashtagSearchWord(String searchWord);
+
+    Long countPageWithHashtagSearchWord(String searchWord, int page, int size);
 }
