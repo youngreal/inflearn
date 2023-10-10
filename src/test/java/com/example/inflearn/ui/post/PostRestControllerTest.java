@@ -370,6 +370,69 @@ class PostRestControllerTest {
     }
 
     @Test
+    @DisplayName("포스트 해시태그 검색 성공 : 특정 해시태그 검색어 입력")
+    void post_search_hashtag_success() throws Exception {
+        //given
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
+        PostSearch postSearch = PostSearch.of(3,20,"aws");
+        given(postQueryService.searchPostWithHashtag(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.getPageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=aws"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
+                .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andExpect(jsonPath("$.pageCount").value(3L))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 해시태그 검색 성공 : 특정 정렬조건 입력")
+    void post_search_hashtag_success2() throws Exception {
+        //given
+        PostDto postDto = createDto("게시글제목1", "게시글본문1");
+        PostSearch postSearch = PostSearch.of(3,20,"aws", "like");
+        given(postQueryService.searchPostWithHashtag(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.getPageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
+
+        //when & then
+        mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=aws&sort=like"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts[0].title").value("게시글제목1"))
+                .andExpect(jsonPath("$.posts[0].contents").value("게시글본문1"))
+                .andExpect(jsonPath("$.pageCount").value(3L))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 해시태그 검색 실패 : 존재하지 않는 정렬조건 입력")
+    void post_search_hashtag_fail() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=자바&sort=12345"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 해시태그 검색 실패 : page or size값이 1보다 적을때")
+    void post_search_hashtag_fail2() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts/search-hashtag?page=-1&size=-1&searchWord=자바"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("포스트 해시태그 검색 실패 : 검색어 길이가 2보다 작을때")
+    void post_search_hashtag_fail3() throws Exception {
+        //when & then
+        mockMvc.perform(get("/posts/search-hashtag?page=1&size=20&searchWord=자"))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("게시글 좋아요 성공")
     void post_like_success() throws Exception {
         //given

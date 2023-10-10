@@ -186,6 +186,20 @@ public class PostRestController {
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
+    @GetMapping("/posts/search-hashtag")
+    public PostResponseWithPageCount searchedPostsWithHashtag(@ModelAttribute @Valid PostSearch postSearch) {
+        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+            throw new SearchWordLengthException();
+        }
+
+        List<PostResponse> posts = postQueryService.searchPostWithHashtag(postSearch).stream()
+                .map(PostResponse::from)
+                .toList();
+
+        long pageCount = postQueryService.getPageCountWithHashtagSearchWord(postSearch);
+        return new PostResponseWithPageCount(posts, pageCount);
+    }
+
 
     @PostMapping("/posts/{postId}/likes")
     public void like(LoginedMember loginedMember,@PathVariable long postId) {

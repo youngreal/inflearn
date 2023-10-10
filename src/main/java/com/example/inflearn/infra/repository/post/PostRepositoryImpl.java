@@ -2,7 +2,7 @@ package com.example.inflearn.infra.repository.post;
 
 import static com.example.inflearn.domain.QPostHashtag.postHashtag;
 import static com.example.inflearn.domain.comment.domain.QComment.comment;
-import static com.example.inflearn.domain.hashtag.QHashtag.hashtag;
+import static com.example.inflearn.domain.hashtag.domain.QHashtag.hashtag;
 import static com.example.inflearn.domain.like.domain.QLike.like;
 import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
@@ -21,9 +21,11 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+//todo 중복코드 리팩토링 해야함
+//todo Impl클래스를 또 분리해야할수도?
 @Slf4j
 @RequiredArgsConstructor
-public class PostRepositoryImpl implements PostRepositoryCustom{
+public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
 
@@ -94,6 +96,58 @@ public class PostRepositoryImpl implements PostRepositoryCustom{
                 .join(comment.post)
                 .where(comment.post.id.eq(postDto.getPostId()))
                 .fetch();
+    }
+
+    @Override
+    public List<PostDto> searchWithHashtag(String searchWord, int page, int size, String sortCondition, List<Long> postIds) {
+        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
+        NumberPath<Long> commentCount = Expressions.numberPath(Long.class, "commentCount");
+
+        return jpaQueryFactory.select(Projections.fields(PostDto.class,
+                        post.id.as("postId"),
+                        member.nickname,
+                        post.title,
+                        post.contents,
+                        post.viewCount,
+                        ExpressionUtils.as(JPAExpressions
+                                .select(like.id.count())
+                                .from(like)
+                                .where(post.id.eq(like.post.id)), likeCount),
+                        ExpressionUtils.as(JPAExpressions
+                                .select(comment.id.count())
+                                .from(comment)
+                                .where(post.id.eq(comment.post.id)), commentCount),
+                        post.createdAt,
+                        post.updatedAt,
+                        post.postStatus)
+                )
+                .from(post)
+                .join(post.member, member)
+                .where(post.id.in(postIds))
+                .orderBy(sort(sortCondition, likeCount, commentCount))
+                .limit(size)
+                .offset(page)
+                .fetch();
+    }
+
+    @Override
+    public List<Long> findPostIdsByHashtagSearchWord(String searchWord) {
+        return jpaQueryFactory.select(postHashtag.post.id)
+                .from(postHashtag)
+                .join(postHashtag.hashtag)
+                .where(hashtag.hashtagName.eq(searchWord))
+                .fetch();
+    }
+
+    @Override
+    public Long countPageWithHashtagSearchWord(String searchWord, int page, int size) {
+        return jpaQueryFactory.select(postHashtag.post.id.count())
+                .from(postHashtag)
+                .join(postHashtag.hashtag)
+                .where(hashtag.hashtagName.eq(searchWord))
+                .limit(size)
+                .offset(page)
+                .fetchOne();
     }
 
     @Override
