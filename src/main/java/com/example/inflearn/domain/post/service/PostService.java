@@ -30,7 +30,7 @@ public class PostService {
 
     public void write(PostDto dto, long id) {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
-        Post post = dto.toEntity();
+        Post post = dto.toEntityForWrite();
 
         if (dto.getHashtags().isEmpty()) {
             post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
@@ -54,5 +54,14 @@ public class PostService {
         hashtagService.saveHashtagsWhenPostUpdate(post, dto.getHashtags());
         hashtagService.deleteHashtags(beforePostHashtags, dto.getHashtags());
         post.updateTitleAndContents(dto.getTitle(), dto.getContents());
+    }
+
+    //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
+    public void updateViewCountForPopularPosts(List<Long> postIds) {
+        for (Long postId : postIds) {
+            Post post = postRepository.findById(postId).orElseThrow();
+            post.plusViewCount();
+            //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
+        }
     }
 }
