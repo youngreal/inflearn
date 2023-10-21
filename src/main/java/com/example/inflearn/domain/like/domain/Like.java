@@ -23,7 +23,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 public class Like {
-
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
@@ -53,10 +52,5 @@ public class Like {
                 .member(member)
                 .post(post)
                 .build();
-    }
-
-    public void addMemberAndPost() {
-        member.getLikes().add(this);
-        post.getLikes().add(this);
     }
 }
