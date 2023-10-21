@@ -16,7 +16,7 @@ public class PaginationService {
         return size * NUMBER_OF_PAGE;
     }
 
-    public int OffsetWhenGetPageNumbers(int page) {
+    public int offsetWhenGetPageNumbers(int page) {
         int offset;
 
         if (page % NUMBER_OF_PAGE == 0) {

@@ -4,18 +4,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.post.PostDto;
+import com.example.inflearn.domain.post.domain.Post;
+import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.domain.post.PostSearch;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,25 +43,33 @@ class PostQueryServiceTest {
     @Mock
     private PostMapper postMapper;
 
-    @DisplayName("게시글 상세정보를 조회한다")
+    @DisplayName("게시글 상세정보 조회시 조회수가 상승하고, 해시태그와 댓글이 객체에 입력된다")
     @Test
-    void 게시글_상세정보를_조회한다 () {
+    void post_detail_success_input_hashtag_and_comment() {
         // given
         long postId = 1;
         PostDto postDto = PostDto.builder()
                 .title("글제목")
                 .contents("글내용")
+                .hashtags(new HashSet<>())
+                .comments(new ArrayList<>())
                 .build();
-        given(postRepository.findById(postId)).willReturn(Optional.of(postDto.toEntity()));
+        Post post = postDto.toEntityForWrite();
+
+        List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(PostHashtagDto.create("자바"), PostHashtagDto.create("스프링")));
+        List<PostCommentDto> postCommentDtos = new ArrayList<>(List.of(PostCommentDto.create("댓글1"), PostCommentDto.create("댓글2")));
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(postRepository.postDetail(postId)).willReturn(postDto);
+        given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
+        given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
 
         // when
-        assertThat(postDto.getHashtags()).isNullOrEmpty();
         PostDto actual = sut.postDetail(postId);
 
         // then
-        assertThat(postDto.getHashtags()).isNotNull();
-        assertThat(actual).isEqualTo(postDto);
+        assertThat(post.getViewCount()).isEqualTo(postDto.getViewCount() + 1);
+        assertThat(actual.getHashtags().size()).isEqualTo(postHashtagDtos.size());
+        assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
     }
 
     @DisplayName("게시글 상세정보 조회 실패 : 게시글이 존재하지 않는다")
@@ -146,15 +156,15 @@ class PostQueryServiceTest {
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
         // when
-        given(paginationService.OffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.offsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
         given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
         Long actual = sut.getPageCountWithSearchWord(postSearch);
 
         // then
-        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 
@@ -193,15 +203,15 @@ class PostQueryServiceTest {
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
         // when
-        given(paginationService.OffsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.offsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
         given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
         Long actual = sut.getPageCountWithHashtagSearchWord(postSearch);
 
         // then
-        then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 }
