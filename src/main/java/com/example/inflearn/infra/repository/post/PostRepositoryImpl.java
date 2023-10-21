@@ -17,6 +17,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -151,6 +152,24 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
+    public List<PostDto> findPopularPostByDate(LocalDateTime firstDay, LocalDateTime endDay) {
+        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
+        return jpaQueryFactory.select(Projections.fields(PostDto.class,
+                        post.id,
+                        ExpressionUtils.as(JPAExpressions
+                                .select(like.id.count())
+                                .from(like)
+                                .where(post.id.eq(like.post.id)), likeCount))
+                )
+                .from(post)
+                .where(post.createdAt.between(firstDay, endDay))
+                .groupBy(post.id)
+                .orderBy(likeCount.desc())
+                .limit(5)
+                .fetch();
+    }
+
+    @Override
     public List<PostHashtagDto> postHashtagsByPostDtos(List<PostDto> posts) {
         List<Long> postIds = posts.stream().map(PostDto::getPostId).toList();
 
@@ -176,6 +195,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                                 .select(like.id.count())
                                 .from(like)
                                 .where(like.post.id.eq(postId)), "likeCount"),
+                        ExpressionUtils.as(JPAExpressions
+                                .select(comment.id.count())
+                                .from(comment)
+                                .where(post.id.eq(comment.post.id)), "commentCount"),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)

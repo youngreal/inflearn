@@ -56,7 +56,7 @@ public class PostDto {
         this.postStatus = postStatus;
     }
 
-    public Post toEntity() {
+    public Post toEntityForWrite() {
         return Post.builder()
                 .title(this.title)
                 .contents(this.contents)
