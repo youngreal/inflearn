@@ -58,11 +58,11 @@ public class PostQueryService {
     }
 
     public Long getPageCountWithSearchWord(PostSearch postSearch) {
-        return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
     }
 
     public Long getPageCountWithHashtagSearchWord(PostSearch postSearch) {
-        return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.OffsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
     }
 
     // page 1 , size = 20
