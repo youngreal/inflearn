@@ -93,4 +93,8 @@ public class Post {
         this.contents = contents;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void plusViewCount() {
+        this.viewCount += 1;
+    }
 }

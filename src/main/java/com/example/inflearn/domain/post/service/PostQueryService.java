@@ -29,8 +29,9 @@ public class PostQueryService {
     //todo 여기 있는게 좋을것인가? 개선해야하지않을까?
     private final RedisRepository redisRepository;
 
+    //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
     public PostDto postDetail(long postId) {
-        postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+        addViewCount(postId);
         PostDto postDetail = postRepository.postDetail(postId);
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
         postDetail.inputComments(postRepository.commentsBy(postDetail));
@@ -93,5 +94,20 @@ public class PostQueryService {
                 .collect(Collectors.groupingBy(PostHashtagDto::postId));
 
         postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
+    }
+
+    private void addViewCount(long postId) {
+        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
+        PostDto postDtoInRedis = redisRepository.getPopularPosts().stream()
+                .filter(postDto -> postDto.getPostId().equals(postId))
+                .findFirst().orElse(null);
+
+        // 레디스에 없으면 DB에서 꺼내서 조회수 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+        if (postDtoInRedis == null) {
+            Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+            post.plusViewCount();
+        } else {
+            redisRepository.updatePopularPostViewCount(postDtoInRedis.getPostId());
+        }
     }
 }

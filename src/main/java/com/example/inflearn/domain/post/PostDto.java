@@ -88,4 +88,9 @@ public class PostDto {
             }
         }
     }
+
+    //todo DTO에 해당 로직이 있는게 괜찮은걸까?
+    public void updateViewCount() {
+        this.viewCount += 1;
+    }
 }

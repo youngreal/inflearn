@@ -20,9 +20,11 @@ import org.springframework.stereotype.Component;
 public class RedisRepository {
 
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_KEY = "popularPostLock";
+    private static final String UPDATE_VIEW_LOCK_KEY = "updateViewLock";
     private static final String LIKE_COUNT_KEY = "likeCount";
     private static final int POPULAR_POST_COUNT = 5;
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "lock";
+    private static final String UPDATE_VIEW_LOCK_VALUE = "updateViewLock";
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisTemplate<String, List<PostDto>> likeCountRedis;
 
@@ -36,6 +38,15 @@ public class RedisRepository {
 
     public void popularPostListUpdateUnLock() {
         redisTemplate.delete(POPULAR_POST_LIST_UPDATE_LOCK_KEY);
+    }
+
+    public Boolean updateViewCountLock() {
+        return redisTemplate.opsForValue()
+                .setIfAbsent(UPDATE_VIEW_LOCK_KEY, UPDATE_VIEW_LOCK_VALUE, Duration.ofMillis(3_000));
+    }
+
+    public void updateViewCountUnLock() {
+        redisTemplate.delete(UPDATE_VIEW_LOCK_KEY);
     }
 
     public List<PostDto> getPopularPosts() {
@@ -70,5 +81,17 @@ public class RedisRepository {
 
     public void setPopularPosts(List<PostDto> popularPosts) {
         likeCountRedis.opsForValue().set(LIKE_COUNT_KEY, popularPosts);
+    }
+
+    public void updatePopularPostViewCount(long postId) {
+        List<PostDto> postDtos = likeCountRedis.opsForValue().get(LIKE_COUNT_KEY);
+        //todo 레디스에서 get할때마다 null체크하는데 optional로 해줘도 될듯?
+        if (postDtos != null) {
+            for (PostDto postDto : postDtos) {
+                if (postDto.getPostId() == postId) {
+                    postDto.updateViewCount();
+                }
+            }
+        }
     }
 }

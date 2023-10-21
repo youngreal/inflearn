@@ -24,6 +24,8 @@ public class PostSchedulerService {
 
     private static final int HOURS = 60 * 60 * 1_000;
     private static final int THREE_HOURS = 3 * HOURS;
+    private static final int MINUTE = 60 * 1_000;
+    private static final int THREE_MINUTE = 3 * MINUTE;
     private final RedisRepository redisRepository;
     private final PostQueryService postQueryService;
     private final PostService postService;
@@ -42,6 +44,33 @@ public class PostSchedulerService {
             postQueryService.updatePopularPosts();
         } finally {
             redisRepository.popularPostListUpdateUnLock();
+        }
+    }
+
+    /*
+    여러 분산 서버에서 동시실행 방지를 위한 분산락
+     */
+    @Scheduled(fixedDelay = THREE_MINUTE)
+    public void updateViewCountToDatabase() {
+        if (FALSE.equals(redisRepository.updateViewCountLock())) {
+            log.info("The updateViewCount lock has already been acquired from another server.");
+            return;
+        }
+
+        try {
+            log.info("Get Lock : update PopularPostLists");
+            List<PostDto> popularPosts = redisRepository.getPopularPosts();
+            List<Long> postIds = new ArrayList<>();
+            //todo optional로 개선
+            if (popularPosts != null) {
+                for (PostDto popularPost : popularPosts) {
+                    postIds.add(popularPost.getPostId());
+                }
+            }
+
+            postService.updateViewCountForPopularPosts(postIds);
+        } finally {
+            redisRepository.updateViewCountUnLock();
         }
     }
 }
