@@ -33,7 +33,6 @@ public class LikeService {
         }
 
         Like like = Like.create(member, post);
-        like.addMemberAndPost();
         likeRepository.save(like);
     }
 

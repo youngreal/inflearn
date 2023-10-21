@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
@@ -25,7 +26,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
+//todo Index 컬럼, nullable 컬럼, @Table(uniqueConstraints = ) 조건을 사용해서 유니크컬럼도 지정해보자.
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @Getter
@@ -38,13 +39,12 @@ public class Post {
     @Column(nullable = false)
     private String title; // 글 제목
 
-    //todo @Lob?
     //todo fulltext 인덱스 인걸 어떻게 반영해야할까?
     @Column(nullable = false)
+    @Lob
     private String contents; // 글내용
 
     private int viewCount; // 조회수
-
     private LocalDateTime createdAt; // 작성날짜
     private LocalDateTime updatedAt; // 수정날짜
 
@@ -55,17 +55,13 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
-    @ToString.Exclude
-    @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
-    private List<Like> likes = new ArrayList<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Member member;
 
     @Builder
     private Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
-            LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags, List<Like> likes,
+            LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags,
             Member member) {
         this.id = id;
         this.title = title;
@@ -75,17 +71,16 @@ public class Post {
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
         this.postHashtags = postHashtags;
-        this.likes = likes;
         this.member = member;
     }
 
+    //todo 조금 애매하고 헷갈릴수있는 로직
     public void addPostHashtag(PostHashtag postHashtag) {
         this.postHashtags.add(postHashtag);
     }
 
     public void addMember(Member member) {
         this.member = member;
-        member.getPosts().add(this);
     }
 
     public void updateTitleAndContents(String title, String contents) {

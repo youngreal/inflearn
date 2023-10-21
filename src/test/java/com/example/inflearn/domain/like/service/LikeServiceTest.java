@@ -52,11 +52,6 @@ class LikeServiceTest {
                 .id(1L)
                 .title("제목1234")
                 .contents("본문1234")
-                .likes(new ArrayList<>(List.of(Like.create(member, Post.builder()
-                        .title("제목2")
-                        .contents("본문2")
-                        .build())
-                )))
                 .build();
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
