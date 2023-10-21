@@ -81,7 +81,7 @@ class MailEventTest {
         await().untilAsserted(() -> verify(mailService).send(any()));
     }
 
-    @DisplayName("메일서버에서 예외발생시 retry가 최대 5회 동작한다")
+    @DisplayName("메일서버에서 예외발생시 retry가 최대 3회 동작한다")
     @Test
     void retry() {
         // given
@@ -94,6 +94,6 @@ class MailEventTest {
 
         // then
         // 조건이 true가 되거나 시간초과에 도달할때까지 기다리며 테스트에서 비동기작업을 처리/확인방법을 제공
-        await().timeout(TIMEOUT_FOR_TEST, TimeUnit.SECONDS).untilAsserted(() -> verify(mailService, times(5)).send(any()));
+        await().timeout(TIMEOUT_FOR_TEST, TimeUnit.SECONDS).untilAsserted(() -> verify(mailService, times(3)).send(any()));
     }
 }

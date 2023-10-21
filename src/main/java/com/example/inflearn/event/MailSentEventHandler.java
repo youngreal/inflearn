@@ -22,7 +22,7 @@ public class MailSentEventHandler {
     @Async
     @Retryable(
             retryFor = CustomMessagingException.class,
-            maxAttempts = 5,
+            maxAttempts = 3,
             backoff = @Backoff(
                     delay = 1000,
                     maxDelay = 20000,
