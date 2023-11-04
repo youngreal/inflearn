@@ -6,4 +6,7 @@ public record PostCommentDto(
         String contents
 ) {
 
+    public static PostCommentDto create(String contents) {
+        return new PostCommentDto(null, null, contents);
+    }
 }

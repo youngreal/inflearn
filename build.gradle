@@ -60,13 +60,11 @@ def generated= "$buildDir/generated/querydsl"
 
 // java source set에 querydsl QClass 위치 추가
 sourceSets {
-//    main.java.srcDires += [generated]
     main.java.srcDirs generated
 }
 
 // querydsl QClass 파일 생성 위치를 지정
 tasks.withType(JavaCompile){
-//    options.getGeneratedSourceOutputDirectory().set(file(generated))
     options.annotationProcessorGeneratedSourcesDirectory = file(generated)
 }
 

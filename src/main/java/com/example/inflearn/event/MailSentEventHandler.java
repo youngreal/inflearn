@@ -32,12 +32,12 @@ public class MailSentEventHandler {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋된후에 이벤트가 실행된다.
     public void handle(MailSentEvent event) {
-        log.info("event 실행");
+        log.info("메일 event 실행");
         mailService.send(event.getMessage());
     }
 
     @Recover
     public void recoverMailSend(CustomMessagingException e) {
-        log.info("recover start : exception msg = {}", e.getMessage());
+        log.warn("recover start : exception msg = {}", e.getMessage());
     }
 }

@@ -12,9 +12,9 @@ public record PostResponse(
         String nickname,
         String title,
         String contents,
-        int viewCount,
-        Long likeCount,
-        Long commentCount,
+        long viewCount,
+        long likeCount,
+        long commentCount,
         Set<String> hashtags,
         LocalDateTime createdAt,
         PostStatus postStatus

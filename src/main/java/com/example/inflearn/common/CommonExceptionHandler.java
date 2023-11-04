@@ -16,6 +16,7 @@ import com.example.inflearn.common.exception.WrongEmailTokenException;
 import com.example.inflearn.common.exception.WrongServletRequestException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -139,6 +140,13 @@ public class CommonExceptionHandler {
         return ResponseEntity
                 .status(e.getHttpStatus())
                 .body(e.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> dataIntegrityViolationException() {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Unique 제약조건 위배");
     }
 //
 //    @ExceptionHandler(RuntimeException.class)
