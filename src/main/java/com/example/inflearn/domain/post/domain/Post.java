@@ -1,23 +1,22 @@
 package com.example.inflearn.domain.post.domain;
 
 import com.example.inflearn.domain.PostHashtag;
-import com.example.inflearn.domain.like.domain.Like;
 import com.example.inflearn.domain.member.domain.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,14 +25,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
 //todo Index 컬럼, nullable 컬럼, @Table(uniqueConstraints = ) 조건을 사용해서 유니크컬럼도 지정해보자.
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @Getter
+@Table(indexes = {
+        @Index(columnList = "createdAt")
+})
 @Entity
 public class Post {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -44,7 +48,7 @@ public class Post {
     @Lob
     private String contents; // 글내용
 
-    private int viewCount; // 조회수
+    private long viewCount; // 조회수
     private LocalDateTime createdAt; // 작성날짜
     private LocalDateTime updatedAt; // 수정날짜
 
@@ -56,11 +60,11 @@ public class Post {
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "member_id")
     private Member member;
 
     @Builder
-    private Post(Long id, String title, String contents, int viewCount, LocalDateTime createdAt,
+    private Post(Long id, String title, String contents, long viewCount, LocalDateTime createdAt,
             LocalDateTime updatedAt, PostStatus postStatus, List<PostHashtag> postHashtags,
             Member member) {
         this.id = id;
@@ -91,5 +95,9 @@ public class Post {
 
     public void plusViewCount() {
         this.viewCount += 1;
+    }
+
+    public void updateViewCountFromCache(long viewCount) {
+        this.viewCount = viewCount;
     }
 }
