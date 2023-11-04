@@ -28,8 +28,8 @@ public class Hashtag {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "hashtag_name", unique = true)
-    private String hashtagName;
+    @Column(name = "hashtag_name")
+    private String hashtagName; // unique
 
     @ToString.Exclude
     @OneToMany(mappedBy = "hashtag", cascade = CascadeType.REMOVE)
