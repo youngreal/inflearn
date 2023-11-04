@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("default, dev")
 @Component
 public class DevMailService implements MailService{
 
@@ -32,7 +32,7 @@ public class DevMailService implements MailService{
         } catch (MessagingException e) {
             log.error("messaging exception 발생", e);
             // retry를 적용시키기위해 uncheckException을 던진다.
-            throw new CustomMessagingException();
+            throw new CustomMessagingException(e);
         }
     }
 }

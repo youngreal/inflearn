@@ -5,4 +5,7 @@ public record PostHashtagDto (
         String hashtagName
 ){
 
+    public static PostHashtagDto create(String hashtagName) {
+        return new PostHashtagDto(null, hashtagName);
+    }
 }

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.example.inflearn.common.config.RedisConfig;
 import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
@@ -33,6 +34,9 @@ class MailEventTest {
     @Autowired
     private MemberService memberService;
 
+    @Autowired
+    private RedisConfig redisConfig;
+
     @MockBean
     private MailService mailService;
 
@@ -52,15 +56,14 @@ class MailEventTest {
         event = new MailSentEvent(member);
     }
 
-    @DisplayName("회원가입시 예외가 발생하면 메일이 전송되지않는다")
+    @DisplayName("회원저장시 예외가 발생하면 메일이 전송되지않는다")
     @Test
-    void test0() {
+    void 회원저장_실패시_메일_전송되지않음() {
         // given
         given(memberRepository.existsByEmail(member.getEmail())).willReturn(false);
         given(memberRepository.save(any())).willThrow(new RuntimeException());
 
         // when
-        //todo 테스트코드에 try/catch가 있는게 개선가능..?
         try {
             memberService.signUp(member);
         } catch (RuntimeException e) {

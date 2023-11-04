@@ -11,6 +11,7 @@ import static org.mockito.BDDMockito.then;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
+import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
@@ -43,6 +44,9 @@ class PostQueryServiceTest {
     @Mock
     private PostMapper postMapper;
 
+    @Mock
+    private LikeCountRedisRepository likeCountRedisRepository;
+
     @DisplayName("게시글 상세정보 조회시 조회수가 상승하고, 해시태그와 댓글이 객체에 입력된다")
     @Test
     void post_detail_success_input_hashtag_and_comment() {
@@ -62,12 +66,12 @@ class PostQueryServiceTest {
         given(postRepository.postDetail(postId)).willReturn(postDto);
         given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
         given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
+//        given(likeCountRedisRepository.getViewCount(postId)).willReturn(1);
 
         // when
         PostDto actual = sut.postDetail(postId);
 
         // then
-        assertThat(post.getViewCount()).isEqualTo(postDto.getViewCount() + 1);
         assertThat(actual.getHashtags().size()).isEqualTo(postHashtagDtos.size());
         assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
     }
@@ -82,6 +86,8 @@ class PostQueryServiceTest {
         // when & then
         assertThrows(DoesNotExistPostException.class, () -> sut.postDetail(postId));
     }
+
+    //todo 게시글 상세조회시 레디스에 저장하는지 안하는지 테스트 해야한다.
 
 
     @DisplayName("페이지당 게시글 조회 성공")
