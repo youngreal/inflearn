@@ -18,7 +18,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CustomArgumentResolver implements HandlerMethodArgumentResolver {
+public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final MemberRepository memberRepository;
 
