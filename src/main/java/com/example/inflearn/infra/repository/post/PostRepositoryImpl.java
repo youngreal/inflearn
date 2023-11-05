@@ -8,6 +8,7 @@ import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 
 import com.example.inflearn.domain.post.PostDto;
+import com.example.inflearn.infra.repository.dto.projection.PopularPostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.querydsl.core.types.ExpressionUtils;
@@ -17,7 +18,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,19 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return post.id.desc();
     }
 
+    /**
+     * todo
+     * SELECT
+     *     post_id,
+     *     post_content,
+     *     (SELECT hashtag_name FROM Hashtags WHERE Hashtags.hashtag_id = Post_Hashtags.hashtag_id) AS hashtag_name
+     * FROM
+     *     Posts
+     * WHERE
+     *     post_id = [desired_post_id];
+     *
+     *     조인없이 서브쿼리로도 풀수있다. 나는 왜 조인을썼는가? 명확하게 설명할수있나? 어쩔때 서브쿼리를 쓸것인가?
+     */
     @Override
     public List<PostHashtagDto> postHashtagsBy(PostDto postDto) {
         return jpaQueryFactory.select(
@@ -85,6 +99,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetch();
     }
 
+    //todo SELECT comment_id, comment_content, comment_date FROM Comments WHERE post_id = [desired_post_id]; 같은 쿼리로도 개선이 가능한데, join대신 테스트해보자
     @Override
     public List<PostCommentDto> commentsBy(PostDto postDto) {
         return jpaQueryFactory.select(
@@ -144,25 +159,27 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public Long countPageWithHashtagSearchWord(String searchWord, int page, int size) {
         return jpaQueryFactory.select(postHashtag.post.id.count())
                 .from(postHashtag)
-                .join(postHashtag.hashtag)
+                .join(postHashtag.hashtag, hashtag)
                 .where(hashtag.hashtagName.eq(searchWord))
                 .limit(size)
                 .offset(page)
                 .fetchOne();
     }
 
+    //todo 쿼리 성능 확인
     @Override
-    public List<PostDto> findPopularPostByDate(LocalDateTime firstDay, LocalDateTime endDay) {
+    public List<PopularPostDto> findPopularPostByDate(LocalDate firstDay, LocalDate endDay) {
         NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
-        return jpaQueryFactory.select(Projections.fields(PostDto.class,
-                        post.id,
-                        ExpressionUtils.as(JPAExpressions
-                                .select(like.id.count())
-                                .from(like)
-                                .where(post.id.eq(like.post.id)), likeCount))
+        return jpaQueryFactory.select(Projections.constructor(PopularPostDto.class,
+                                post.id,
+                                ExpressionUtils.as(JPAExpressions
+                                        .select(like.id.count())
+                                        .from(like)
+                                        .where(post.id.eq(like.post.id)), likeCount)
+                        )
                 )
                 .from(post)
-                .where(post.createdAt.between(firstDay, endDay))
+                .where(post.createdAt.between(firstDay.atStartOfDay(), endDay.atStartOfDay()))
                 .groupBy(post.id)
                 .orderBy(likeCount.desc())
                 .limit(5)
@@ -173,14 +190,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public List<PostHashtagDto> postHashtagsByPostDtos(List<PostDto> posts) {
         List<Long> postIds = posts.stream().map(PostDto::getPostId).toList();
 
-        return jpaQueryFactory.select(
-                Projections.constructor(PostHashtagDto.class,
-                        post.id,
+        List<PostHashtagDto> result = jpaQueryFactory.select(
+                        Projections.constructor(PostHashtagDto.class,
+                                postHashtag.post.id,
                                 hashtag.hashtagName))
                 .from(postHashtag)
-                .join(postHashtag.hashtag)
+                .join(postHashtag.hashtag, hashtag)
                 .where(postHashtag.post.id.in(postIds))
                 .fetch();
+
+        return result;
     }
 
     @Override
