@@ -1,6 +1,6 @@
 package com.example.inflearn.common.config;
 
-import com.example.inflearn.common.security.CustomArgumentResolver;
+import com.example.inflearn.common.security.AuthArgumentResolver;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +16,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(new CustomArgumentResolver(memberRepository));
+        resolvers.add(new AuthArgumentResolver(memberRepository));
     }
 }

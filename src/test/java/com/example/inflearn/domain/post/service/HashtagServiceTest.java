@@ -57,7 +57,7 @@ class HashtagServiceTest {
 
         // when
         List<PostHashtag> beforePostHashtags = new ArrayList<>(post.getPostHashtags());
-        sut.saveNewHashtagsWhenPostWrite(post, input);
+        sut.saveHashtags(post, input);
         List<PostHashtag> afterPostHashtags = post.getPostHashtags();
 
         // then
@@ -75,7 +75,7 @@ class HashtagServiceTest {
 
         // when
         int beforePostHashtagSize = post.getPostHashtags().size();
-        sut.saveNewHashtagsWhenPostWrite(post, input);
+        sut.saveHashtags(post, input);
         int afterPostHashtagSize = post.getPostHashtags().size();
 
         // then

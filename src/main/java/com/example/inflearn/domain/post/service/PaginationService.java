@@ -5,24 +5,24 @@ import org.springframework.stereotype.Component;
 @Component
 public class PaginationService {
 
-    private static final int COUNT_PER_PAGE = 20;
-    private static final int NUMBER_OF_PAGE = 10;
+    private static final int POST_QUANTITY_PER_PAGE = 20;
+    private static final int PAGE_TOTAL_NUMBER_PER_VIEW = 10;
 
     public int calculateOffSet(int page) {
-        return (page - 1) * COUNT_PER_PAGE;
+        return (page - 1) * POST_QUANTITY_PER_PAGE;
     }
 
-    public int sizeWhenGetPageNumbers(int size) {
-        return size * NUMBER_OF_PAGE;
+    public int sizeForTotalPageNumbers(int size) {
+        return size * PAGE_TOTAL_NUMBER_PER_VIEW;
     }
 
-    public int offsetWhenGetPageNumbers(int page) {
+    public int offsetForTotalPageNumbers(int pageNumber) {
         int offset;
 
-        if (page % NUMBER_OF_PAGE == 0) {
-            offset = (page - NUMBER_OF_PAGE) * COUNT_PER_PAGE;
+        if (pageNumber % PAGE_TOTAL_NUMBER_PER_VIEW == 0) {
+            offset = (pageNumber - PAGE_TOTAL_NUMBER_PER_VIEW) * POST_QUANTITY_PER_PAGE;
         } else {
-            offset = (page - (page % NUMBER_OF_PAGE)) * COUNT_PER_PAGE;
+            offset = (pageNumber - (pageNumber % PAGE_TOTAL_NUMBER_PER_VIEW)) * POST_QUANTITY_PER_PAGE;
         }
 
         return offset;

@@ -32,8 +32,7 @@ public class LikeService {
             throw new AlreadyLikeException();
         }
 
-        Like like = Like.create(member, post);
-        likeRepository.save(like);
+        likeRepository.save(Like.create(member, post));
     }
 
     public void unLike(long memberId, long postId) {

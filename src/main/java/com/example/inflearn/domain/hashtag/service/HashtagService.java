@@ -20,20 +20,14 @@ public class HashtagService {
 
     private final HashtagRepository hashtagRepository;
 
-    public void saveNewHashtagsWhenPostWrite(Post post, Set<String> inputStringHashtags) {
-        Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags); // 입력받은 문자열중 DB에 존재했던 해시태그들
-        Set<Hashtag> inputHashtags = convertToHashtags(inputStringHashtags);
-        Set<Hashtag> insertHashtags = createHashtagsForInsert(inputHashtags, existingHashtagsInDB);
-        addPostHashtags(post, inputHashtags, insertHashtags, existingHashtagsInDB);
-
-        //todo  동시상황에서 DataIntegrityViolationException 예외 발생할수있는데 try-catch할지? 아니면 핸들러로 넘길지?
-        hashtagRepository.saveAll(insertHashtags);
+    public void saveHashtags(Post post, Set<String> inputStringHashtags) {
+        hashtagRepository.saveAll(getHashtagsForInsertWhenPostSave(post, inputStringHashtags));
     }
 
     public void saveHashtagsWhenPostUpdate(Post post, Set<String> inputStringHashtags) {
         Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags);
-        Set<Hashtag> insertHashtags = getHashtagsForInsert(existingHashtagsInDB, convertToHashtags(inputStringHashtags));
-        addPostHashtagsWhenPostUpdate(post, convertToHashtags(inputStringHashtags), insertHashtags, existingHashtagsInDB);
+        Set<Hashtag> insertHashtags = getHashtagsForInsertWhenPostUpdate(existingHashtagsInDB, convertToHashtagType(inputStringHashtags));
+        addPostHashtagsWhenPostUpdate(post, convertToHashtagType(inputStringHashtags), insertHashtags, existingHashtagsInDB);
 
         hashtagRepository.saveAll(insertHashtags); // DB에 없던 요청받은 해시태그 삽입
     }
@@ -44,13 +38,11 @@ public class HashtagService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
 
-        Set<Hashtag> deleteHashtags = getHashtagsForDelete(hashtagsInPost, convertToHashtags(inputStringHashtags)); // spring, aws
-        hashtagRepository.deleteAll(deleteHashtags);
+        //todo N+1문제 발생할수있음
+        hashtagRepository.deleteAll(getHashtagsForDelete(hashtagsInPost, convertToHashtagType(inputStringHashtags)));
     }
 
-
-
-    private Set<Hashtag> getHashtagsForInsert(Set<Hashtag> existingHashtagsInDB, Set<Hashtag> inputStringHashtags) {
+    private Set<Hashtag> getHashtagsForInsertWhenPostUpdate(Set<Hashtag> existingHashtagsInDB, Set<Hashtag> inputStringHashtags) {
         Set<Hashtag> hashtagsForInsert = new HashSet<>(inputStringHashtags);
         hashtagsForInsert.addAll(existingHashtagsInDB);
         hashtagsForInsert.removeAll(existingHashtagsInDB);
@@ -71,10 +63,12 @@ public class HashtagService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
+    // DB에 존재하는게 비었으면 input해시태그를, DB에 존재하는게 있으면 input에서 DB에있는걸 배제한 애만 DB에 넣는다
     private Set<Hashtag> createHashtagsForInsert(Set<Hashtag> inputHashtags, Set<Hashtag> existingHashtagsInDB) {
         if (existingHashtagsInDB.isEmpty()) {
             return inputHashtags;
         } else {
+            //todo DB에있는 해시태그와 입력받은해시태그중 DB에 없는 해시태그를 필터링하는과정인데 해당방법이 최선일까?
             Set<Hashtag> hashtagsForInsert = new HashSet<>(inputHashtags);
             hashtagsForInsert.addAll(existingHashtagsInDB);
             hashtagsForInsert.removeAll(existingHashtagsInDB);
@@ -83,79 +77,60 @@ public class HashtagService {
         }
     }
 
-    private void addPostHashtags(Post post, Set<Hashtag> inputHashtags,
-            Set<Hashtag> insertHashtags, Set<Hashtag> existingHashtagsInDB) {
-
-        // 새로 삽입해야하는 해시태그가 없는경우
-        if (insertHashtags.isEmpty()) {
-            // 작성요청시 해시태그 입력 안한경우
-            if (inputHashtags.isEmpty()) {
-                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, null);
-                post.addPostHashtag(postHashtag);
-            }
-
-            // 작성요청시 해시태그 입력받았지만 이미 DB에 있는 해시태그 사용하는경우
-            for (Hashtag hashtagInDB : existingHashtagsInDB) {
-                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtagInDB);
-                post.addPostHashtag(postHashtag);
-                hashtagInDB.addPostHashtag(postHashtag);
-            }
-        } else {
-            // 새로 삽입해야하는 해시태그가 있는경우, DB에 있는 해시태그들은 먼저 기존에있던걸로 생성한다.
-            for (Hashtag hashtagInDB : existingHashtagsInDB) {
-                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtagInDB);
-                post.addPostHashtag(postHashtag);
-                hashtagInDB.addPostHashtag(postHashtag);
-            }
-
-            // 새로 삽입해야하는 해시태그들을 생성한다. DB에 없는 해시태그들은 새롭게 생성한다.
-            for (Hashtag insertHashtag : insertHashtags) {
-                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, insertHashtag);
-                post.addPostHashtag(postHashtag);
-                postHashtag.getHashtag().addPostHashtag(postHashtag);
-            }
-        }
-    }
-
+    // DB에 넣을 해시태그가 비었으면
     private void addPostHashtagsWhenPostUpdate(Post post, Set<Hashtag> inputHashtags, Set<Hashtag> insertToDBHashtags, Set<Hashtag> existingHashtagsInDB) {
-        List<PostHashtag> beforePostHashtags = post.getPostHashtags();
-        beforePostHashtags.clear();
+//        List<PostHashtag> beforePostHashtags = post.getPostHashtags();
+//        beforePostHashtags.clear();
 
         // DB에 새로넣을 해시태그가 존재하지 않는경우
         if (insertToDBHashtags.isEmpty()) {
             for (Hashtag inputHashtag : inputHashtags) {
                 if (existingHashtagsInDB.contains(inputHashtag)) {
-
                     Hashtag hashtag = existingHashtagsInDB.stream()
                             .filter(existInDBHashtag -> existInDBHashtag.equals(inputHashtag))
                             .findAny()
                             .orElseThrow();
 
-                    PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtag);
-                    post.addPostHashtag(postHashtag);
-                    hashtag.addPostHashtag(postHashtag);
+                    createPostHashtag(post, hashtag);
                 }
             }
-
-            // 해시태그가 아무것도 추가되지않은경우 null인 PostHashtag 생성
-            if (post.getPostHashtags().isEmpty()) {
-                post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
-            }
-
         }
         // DB에 새로넣을 해시태그가 존재하는경우
         else {
-            for (Hashtag insertToDBHashtag : insertToDBHashtags) {
-                PostHashtag postHashtag = PostHashtag.createPostHashtag(post, insertToDBHashtag);
-                post.addPostHashtag(postHashtag);
-                insertToDBHashtag.addPostHashtag(postHashtag);
+            for (Hashtag hashtag : insertToDBHashtags) {
+                createPostHashtag(post, hashtag);
             }
         }
     }
 
-    private Set<Hashtag> convertToHashtags(Set<String> inputStringHashtags) {
+    private Set<Hashtag> convertToHashtagType(Set<String> inputStringHashtags) {
         return inputStringHashtags.stream()
                 .map(Hashtag::createHashtag)
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private void createPostHashtag(Post post, Hashtag hashtag) {
+            PostHashtag postHashtag = PostHashtag.createPostHashtag(post, hashtag);
+            post.addPostHashtag(postHashtag);
+            hashtag.addPostHashtag(postHashtag);
+    }
+
+    private Set<Hashtag> getHashtagsForInsertWhenPostSave(Post post, Set<String> inputStringHashtags) {
+        Set<Hashtag> existingHashtagsInDB = hashtagRepository.findByHashtagNameIn(inputStringHashtags); // 입력받은 문자열중 DB에 존재했던 해시태그들
+        Set<Hashtag> insertHashtags = createHashtagsForInsert(convertToHashtagType(inputStringHashtags), existingHashtagsInDB);
+        createPostHashtags(post, existingHashtagsInDB, insertHashtags);
+        return insertHashtags;
+    }
+
+    private void createPostHashtags(Post post, Set<Hashtag> existingHashtagsInDB, Set<Hashtag> insertHashtags) {
+        for (Hashtag hashtag : existingHashtagsInDB) {
+            createPostHashtag(post, hashtag);
+        }
+
+        if (!insertHashtags.isEmpty()) {
+            for (Hashtag hashtag : insertHashtags) {
+                createPostHashtag(post, hashtag);
+            }
+        }
     }
 }
