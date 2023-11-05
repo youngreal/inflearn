@@ -2,6 +2,7 @@ package com.example.inflearn.common.annotation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,16 +22,12 @@ public class EnumValidator implements ConstraintValidator<SortEnum, String> {
             return true;
         }
 
-        boolean result = false;
         Object[] enumValues = this.annotation.enumClass().getEnumConstants();
-        if (enumValues != null) {
-            for (Object enumValue : enumValues) {
-                if (value.equals(enumValue.toString()) || (this.annotation.ignoreCase() && value.equalsIgnoreCase(enumValue.toString()))) {
-                    result = true;
-                    break;
-                }
-            }
+        if (enumValues == null) {
+            return false;
         }
-        return result;
+
+        return Arrays.stream(enumValues)
+                .anyMatch(enumValue -> value.equals(enumValue.toString()) || (this.annotation.ignoreCase() && value.equalsIgnoreCase(enumValue.toString())));
     }
 }
