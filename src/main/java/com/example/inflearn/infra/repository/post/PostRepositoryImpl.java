@@ -1,11 +1,11 @@
 package com.example.inflearn.infra.repository.post;
 
-import static com.example.inflearn.domain.QPostHashtag.postHashtag;
 import static com.example.inflearn.domain.comment.domain.QComment.comment;
 import static com.example.inflearn.domain.hashtag.domain.QHashtag.hashtag;
 import static com.example.inflearn.domain.like.domain.QLike.like;
 import static com.example.inflearn.domain.member.domain.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
+import static com.example.inflearn.domain.post.domain.QPostHashtag.postHashtag;
 
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.dto.projection.PopularPostDto;
@@ -30,12 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
+    private final NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
+    private final NumberPath<Long> commentCount = Expressions.numberPath(Long.class, "commentCount");
 
     @Override
     public List<PostDto> getPostsPerPage(int page, int size, String sortCondition) {
-        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
-        NumberPath<Long> commentCount = Expressions.numberPath(Long.class, "commentCount");
-
         return jpaQueryFactory.select(Projections.fields(PostDto.class,
                         post.id.as("postId"),
                         member.nickname,
@@ -56,14 +55,19 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 )
                 .from(post)
                 .join(post.member, member)
-                .orderBy(sort(sortCondition, likeCount, commentCount))
+                .orderBy(sort(sortCondition))
                 .limit(size)
                 .offset(page)
                 .fetch();
     }
 
     //todo Enum으로 개선?
-    private OrderSpecifier<?> sort(String sortCondition, NumberPath<Long> likeCount, NumberPath<Long> commentCount) {
+    /*
+    11.06 Enum으로 개선하려고 했는데 Enum에 querydsl에 의존적인 NumberPath같은 클래스가 의존된다(post.id, likeCount) 등을 반환해줘야하기때문에.. 이 경우 해당 Enum의 위치는 infra레이어에 있어야하거나 공통 DTO모듈에 있어야할것같은데.
+    수정하는게 좋을지 모르겠다.
+     */
+
+    private OrderSpecifier<?> sort(String sortCondition) {
         if (sortCondition == null) {
             return post.id.desc();
         } else if (sortCondition.equalsIgnoreCase("like")) {
@@ -116,9 +120,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     @Override
     public List<PostDto> searchWithHashtag(String searchWord, int page, int size, String sortCondition, List<Long> postIds) {
-        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
-        NumberPath<Long> commentCount = Expressions.numberPath(Long.class, "commentCount");
-
         return jpaQueryFactory.select(Projections.fields(PostDto.class,
                         post.id.as("postId"),
                         member.nickname,
@@ -140,7 +141,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .from(post)
                 .join(post.member, member)
                 .where(post.id.in(postIds))
-                .orderBy(sort(sortCondition, likeCount, commentCount))
+                .orderBy(sort(sortCondition))
                 .limit(size)
                 .offset(page)
                 .fetch();
@@ -169,7 +170,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     //todo 쿼리 성능 확인
     @Override
     public List<PopularPostDto> findPopularPostByDate(LocalDate firstDay, LocalDate endDay) {
-        NumberPath<Long> likeCount = Expressions.numberPath(Long.class, "likeCount");
         return jpaQueryFactory.select(Projections.constructor(PopularPostDto.class,
                                 post.id,
                                 ExpressionUtils.as(JPAExpressions
@@ -190,7 +190,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public List<PostHashtagDto> postHashtagsByPostDtos(List<PostDto> posts) {
         List<Long> postIds = posts.stream().map(PostDto::getPostId).toList();
 
-        List<PostHashtagDto> result = jpaQueryFactory.select(
+        return jpaQueryFactory.select(
                         Projections.constructor(PostHashtagDto.class,
                                 postHashtag.post.id,
                                 hashtag.hashtagName))
@@ -198,8 +198,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .join(postHashtag.hashtag, hashtag)
                 .where(postHashtag.post.id.in(postIds))
                 .fetch();
-
-        return result;
     }
 
     @Override
