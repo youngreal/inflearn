@@ -3,7 +3,7 @@ package com.example.inflearn.domain.post.service;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
-import com.example.inflearn.domain.PostHashtag;
+import com.example.inflearn.domain.post.domain.PostHashtag;
 import com.example.inflearn.domain.hashtag.service.HashtagService;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.post.domain.Post;
@@ -12,6 +12,8 @@ import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,7 @@ public class PostService {
         if (dto.getHashtags().isEmpty()) {
             post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
         } else {
-            hashtagService.saveNewHashtagsWhenPostWrite(post, dto.getHashtags());
+            hashtagService.saveHashtags(post, dto.getHashtags());
         }
 
         post.addMember(member);
@@ -57,11 +59,11 @@ public class PostService {
     }
 
     //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
-    public void updateViewCountForPopularPosts(List<Long> postIds) {
-        for (Long postId : postIds) {
-            Post post = postRepository.findById(postId).orElseThrow();
-            post.plusViewCount();
-            //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
+    public void updateViewCountForPopularPosts(Map<Object, Object> popularPostEntries) {
+        for (Entry<Object, Object> entry : popularPostEntries.entrySet()) {
+            Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
+            post.updateViewCountFromCache((Long) entry.getValue());
         }
+            //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
     }
 }
