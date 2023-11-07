@@ -1,4 +1,4 @@
-package com.example.inflearn.event;
+package com.example.inflearn.domain.member.event;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;

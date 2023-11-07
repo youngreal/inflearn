@@ -1,4 +1,4 @@
-package com.example.inflearn.event;
+package com.example.inflearn.domain.member.event;
 
 import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.infra.mail.MailService;
