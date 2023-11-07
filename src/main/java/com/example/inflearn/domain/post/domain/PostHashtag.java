@@ -1,17 +1,14 @@
-package com.example.inflearn.domain;
+package com.example.inflearn.domain.post.domain;
 
 import com.example.inflearn.domain.hashtag.domain.Hashtag;
-import com.example.inflearn.domain.post.domain.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

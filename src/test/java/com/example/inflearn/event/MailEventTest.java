@@ -12,6 +12,8 @@ import com.example.inflearn.common.config.RedisConfig;
 import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
+import com.example.inflearn.domain.member.event.MailSentEvent;
+import com.example.inflearn.domain.member.event.MailSentEventHandler;
 import com.example.inflearn.infra.mail.MailService;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import java.util.concurrent.TimeUnit;
