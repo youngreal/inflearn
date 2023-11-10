@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:mysql:8:///
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  mail:
+    host: smtp.gmail.com
+    username: ${EMAIL_SMTP_ACCOUNT}
+    password: ${EMAIL_SMTP_PASSWORD}
+    port: 587

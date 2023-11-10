@@ -1,0 +1,48 @@
+logging:
+  level:
+    com.board.board: debug
+    #    request /response 정보 볼수있다.
+    org.springframework.web.servlet: debug
+    #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+spring:
+  datasource:
+    url: jdbc:mysql://inflearn-database:3306/inflearn
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        ddl-auto: update
+        # 한줄로 나와야되는 디버깅쿼리문을 예쁘게 포맷해서 보여줌
+        format_sql: true
+        default_batch_fetch_size: 100
+    open-in-view: false
+
+  data:
+    redis:
+      host: inflearn-redis
+      port: 6379
+
+  mail:
+    host: smtp.gmail.com
+    username: ${EMAIL_SMTP_ACCOUNT}
+    password: ${EMAIL_SMTP_PASSWORD}
+    port: 587
+
+    properties:
+      mail:
+        smtp:
+          auth: true
+          timeout: 5000
+          starttls:
+              enable: true
+              # SSL용 포트
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+
+mybatis:
+  mapper-locations: classpath:/mapper/*.xml
