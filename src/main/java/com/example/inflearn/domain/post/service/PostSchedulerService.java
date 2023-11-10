@@ -34,7 +34,7 @@ public class PostSchedulerService {
     private final PostService postService;
 
     //todo AOP로 개선할수있을것같다. 핵심로직과 락을거는 로직의 분리
-    @Scheduled(fixedDelay = THREE_HOURS)
+//    @Scheduled(fixedDelay = THREE_HOURS)
     public void updatePopularPosts() {
         // 락 획득에 실패한다면 재시도를 시도하지않고 리턴한다
         if (FALSE.equals(redisRepository.popularPostListUpdateLock())) {
@@ -54,7 +54,7 @@ public class PostSchedulerService {
     /*
     여러 분산 서버에서 동시실행 방지를 위한 분산락
      */
-    @Scheduled(fixedDelay = THREE_MINUTE)
+//    @Scheduled(fixedDelay = THREE_MINUTE)
     public void updateViewCountToDatabase() {
         if (FALSE.equals(redisRepository.updateViewCountLock())) {
             log.info("The updateViewCount lock has already been acquired from another server.");

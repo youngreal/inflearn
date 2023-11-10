@@ -1,11 +1,9 @@
 package com.example.inflearn.infra.redis;
 
-import com.example.inflearn.domain.post.PostDto;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.HyperLogLogOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +19,16 @@ public class RedisRepository {
 
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_KEY = "popularPostLock";
     private static final String UPDATE_VIEW_LOCK_KEY = "updateViewLock";
-    private static final String LIKE_COUNT_KEY = "likeCount";
-    private static final int POPULAR_POST_COUNT = 5;
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "lock";
     private static final String UPDATE_VIEW_LOCK_VALUE = "updateViewLock";
     private final RedisTemplate<String, String> redisTemplate;
-    private final RedisTemplate<String, List<PostDto>> likeCountRedis;
+    private final HyperLogLogOperations<String, Long> hyperLogLogOperations;
+
+
+    //    public void test() {
+//        hyperLogLogOperations.add("key", 1L);
+//        Long size = hyperLogLogOperations.size(String.valueOf(1L));
+//    }
 
     // key에는 인스턴스 ID, value에는 lock?
     // 락을 새로 세팅했으면 true, 락이 이미있었으면 false
@@ -47,51 +49,5 @@ public class RedisRepository {
 
     public void updateViewCountUnLock() {
         redisTemplate.delete(UPDATE_VIEW_LOCK_KEY);
-    }
-
-    public List<PostDto> getPopularPosts() {
-        return likeCountRedis.opsForValue().get(LIKE_COUNT_KEY);
-    }
-
-    public void updatePopularPosts(List<PostDto> posts) {
-        List<PostDto> popularPosts = likeCountRedis.opsForValue().get(LIKE_COUNT_KEY);
-        if (popularPosts == null) {
-            popularPosts = new ArrayList<>(posts);
-        }
-
-        popularPosts.addAll(posts);
-
-        popularPosts.sort((post1, post2) -> {
-            int likeCountComparison = Long.compare(post2.getLikeCount(), post1.getLikeCount());
-            if (likeCountComparison == 0) {
-                return Integer.compare(post2.getViewCount(), post1.getViewCount()); // Descending order
-            } else {
-                return likeCountComparison;
-            }
-        });
-
-        if (popularPosts.size() > POPULAR_POST_COUNT) {
-            popularPosts = popularPosts.subList(0, POPULAR_POST_COUNT);
-        }
-
-        log.info("redis posts = {}", redisTemplate.opsForValue().get(LIKE_COUNT_KEY));
-        likeCountRedis.opsForValue().set(LIKE_COUNT_KEY, popularPosts);
-        log.info("redis posts after = {}", redisTemplate.opsForValue().get(LIKE_COUNT_KEY));
-    }
-
-    public void setPopularPosts(List<PostDto> popularPosts) {
-        likeCountRedis.opsForValue().set(LIKE_COUNT_KEY, popularPosts);
-    }
-
-    public void updatePopularPostViewCount(long postId) {
-        List<PostDto> postDtos = likeCountRedis.opsForValue().get(LIKE_COUNT_KEY);
-        //todo 레디스에서 get할때마다 null체크하는데 optional로 해줘도 될듯?
-        if (postDtos != null) {
-            for (PostDto postDto : postDtos) {
-                if (postDto.getPostId() == postId) {
-                    postDto.updateViewCount();
-                }
-            }
-        }
     }
 }
