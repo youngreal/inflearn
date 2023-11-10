@@ -55,7 +55,7 @@ public class PostRestController {
             Set<String> hashtags = validateDuplicatedHashtag(request.hashtags());
             postService.write(request.toDtoWithHashtag(hashtags), loginedMember.id());
         }
- }
+    }
 
     //todo 글 수정시 해시태그 유무 DB에서 꺼낼때는 DB에없었는데, 동시에 해시태그가 삽입된다면? 동시성 문제 발생할수있다.
     //todo 글 수정시 해시태그를 삭제해야해서 삭제하는순간에 조회하는 요청이 온다면?
@@ -120,14 +120,6 @@ public class PostRestController {
 
      */
 
-   /*
-    todo
-    - 최신순으로 조회한다(ㅇ)
-    - 해시태그로 검색한다
-    - 댓글많은순으로 조회한다(ㅇ)
-    - 좋아요순으로 조회한다(ㅇ)
-     */
-
     /*
      ## Eager일때
      select post offset limit
@@ -148,8 +140,6 @@ public class PostRestController {
      select * from hashtag where hashtag_id in
      select post offset limit
      */
-    //todo 조인이 13초 걸리는데 이유가 뭘까? 인덱스를 태워야한다..
-    //todo PostPaging으로 Service에 넘겨야할까? primitive type으로 변경해서 넘겨야할까.. postPaging은 ui에서 요청받는 dto인데..?
     @GetMapping("/posts")
     public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
         List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size(), postPaging.sort()).stream()
@@ -160,13 +150,53 @@ public class PostRestController {
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
+    /*
+    ### Lazy + batch size
+     select post from post postId in (100 null 99)
+     select * from member where m.id in(100 null 99)
+     select * from post_hashtag where post_id = ?
+     select * from hashtag where hashtagid In(100 null 98)
+
+     ### fetch member걸고 batch size 해제했을때
+     해시태그 없는 게시글
+     select * from post left join member where p.id = 239
+     select * from post_hashtag where post.id = 239
+
+     해시태그 있을때(2개)
+     select * from post left join member where p.id = ?
+     select * from post_hashtag where post.id = ?
+     select * from hashtag where h.id = ?
+     select * from hashtag where h.id = ?
+     => 100개면 100번 나감
+     */
     @GetMapping("/posts/{postId}")
     public PostDetailPageResponse postDetail(@PathVariable long postId) {
         return PostDetailPageResponse.from(postQueryService.postDetail(postId));
     }
 
-    - 댓글많은순으로 조회한다(지금못함)
-    - 좋아요순으로 조회한다(지금못함)
+
+    /**
+     * 한페이지에 20개의 게시글을 보여주고싶다
+     * 버튼은 10개 + 이전+다음
+     * ex ) page =5 , size =100을 프론트에서 보내고 응답게시글에 따라서 페이지화면을 렌더링한다.
+     * 1페이지의 20개를 조회하기위해
+     *
+     * page가 1~10이면  size * 0(offset), size * 10(limit)
+     * page가 11~20이면 size * 10(offset) , size * 10(limit)
+     * page가 21~30이면 size * 20(offset) , size * 10(limit)
+     *
+     * //페이지당 20개의 게시글 목록들을 전달
+     * Posts = select * from post limit (page-1) x 20;
+     *
+     * // 최대200개까지의 post들 count => 여기서 반환되는 개수에따라 프론트가 페이지 판단
+     * responseCount = select count(*) from post limit (page-1, size);
+     */
+
+    /*
+    select * from post where (title,parentCommentContent) against limit
+    select * from member where member_id in
+    select * from post_hashtag where post_id in
+    select count(id) from(select id from post where match limit ?,?) as subquery
      */
 
     @GetMapping("/posts/search")
@@ -217,6 +247,7 @@ public class PostRestController {
         commentService.saveComment(loginedMember.id(), postId, postCommentContents.contents());
     }
 
+    //todo 얘의 위치를 변경해야할것같다.
     @PostMapping("/comments/{parentCommentId}/reply")
     public void reply(LoginedMember loginedMember, @RequestBody @Valid PostReplyContents postReplyContents, @PathVariable long parentCommentId) {
         commentService.saveReply(loginedMember.id(), parentCommentId, postReplyContents.contents());
