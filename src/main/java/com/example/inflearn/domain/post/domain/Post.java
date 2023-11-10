@@ -55,7 +55,7 @@ public class Post {
     private PostStatus postStatus; // 글 해결 여부
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "post", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
