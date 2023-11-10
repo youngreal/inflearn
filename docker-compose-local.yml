@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  inflearn-redis:
+    container_name: inflearn-redis
+    build:
+      dockerfile: Dockerfile
+      context: ./redis
+    image: leeyoungjin/inflearn-redis
+    ports:
+      - "6379:6379"
+  inflearn-database:
+    container_name: inflearn-database
+    build:
+      dockerfile: Dockerfile
+      context: ./database
+    image: leeyoungjin/inflearn-database
+    environment:
+      - MYSQL_DATABASE=inflearn
+      - MYSQL_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+    volumes:
+      - ./database/config:/etc/mysql/conf.d
+    ports:
+      - "3306:3306"
