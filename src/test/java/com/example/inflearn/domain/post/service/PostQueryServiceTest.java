@@ -162,15 +162,15 @@ class PostQueryServiceTest {
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
         // when
-        given(paginationService.offsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
-        given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(paginationService.offsetForTotalPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.sizeForTotalPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
+        given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
         Long actual = sut.getPageCountWithSearchWord(postSearch);
 
         // then
-        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 
@@ -209,15 +209,15 @@ class PostQueryServiceTest {
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
         // when
-        given(paginationService.offsetWhenGetPageNumbers(postSearch.page())).willReturn(0);
-        given(paginationService.sizeWhenGetPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
-        given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()))).willReturn(1L);
+        given(paginationService.offsetForTotalPageNumbers(postSearch.page())).willReturn(0);
+        given(paginationService.sizeForTotalPageNumbers(postSearch.size())).willReturn(postSearch.size() * 10);
+        given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
         Long actual = sut.getPageCountWithHashtagSearchWord(postSearch);
 
         // then
-        then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
     }
 }
