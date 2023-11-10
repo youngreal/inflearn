@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  inflearn-redis:
+    container_name: inflearn-redis
+    build:
+      dockerfile: Dockerfile
+      context: ./redis
+    image: leeyoungjin/inflearn-redis
+    ports:
+      - "6379:6379"
+  inflearn-database:
+    container_name: inflearn-database
+    build:
+      dockerfile: Dockerfile
+      context: ./database
+    image: leeyoungjin/inflearn-database
+    environment:
+      - MYSQL_DATABASE=inflearn
+      - MYSQL_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+    volumes:
+      - ./database/config:/etc/mysql/conf.d
+    ports:
+      - "3306:3306"
+  inflearn-app:
+    container_name: inflearn-app
+    build: . # 도커파일이 있는 위치
+    depends_on: # 컨테이너 실행순서 지정 DB와 레디스가 띄워져있는상태에서 app을 실행한다.
+      - inflearn-database
+      - inflearn-redis
+    image: leeyoungjin/inflearn-app
+    environment:
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    ports:
+      - "80:8080"
+    restart: always # 레디스나 DB가 실행가능한 상태가 아닌경우있을수있는데 그경우에 재시작할수있도록 설정
