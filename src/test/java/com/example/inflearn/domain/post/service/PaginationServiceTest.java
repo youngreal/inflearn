@@ -48,7 +48,7 @@ class PaginationServiceTest {
         int size = 20;
 
         // when
-        int actual = sut.sizeWhenGetPageNumbers(size);
+        int actual = sut.sizeForTotalPageNumbers(size);
 
         // then
         assertThat(actual).isEqualTo(200);
@@ -60,7 +60,7 @@ class PaginationServiceTest {
     @ParameterizedTest
     void offset_when_getPageNumbers(int input, int expected) {
         // given & when
-        int actual = sut.offsetWhenGetPageNumbers(input);
+        int actual = sut.offsetForTotalPageNumbers(input);
 
         // then
         assertThat(actual).isEqualTo(expected);

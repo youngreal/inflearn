@@ -3,6 +3,7 @@ package com.example.inflearn.domain.post;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostStatus;
 import com.example.inflearn.dto.CommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PopularPostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 /*
@@ -29,9 +31,9 @@ public class PostDto {
     private String nickname;
     private String title;
     private String contents;
-    private int viewCount;
-    private Long likeCount;
-    private Long commentCount;
+    private long viewCount;
+    private long likeCount;
+    private long commentCount;
     private Set<String> hashtags = new HashSet<>();
     private List<CommentDto> comments = new ArrayList<>();
     private LocalDateTime createdAt;
@@ -39,8 +41,8 @@ public class PostDto {
     private PostStatus postStatus;
 
     @Builder
-    private PostDto(Long postId, String nickname, String title, String contents, int viewCount,
-            Long likeCount, Set<String> hashtags, List<CommentDto> comments,
+    private PostDto(Long postId, String nickname, String title, String contents, long viewCount,
+            long likeCount, Set<String> hashtags, List<CommentDto> comments,
             LocalDateTime createdAt,
             LocalDateTime updatedAt, PostStatus postStatus) {
         this.postId = postId;
@@ -54,6 +56,17 @@ public class PostDto {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.postStatus = postStatus;
+    }
+
+    public static List<PostDto> toDto(List<PopularPostDto> popularPosts) {
+        List<PostDto> postDtos = new ArrayList<>();
+        for (PopularPostDto popularPost : popularPosts) {
+            postDtos.add(PostDto.builder()
+                    .postId(popularPost.postId())
+                    .likeCount(popularPost.likeCount())
+                    .build());
+        }
+        return postDtos;
     }
 
     public Post toEntityForWrite() {
@@ -87,10 +100,5 @@ public class PostDto {
                 }
             }
         }
-    }
-
-    //todo DTO에 해당 로직이 있는게 괜찮은걸까?
-    public void updateViewCount() {
-        this.viewCount += 1;
     }
 }

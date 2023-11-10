@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @RequiredArgsConstructor
-@Profile("default, dev")
+@Profile("dev")
 @Component
 public class DevMailService implements MailService{
 

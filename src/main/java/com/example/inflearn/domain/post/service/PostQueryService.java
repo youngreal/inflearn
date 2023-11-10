@@ -1,14 +1,16 @@
 package com.example.inflearn.domain.post.service;
 
+import static java.util.stream.Collectors.toMap;
+
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
-import com.example.inflearn.infra.redis.RedisRepository;
+import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.domain.post.PostSearch;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,11 +29,14 @@ public class PostQueryService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     //todo 여기 있는게 좋을것인가? 개선해야하지않을까?
-    private final RedisRepository redisRepository;
+    private final LikeCountRedisRepository likeCountRedisRepository;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
+    //todo 테스트 하기도 힘들다
     public PostDto postDetail(long postId) {
-        addViewCount(postId);
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+        post.plusViewCount();
+//        addViewCount(post);
         PostDto postDetail = postRepository.postDetail(postId);
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
         postDetail.inputComments(postRepository.commentsBy(postDetail));
@@ -51,63 +56,59 @@ public class PostQueryService {
         return postDtos;
     }
 
-    public List<PostDto> getPostsPerPage(int page, int size, String sort) {
-        List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(page), size, sort);
+    public List<PostDto> getPostsPerPage(int pageNumber, int postQuantityPerPage, String sort) {
+        List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(pageNumber), postQuantityPerPage, sort);
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
     public Long getPageCountWithSearchWord(PostSearch postSearch) {
-        return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
     }
 
     public Long getPageCountWithHashtagSearchWord(PostSearch postSearch) {
-        return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetWhenGetPageNumbers(postSearch.page()), paginationService.sizeWhenGetPageNumbers(postSearch.size()));
+        return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
     }
 
     // page 1 , size = 20
     // offset 0, 200
     // page 11 , size = 20 size = x 10
     // offset 200, 20
-    public long getPageCount(int page, int size) {
-        List<Long> pageCount = postRepository.getPageCount(paginationService.offsetWhenGetPageNumbers(page), paginationService.sizeWhenGetPageNumbers(size));
+    public long getPageCount(int pageNumber, int postQuantityPerPage) {
+        List<Long> pageCount = postRepository.getPageCount(paginationService.offsetForTotalPageNumbers(pageNumber), paginationService.sizeForTotalPageNumbers(postQuantityPerPage));
         return pageCount.size();
     }
 
     // 현재 시간으로부터 -7일 사이에 있는 게시글중 좋아요 개수가 가장 많은 게시글을 5개까지만 가져온다
     public void updatePopularPosts() {
-        LocalDateTime firstDay = LocalDateTime.now();
-        LocalDateTime endDay = firstDay.minusDays(7);
-        List<PostDto> popularPosts = postRepository.findPopularPostByDate(firstDay, endDay);
         // 레디스에 있는 게시글과 popularPosts의 likeCount들을 비교해서 5개만 레디스에 업데이트한다
-        redisRepository.updatePopularPosts(popularPosts);
+        Map<Long, Long> popularPosts = getPopularPosts().stream()
+                .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
+
+        likeCountRedisRepository.updatePopularPosts(popularPosts);
+    }
+
+    private List<PostDto> getPopularPosts() {
+        LocalDate endDay = LocalDate.now();
+        LocalDate firstDay = endDay.minusDays(7);
+        return PostDto.toDto(postRepository.findPopularPostByDate(firstDay, endDay));
     }
 
     private void setHashtagsWithJoin(List<PostDto> postDtos) {
         List<PostHashtagDto> postHashtagDtos = postRepository.postHashtagsByPostDtos(postDtos);
-
-        if (postHashtagDtos == null) {
-            postHashtagDtos = List.of();
-        }
-
         Map<Long, List<PostHashtagDto>> postHashtagMap = postHashtagDtos.stream()
                 .collect(Collectors.groupingBy(PostHashtagDto::postId));
 
         postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
     }
 
-    private void addViewCount(long postId) {
+    private void addViewCount(Post post) {
         // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
-        PostDto postDtoInRedis = redisRepository.getPopularPosts().stream()
-                .filter(postDto -> postDto.getPostId().equals(postId))
-                .findFirst().orElse(null);
-
         // 레디스에 없으면 DB에서 꺼내서 조회수 업데이트, 레디스에있으면 레디스에 조회수 카운팅
-        if (postDtoInRedis == null) {
-            Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
             post.plusViewCount();
         } else {
-            redisRepository.updatePopularPostViewCount(postDtoInRedis.getPostId());
+            likeCountRedisRepository.updateViewCountToCache(post.getId());
         }
     }
 }

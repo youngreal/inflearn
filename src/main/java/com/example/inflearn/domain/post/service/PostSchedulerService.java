@@ -3,9 +3,11 @@ package com.example.inflearn.domain.post.service;
 import static java.lang.Boolean.FALSE;
 
 import com.example.inflearn.domain.post.PostDto;
+import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.redis.RedisRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,9 +29,11 @@ public class PostSchedulerService {
     private static final int MINUTE = 60 * 1_000;
     private static final int THREE_MINUTE = 3 * MINUTE;
     private final RedisRepository redisRepository;
+    private final LikeCountRedisRepository likeCountRedisRepository;
     private final PostQueryService postQueryService;
     private final PostService postService;
 
+    //todo AOP로 개선할수있을것같다. 핵심로직과 락을거는 로직의 분리
     @Scheduled(fixedDelay = THREE_HOURS)
     public void updatePopularPosts() {
         // 락 획득에 실패한다면 재시도를 시도하지않고 리턴한다
@@ -59,16 +63,7 @@ public class PostSchedulerService {
 
         try {
             log.info("Get Lock : update PopularPostLists");
-            List<PostDto> popularPosts = redisRepository.getPopularPosts();
-            List<Long> postIds = new ArrayList<>();
-            //todo optional로 개선
-            if (popularPosts != null) {
-                for (PostDto popularPost : popularPosts) {
-                    postIds.add(popularPost.getPostId());
-                }
-            }
-
-            postService.updateViewCountForPopularPosts(postIds);
+            postService.updateViewCountForPopularPosts(likeCountRedisRepository.getPopularPostEntries());
         } finally {
             redisRepository.updateViewCountUnLock();
         }

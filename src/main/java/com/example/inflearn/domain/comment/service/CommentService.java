@@ -26,9 +26,7 @@ public class CommentService {
     public void saveComment(long memberId, long postId, String contents) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-
-        Comment comment = Comment.createComment(member, post, contents);
-        commentRepository.save(comment);
+        commentRepository.save(Comment.createComment(member, post, contents));
     }
 
     public void saveReply(long memberId, long commentId, String contents) {
@@ -38,7 +36,6 @@ public class CommentService {
             throw new CannotCreateReplyException();
         }
 
-        Comment reply = Comment.createComment(member, parentComment.getPost(), contents);
-        parentComment.addReply(reply);
+        parentComment.addReply(Comment.createComment(member, parentComment.getPost(), contents));
     }
 }
