@@ -1,9 +1,10 @@
 package com.example.inflearn.infra.repository.post;
 
 import com.example.inflearn.domain.post.PostDto;
+import com.example.inflearn.infra.repository.dto.projection.PopularPostDto;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface PostRepositoryCustom {
@@ -26,5 +27,5 @@ public interface PostRepositoryCustom {
 
     Long countPageWithHashtagSearchWord(String searchWord, int page, int size);
 
-    List<PostDto> findPopularPostByDate(LocalDateTime firstDay, LocalDateTime endDay);
+    List<PopularPostDto> findPopularPostByDate(LocalDate firstDay, LocalDate endDay);
 }
