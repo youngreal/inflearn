@@ -35,7 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
-src/main/java/com/example/inflearn/common/PostInitializer.java
 src/main/java/com/example/inflearn/common/HashtagInitializer.java
 src/test/java/com/example/inflearn/repository/RepositoryTest.java
 src/test/java/com/example/inflearn/domain/post/service/ConcurrentTest.java
