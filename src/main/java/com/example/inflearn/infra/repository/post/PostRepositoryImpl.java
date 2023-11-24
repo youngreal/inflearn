@@ -215,7 +215,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         ExpressionUtils.as(JPAExpressions
                                 .select(comment.id.count())
                                 .from(comment)
-                                .where(post.id.eq(comment.post.id)), "commentCount"),
+//                                .where(post.id.eq(comment.post.id)), "commentCount"),
+                                .where(comment.post.id.eq(postId)), "commentCount"),
                         post.createdAt,
                         post.updatedAt,
                         post.postStatus)
