@@ -18,21 +18,28 @@ public class DevMailService implements MailService{
 
     private final JavaMailSender javaMailSender;
 
+    /**
+     * MessagingException 발생시 로그를 남기기위해 catch를 하게되면 MailSentEventHandler에서 MessagingException에 대한 트리거가 작동되지않음.
+     * 따라서, 로그도 남겨주면서 커스텀예외로 전환해서 CustomMessagingException을 retry의 트리거로 동작시킨다.
+     */
     @Override
     public void send(EmailMessage emailMessage) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false,
-                    "UTF-8");
-            mimeMessageHelper.setTo(emailMessage.to());
-            mimeMessageHelper.setSubject(emailMessage.subject());
-            mimeMessageHelper.setText(emailMessage.message(), true);
-            javaMailSender.send(mimeMessage);
             log.info("sent email: {}", emailMessage.message());
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
+            setMessage(emailMessage, mimeMessageHelper);
+            javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
-            log.error("messaging exception 발생", e);
-            // retry를 적용시키기위해 uncheckException을 던진다.
+            log.warn("messaging exception 발생, retry 시작");
             throw new CustomMessagingException(e);
         }
+    }
+
+    private void setMessage(EmailMessage emailMessage, MimeMessageHelper mimeMessageHelper)
+            throws MessagingException {
+        mimeMessageHelper.setTo(emailMessage.to());
+        mimeMessageHelper.setSubject(emailMessage.subject());
+        mimeMessageHelper.setText(emailMessage.message(), true);
     }
 }
