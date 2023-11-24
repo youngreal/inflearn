@@ -1,13 +1,14 @@
 package com.example.inflearn.domain.hashtag.domain;
 
 import com.example.inflearn.domain.post.domain.PostHashtag;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -17,10 +18,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@ToString
-@Getter
 @EqualsAndHashCode(of = "hashtagName")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
+@Getter
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "hashtag_name")
+        }
+)
 @Entity
 public class Hashtag {
 
@@ -28,11 +34,11 @@ public class Hashtag {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "hashtag_name")
-    private String hashtagName; // unique
+    @Column(name = "hashtag_name", nullable = false)
+    private String hashtagName;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "hashtag", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "hashtag")
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
     @Builder

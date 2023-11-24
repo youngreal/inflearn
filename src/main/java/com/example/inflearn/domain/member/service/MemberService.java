@@ -9,10 +9,13 @@ import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.event.Events;
 import com.example.inflearn.domain.member.event.MailSentEvent;
 import com.example.inflearn.infra.repository.member.MemberRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -29,6 +32,21 @@ public class MemberService {
         Events.raise(new MailSentEvent(member));
         return memberRepository.save(member);
     }
+
+    // 부하테스트용
+//    public Member signUp(Member member) {
+//        if (memberRepository.existsByEmail(member.getEmail())) {
+////            throw new AlreadyExistMemberException();
+//        }
+//
+//        member.generateEmailToken();
+//        Events.raise(new MailSentEvent(member));
+//        memberRepository.save(Member.builder()
+//                .email(UUID.randomUUID() + "@naver.com")
+//                .password("123456789")
+//                .build());
+//        return member;
+//    }
     
     public Member checkEmail(String emailToken, String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(() -> new DoesNotExistEmailException("잘못된 이메일 주소입니다."));
