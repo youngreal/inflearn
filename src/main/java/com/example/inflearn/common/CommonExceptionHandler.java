@@ -3,7 +3,6 @@ package com.example.inflearn.common;
 import com.example.inflearn.common.exception.AlreadyExistMemberException;
 import com.example.inflearn.common.exception.AlreadyLikeException;
 import com.example.inflearn.common.exception.CannotCreateReplyException;
-import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.common.exception.DoesNotExistCommentException;
 import com.example.inflearn.common.exception.DoesNotExistEmailException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
@@ -98,15 +97,6 @@ public class CommonExceptionHandler {
                 .status(e.getHttpStatus())
                 .body(e.getMessage());
     }
-
-    @ExceptionHandler(CustomMessagingException.class)
-    public ResponseEntity<String> customMessagingException(CustomMessagingException e) {
-        log.info("custom ex 핸들링");
-        return ResponseEntity
-                .status(e.getHttpStatus())
-                .body(e.getMessage());
-    }
-
     @ExceptionHandler(SearchWordLengthException.class)
     public ResponseEntity<String> searchWordLengthException(SearchWordLengthException e) {
         return ResponseEntity
@@ -148,9 +138,9 @@ public class CommonExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Unique 제약조건 위배");
     }
-//
+
 //    @ExceptionHandler(RuntimeException.class)
-//    public ResponseEntity<String> exception(RuntimeException e) {
+//    public ResponseEntity<String> runtimeException(RuntimeException e) {
 //        return ResponseEntity
 //                .status(HttpStatus.INTERNAL_SERVER_ERROR)
 //                .body(e.getMessage());
