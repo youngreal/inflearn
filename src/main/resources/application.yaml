@@ -2,21 +2,21 @@ logging:
   level:
     com.board.board: debug
     #    request /response 정보 볼수있다.
-    org.springframework.web.servlet: debug
+#    org.springframework.web.servlet: debug
     #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
     org.hibernate.orm.jdbc.bind: trace
 spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:mysql://localhost:3306/inflearn
+#    url: jdbc:mysql://localhost:3306/inflearn
+    url: jdbc:mysql://host.docker.internal:3306/inflearn
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     #    스프링부트 2.4~5부터 생김, true로 하면 테스트용 데이터를 넣을수있게끔 가능해짐 (/resources/xxx.sql)
     defer-datasource-initialization: true
-    # 엔티티를 보고 테이블정보를 유추해서 자동으로 DDL문을 만들어줌.
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -26,17 +26,32 @@ spring:
         format_sql: true
         default_batch_fetch_size: 100
     open-in-view: false
-      #  data.sql을 언제 작동시킬것인가? 테스트환경,절대작동하지않음,항상작동함 중 선택
-  sql:
-   init:
-    mode: never
   data:
     redis:
-      host: localhost
+      host: host.docker.internal
+#      host: localhost
       port: 6379
+
+# 액추에이터에서 톰캣 스레드 보는 설정 추가 -> 프로테메우스로 전달
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 # mybatis
 mybatis:
   mapper-locations: classpath:/mapper/*.xml
 
-
+# 프로메테우스 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    prometheus:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
