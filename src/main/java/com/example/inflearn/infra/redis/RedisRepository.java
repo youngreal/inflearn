@@ -22,7 +22,7 @@ public class RedisRepository {
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "lock";
     private static final String UPDATE_VIEW_LOCK_VALUE = "updateViewLock";
     private final RedisTemplate<String, String> redisTemplate;
-    private final HyperLogLogOperations<String, Long> hyperLogLogOperations;
+//    private final HyperLogLogOperations<String, Long> hyperLogLogOperations;
 
 
     //    public void test() {
