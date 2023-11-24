@@ -19,6 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+todo 글 수정시 해시태그 수정/삭제가 발생해야하는데 이는 반드시 게시글수정시 바로 실행되지 않아도 되는 성질이라고 생각한다.
+ 또한 현실적으로 10개미만의 수정/삭제가 발생할 확률이 매우 높으므로 아직까지 크게 병목이 되진않는다.(현재 2.2ms 응답시간소요)
+ 만약 이부분이 병목이 된다면 트랜잭션을 분리하거나 비동기로 처리할수도 있을것같다. 현재는 병목이 아니다.
+ *
+ */
+
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -27,7 +34,6 @@ public class PostService {
 
     private final HashtagService hashtagService;
     private final PostRepository postRepository;
-    //todo usecase 레이어 생성해서 분리해보자.
     private final MemberRepository memberRepository;
 
     public void write(PostDto dto, long id) {

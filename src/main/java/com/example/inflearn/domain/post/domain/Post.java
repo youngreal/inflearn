@@ -25,12 +25,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-//todo Index 컬럼, nullable 컬럼, @Table(uniqueConstraints = ) 조건을 사용해서 유니크컬럼도 지정해보자.
+/**
+ * title과 contents가 fulltext index로 설정되어있습니다.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
 @Getter
 @Table(indexes = {
-        @Index(columnList = "createdAt")
+        @Index(columnList = "createdAt"),
 })
 @Entity
 public class Post {
@@ -42,7 +44,6 @@ public class Post {
     @Column(nullable = false)
     private String title; // 글 제목
 
-    //todo fulltext 인덱스 인걸 어떻게 반영해야할까?
     @Column(nullable = false)
     @Lob
     private String contents; // 글내용
