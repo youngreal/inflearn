@@ -7,8 +7,7 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: trace
 spring:
   datasource:
-#    url: jdbc:mysql://inflearn-database:3306/inflearn
-    url: jdbc:mysql://localhost:3306/inflearn
+    url: jdbc:mysql://inflearn-database:3306/inflearn
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -47,3 +46,17 @@ spring:
 
 mybatis:
   mapper-locations: classpath:/mapper/*.xml
+
+# 프로메테우스 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    prometheus:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true

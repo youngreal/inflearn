@@ -1,15 +1,12 @@
 logging:
   level:
     com.board.board: debug
-    #    request /response 정보 볼수있다.
-#    org.springframework.web.servlet: debug
     #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
     org.hibernate.orm.jdbc.bind: trace
 spring:
   profiles:
     active: local
   datasource:
-#    url: jdbc:mysql://localhost:3306/inflearn
     url: jdbc:mysql://host.docker.internal:3306/inflearn
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
