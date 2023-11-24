@@ -26,6 +26,15 @@ public class RedisConfig {
     }
 
     @Bean
+    public RedisTemplate<Long, Long> redisTemplate1() {
+        RedisTemplate<Long, Long> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+        redisTemplate.setKeySerializer(new GenericToStringSerializer<>(Long.class));
+        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Long.class));
+        return redisTemplate;
+    }
+
+    @Bean
     public RedisTemplate<String, Long> redisTemplate2() {
         RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
@@ -44,7 +53,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public HyperLogLogOperations<String, Long> hyperLogLogOperations() {
-        return redisTemplate2().opsForHyperLogLog();
+    public HyperLogLogOperations<Long, Long> hyperLogLogOperations() {
+        return redisTemplate1().opsForHyperLogLog();
     }
 }

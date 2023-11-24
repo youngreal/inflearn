@@ -28,13 +28,19 @@ public class LikeCountRedisRepository {
         return popularPostsWithViewCount.opsForHash().entries(VIEW_COUNT_KEY);
     }
 
-    public Integer getViewCount(long postId) {
-        return (Integer) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
+    public Long getViewCount(Long postId) {
+        log.info("redis 내 진입 2");
+//        Long viewCOuntSibal = popularPostsWithViewCount.opsForValue().get(VIEW_COUNT_KEY);
+//        log.info("viewCountValue ={}", viewCOuntSibal);
+        return (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
     }
 
     public void updateViewCountToCache(long postId) {
-        Integer viewCount = (Integer) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
+        Long viewCount = (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
+        log.info("viewCount = {}", viewCount);
         popularPostsWithViewCount.opsForHash().put(VIEW_COUNT_KEY, postId, viewCount + 1);
+        Long viewCount2 = (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
+        log.info("after ViewCount = {}", viewCount2);
     }
 
 
