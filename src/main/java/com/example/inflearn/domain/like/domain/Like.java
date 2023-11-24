@@ -33,16 +33,16 @@ public class Like {
     @JoinColumn(name = "post_id")
     private Post post;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id")
-    private Comment comment;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "comment_id")
+//    private Comment comment;
 
     @Builder
-    private Like(Long id, Member member, Post post, Comment comment) {
+    private Like(Long id, Member member, Post post) {
         this.id = id;
         this.member = member;
         this.post = post;
-        this.comment = comment;
+//        this.comment = comment;
     }
 
     public static Like create(Member member, Post post) {

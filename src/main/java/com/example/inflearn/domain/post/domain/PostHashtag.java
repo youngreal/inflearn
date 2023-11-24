@@ -16,14 +16,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-//todo 해당 엔티티는 어떤 패키지에 둬야할까?
 @ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")
 @Getter
-//@Table(indexes = {
-//        @Index(name = "idx_hashtag_post", columnList = "hashtag_id, post_id")
-//})
 @Entity
 public class PostHashtag {
 

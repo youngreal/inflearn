@@ -15,7 +15,6 @@ DB에 새로넣을 해시태그를 계산해주고, post와 hashtag에 postHasht
 HashtagService에서 전부 이 로직을 실행하면 테스트하기가 어려워져서 분리를 시도했다.
  */
 
-//todo 테스트코드
 @Component
 public class PostHashtagHandler {
 
