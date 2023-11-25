@@ -9,8 +9,8 @@ services:
     ports:
       - "6379:6379"
     #    테스트용 CPU, 메모리 제한
-    cpus: 1.0
-    mem_limit: 5g
+    cpus: 0.25
+    mem_limit: 1
   inflearn-database:
     container_name: inflearn-database
     build:
@@ -25,8 +25,8 @@ services:
       - ./database/data:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
-    cpus: 1.0
-    mem_limit: 5g
+    cpus: 0.75
+    mem_limit: 1
   inflearn-app:
     container_name: inflearn-app
     build: . # 도커파일이 있는 위치
@@ -41,8 +41,8 @@ services:
     ports:
       - "80:8080"
     restart: always # 레디스나 DB가 실행가능한 상태가 아닌경우있을수있는데 그경우에 재시작할수있도록 설정
-    cpus: 2
-    mem_limit: 6g
+    cpus: 1
+    mem_limit: 2g
 
   grafana:
     image: grafana/grafana:latest
