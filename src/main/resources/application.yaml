@@ -1,6 +1,6 @@
 logging:
   level:
-    com.board.board: debug
+    com.board.board: info
     #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
     org.hibernate.orm.jdbc.bind: trace
 spring:
@@ -34,6 +34,8 @@ server:
   tomcat:
     mbeanregistry:
       enabled: true
+    threads:
+      max: 300
 
 # mybatis
 mybatis:
