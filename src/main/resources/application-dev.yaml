@@ -47,6 +47,14 @@ spring:
 mybatis:
   mapper-locations: classpath:/mapper/*.xml
 
+# 액추에이터에서 톰캣 스레드 보는 설정 추가 -> 프로테메우스로 전달
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 300
+
 # 프로메테우스 설정
 management:
   endpoints:
