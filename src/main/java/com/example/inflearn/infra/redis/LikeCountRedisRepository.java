@@ -30,8 +30,6 @@ public class LikeCountRedisRepository {
 
     public Long getViewCount(Long postId) {
         log.info("redis 내 진입 2");
-//        Long viewCOuntSibal = popularPostsWithViewCount.opsForValue().get(VIEW_COUNT_KEY);
-//        log.info("viewCountValue ={}", viewCOuntSibal);
         return (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
     }
 
