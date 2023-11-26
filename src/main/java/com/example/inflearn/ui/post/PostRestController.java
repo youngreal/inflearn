@@ -174,29 +174,16 @@ public class PostRestController {
         return PostDetailPageResponse.from(postQueryService.postDetail(postId));
     }
 
+    // redis hash 사용
     @GetMapping("/posts/v0/{postId}")
     public PostDetailPageResponse postDetail0(@PathVariable long postId) {
         return PostDetailPageResponse.from(postQueryService.postDetailV0(postId));
     }
 
-    @GetMapping("/posts/v2/{postId}")
+    // 비동기 + hyperlog사용
+    @GetMapping("/posts/v0/{postId}")
     public PostDetailPageResponse postDetail2(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail2(postId));
-    }
-
-    @GetMapping("/posts/v3/{postId}")
-    public PostDetailPageResponse postDetail3(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail3(postId));
-    }
-
-    @GetMapping("/posts/v4/{postId}")
-    public PostDetailPageResponse postDetail4(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail4(postId));
-    }
-
-    @GetMapping("/posts/v5/{postId}")
-    public PostDetailPageResponse postDetail5(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail5(postId));
+        return PostDetailPageResponse.from(postQueryService.postDetailV2(postId));
     }
 
 
