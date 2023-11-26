@@ -32,7 +32,7 @@ public class PostQueryService {
     private final PaginationService paginationService;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
-//    private final LikeCountRedisRepository likeCountRedisRepository;
+    private final LikeCountRedisRepository likeCountRedisRepository;
     private final LikeCountRedisRepository2 likeCountRedisRepository2;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
@@ -66,12 +66,24 @@ public class PostQueryService {
 //        return postDetail;
 //    }
 
+    // v0 레디스 hash사용
+    @Transactional
+    public PostDto postDetailV0(long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//        Events.raise(new PostViewCountEvent(postId));
+        addViewCount(post);
+        PostDto postDetail = postRepository.postDetail(postId);
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
+    }
+
+    // v1 레디스 hyperloglog사용
     @Transactional
     public PostDto postDetail(long postId) {
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 //        Events.raise(new PostViewCountEvent(postId));
-        post.plusViewCount();
-//        addViewCount(post);
+        addViewCount2(post);
         PostDto postDetail = postRepository.postDetail(postId);
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
         postDetail.inputComments(postRepository.commentsBy(postDetail));
@@ -188,9 +200,21 @@ public class PostQueryService {
         postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
     }
 
+    private void addViewCount(Post post) {
+        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
+        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            log.info("단순 update쿼리 진입");
+            post.plusViewCount();
+        } else {
+            log.info("updateViewCountToCache 진입");
+            likeCountRedisRepository.updateViewCountToCache(post.getId());
+        }
+    }
+
     // todo 부하테스트 해봐야한다. 레디스는 싱글스레드이기떄문에 조회 요청이 레디스에 엄청몰리면 어느정도 트래픽까집 버틸수있는지.
     // todo 만약 hyperloglog로 한다면 ? 성능이 어떻게 나올까?
-    private void addViewCount(Post post) {
+    private void addViewCount2(Post post) {
         // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
         // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
         if (likeCountRedisRepository2.getViewCount(post.getId()) == null) {
