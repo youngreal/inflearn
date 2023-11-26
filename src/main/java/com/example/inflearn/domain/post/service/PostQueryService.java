@@ -59,7 +59,6 @@ public class PostQueryService {
 //    public PostDto postDetail(long postId) {
 //        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 //        post.plusViewCount();
-////        addViewCount(post);
 //        PostDto postDetail = postRepository.postDetail(postId);
 //        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
 //        postDetail.inputComments(postRepository.commentsBy(postDetail));
@@ -90,55 +89,67 @@ public class PostQueryService {
         return postDetail;
     }
 
-    // 범인의심 1 조인쿼리가 범인이다. ( 조인제거)
+    // v2 레디스 hyperloglog사용 + 조회수 업데이트를 비동기로 처리
     @Transactional
-    public PostDto postDetail2(long postId) {
+    public PostDto postDetailV2(long postId) {
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        post.plusViewCount();
-        return PostDto.builder()
-                .title("내용1")
-                .contents("제목1")
-                .nickname("닉네임")
-                .build();
-    }
-
-    // 범인의심 2 update쿼리가 범인이다. ( 업데이트 제거)
-    @Transactional
-    public PostDto postDetail3(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+        Events.raise(new PostViewCountEvent(postId));
+//        addViewCount2(post);
         PostDto postDetail = postRepository.postDetail(postId);
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
         postDetail.inputComments(postRepository.commentsBy(postDetail));
         return postDetail;
     }
 
-    // 범인 의심 3 count쿼리가 범인이다. (postDetail 카운트쿼리)
-    @Transactional
-    public PostDto postDetail4(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        post.plusViewCount();
-        PostDto postDetail = PostDto.builder()
-                .postId(2000001L)
-                .title("내용1")
-                .contents("제목1")
-                .nickname("닉네임")
-                .build();
-
-        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
-        postDetail.inputComments(postRepository.commentsBy(postDetail));
-        return postDetail;
-    }
-
-    // 범인 의심 4 자바 쿼리가 범인이다?(해시태그, 댓글 입력코드)
-    @Transactional
-    public PostDto postDetail5(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        post.plusViewCount();
-        PostDto postDetail = postRepository.postDetail(postId);
+//    // 범인의심 1 조인쿼리가 범인이다. ( 조인제거)
+//    @Transactional
+//    public PostDto postDetail2(long postId) {
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//        post.plusViewCount();
+//        return PostDto.builder()
+//                .title("내용1")
+//                .contents("제목1")
+//                .nickname("닉네임")
+//                .build();
+//    }
+//
+//    // 범인의심 2 update쿼리가 범인이다. ( 업데이트 제거)
+//    @Transactional
+//    public PostDto postDetail3(long postId) {
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//        PostDto postDetail = postRepository.postDetail(postId);
 //        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
 //        postDetail.inputComments(postRepository.commentsBy(postDetail));
-        return postDetail;
-    }
+//        return postDetail;
+//    }
+//
+//    // 범인 의심 3 count쿼리가 범인이다. (postDetail 카운트쿼리)
+//    @Transactional
+//    public PostDto postDetail4(long postId) {
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//        post.plusViewCount();
+//        PostDto postDetail = PostDto.builder()
+//                .postId(2000001L)
+//                .title("내용1")
+//                .contents("제목1")
+//                .nickname("닉네임")
+//                .build();
+//
+//        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+//        postDetail.inputComments(postRepository.commentsBy(postDetail));
+//        return postDetail;
+//    }
+//
+//    // 범인 의심 4 자바 쿼리가 범인이다?(해시태그, 댓글 입력코드)
+//    @Transactional
+//    public PostDto postDetail5(long postId) {
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//        post.plusViewCount();
+//        PostDto postDetail = postRepository.postDetail(postId);
+////        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+////        postDetail.inputComments(postRepository.commentsBy(postDetail));
+//        return postDetail;
+//    }
 
     public List<PostDto> searchPost(PostSearch postSearch) {
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
