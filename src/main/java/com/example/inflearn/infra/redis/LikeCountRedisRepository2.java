@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LikeCountRedisRepository2 {
 
-
     private final HyperLogLogOperations<Long, Long> viewCountOperation;
     private static final String VIEW_COUNT_KEY = "popularPosts";
     private static final String LIKE_COUNT_KEY = "likeCountKey";
@@ -34,8 +33,6 @@ public class LikeCountRedisRepository2 {
     }
     public void updateViewCountToCache(long postId) {
         viewCountOperation.add(postId, viewCountOperation.size(postId) + 1);
-        Long size = viewCountOperation.size(postId);
-        log.info("size = {}", size);
     }
 
     public void updatePopularPosts(Map<Long, Long> popularPostInDB) {

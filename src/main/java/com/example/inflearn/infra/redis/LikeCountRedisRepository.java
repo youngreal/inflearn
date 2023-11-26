@@ -34,11 +34,7 @@ public class LikeCountRedisRepository {
     }
 
     public void updateViewCountToCache(long postId) {
-        Long viewCount = (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
-        log.info("viewCount = {}", viewCount);
-        popularPostsWithViewCount.opsForHash().put(VIEW_COUNT_KEY, postId, viewCount + 1);
-        Long viewCount2 = (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
-        log.info("after ViewCount = {}", viewCount2);
+        popularPostsWithViewCount.opsForHash().increment(LIKE_COUNT_KEY, postId, 1L);
     }
 
 
