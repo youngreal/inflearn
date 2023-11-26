@@ -52,8 +52,6 @@ server:
   tomcat:
     mbeanregistry:
       enabled: true
-    threads:
-      max: 300
 
 # 프로메테우스 설정
 management:
