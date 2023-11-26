@@ -181,7 +181,7 @@ public class PostRestController {
     }
 
     // 비동기 + hyperlog사용
-    @GetMapping("/posts/v0/{postId}")
+    @GetMapping("/posts/v2/{postId}")
     public PostDetailPageResponse postDetail2(@PathVariable long postId) {
         return PostDetailPageResponse.from(postQueryService.postDetailV2(postId));
     }
