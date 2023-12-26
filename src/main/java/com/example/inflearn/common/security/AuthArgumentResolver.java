@@ -33,22 +33,18 @@ public class AuthArgumentResolver implements HandlerMethodArgumentResolver {
         HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
 
         if (servletRequest == null) {
-            throw new WrongServletRequestException("잘못된 서블릿 요청입니다");
+            throw new WrongServletRequestException();
         }
 
         if (servletRequest.getCookies() == null) {
-            throw new EmptyCookieRequestException("잘못된 요청입니다");
+            throw new EmptyCookieRequestException();
         }
 
         Cookie[] cookies = servletRequest.getCookies();
-        for (Cookie cookie : cookies) {
-            log.info(">>>>> cookie.getName= {}", cookie.getName());
-            log.info(">>>>> cookie.getValue= {}", cookie.getValue());
-        }
         Cookie cookie = Arrays.stream(cookies)
                 .filter(cookie1 -> cookie1.getName().equals("SESSION"))
                 .findFirst()
-                .orElseThrow(() -> new UnAuthorizationException("유효하지않은 세션토큰쿠키"));
+                .orElseThrow(() -> new UnAuthorizationException("유효하지 않은 세션토큰"));
 
         Member member = memberRepository.findByLoginToken(cookie.getValue()).orElseThrow(() -> new UnAuthorizationException("존재하지 않은 세션토큰"));
         return new LoginedMember(member.getId());
