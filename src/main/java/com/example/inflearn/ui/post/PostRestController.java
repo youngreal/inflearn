@@ -174,19 +174,6 @@ public class PostRestController {
         return PostDetailPageResponse.from(postQueryService.postDetail(postId));
     }
 
-    // redis hash 사용
-    @GetMapping("/posts/v0/{postId}")
-    public PostDetailPageResponse postDetail0(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetailV0(postId));
-    }
-
-    // 비동기 + hyperlog사용
-    @GetMapping("/posts/v2/{postId}")
-    public PostDetailPageResponse postDetail2(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetailV2(postId));
-    }
-
-
     /**
      * 한페이지에 20개의 게시글을 보여주고싶다
      * 버튼은 10개 + 이전+다음
