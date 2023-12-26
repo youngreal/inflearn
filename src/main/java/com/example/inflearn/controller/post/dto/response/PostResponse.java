@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.post.dto.response;
+package com.example.inflearn.controller.post.dto.response;
 
 import com.example.inflearn.domain.post.domain.PostStatus;
 import com.example.inflearn.domain.post.PostDto;

@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.member.dto.response;
+package com.example.inflearn.controller.member.dto.response;
 
 import com.example.inflearn.domain.member.domain.Member;
 

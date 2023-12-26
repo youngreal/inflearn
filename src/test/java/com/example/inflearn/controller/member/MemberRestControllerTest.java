@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.member;
+package com.example.inflearn.controller.member;
 
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,8 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
 import com.example.inflearn.infra.repository.member.MemberRepository;
-import com.example.inflearn.ui.member.dto.request.MemberJoinRequest;
-import com.example.inflearn.ui.member.dto.request.MemberLoginRequest;
+import com.example.inflearn.controller.member.dto.request.MemberJoinRequest;
+import com.example.inflearn.controller.member.dto.request.MemberLoginRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.Optional;

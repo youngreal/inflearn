@@ -1,11 +1,11 @@
-package com.example.inflearn.ui.member;
+package com.example.inflearn.controller.member;
 
 import com.example.inflearn.common.security.LoginedMember;
 import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.member.service.MemberService;
-import com.example.inflearn.ui.member.dto.request.MemberJoinRequest;
-import com.example.inflearn.ui.member.dto.request.MemberLoginRequest;
-import com.example.inflearn.ui.member.dto.response.MemberJoinResponse;
+import com.example.inflearn.controller.member.dto.request.MemberJoinRequest;
+import com.example.inflearn.controller.member.dto.request.MemberLoginRequest;
+import com.example.inflearn.controller.member.dto.response.MemberJoinResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

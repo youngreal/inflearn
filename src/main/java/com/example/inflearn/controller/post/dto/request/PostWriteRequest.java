@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.post.dto.request;
+package com.example.inflearn.controller.post.dto.request;
 
 import com.example.inflearn.domain.post.PostDto;
 import jakarta.validation.constraints.NotBlank;
@@ -8,27 +8,27 @@ import java.util.Set;
 import lombok.Builder;
 
 @Builder
-public record PostUpdateRequest(
+public record PostWriteRequest(
         @NotBlank
         String title,
-        List<String> hashtags,
         @NotBlank
-        String contents
+        String contents,
+        List<String> hashtags
 ) {
 
     public PostDto toDto() {
         return PostDto.builder()
                 .title(this.title)
-                .hashtags(new HashSet<>())
                 .contents(this.contents)
+                .hashtags(new HashSet<>())
                 .build();
     }
 
     public PostDto toDtoWithHashtag(Set<String> hashtags) {
         return PostDto.builder()
                 .title(this.title)
-                .hashtags(hashtags)
                 .contents(this.contents)
+                .hashtags(hashtags)
                 .build();
     }
 }
