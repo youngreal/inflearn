@@ -5,12 +5,11 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public class EmptyCookieRequestException extends RuntimeException {
-    private final String message;
+    private static final String MESSAGE = "잘못된 요청입니다";
     private final HttpStatus httpStatus;
 
-    public EmptyCookieRequestException(String message) {
-        super(message);
-        this.message = message;
+    public EmptyCookieRequestException() {
+        super(MESSAGE);
         this.httpStatus = HttpStatus.UNAUTHORIZED;
     }
 }
