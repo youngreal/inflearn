@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,6 @@ todo 글 수정시 해시태그 수정/삭제가 발생해야하는데 이는 �
 @Transactional
 @RequiredArgsConstructor
 @Service
-@Slf4j
 public class PostService {
 
     private final HashtagService hashtagService;
