@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.post.dto.request;
+package com.example.inflearn.controller.post.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

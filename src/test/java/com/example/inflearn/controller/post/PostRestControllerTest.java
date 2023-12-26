@@ -1,4 +1,4 @@
-package com.example.inflearn.ui.post;
+package com.example.inflearn.controller.post;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -21,17 +21,19 @@ import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.service.PostQueryService;
 import com.example.inflearn.domain.post.service.PostService;
 import com.example.inflearn.infra.repository.member.MemberRepository;
-import com.example.inflearn.ui.post.dto.request.PostCommentContents;
-import com.example.inflearn.ui.post.dto.request.PostPaging;
-import com.example.inflearn.ui.post.dto.request.PostReplyContents;
+import com.example.inflearn.controller.post.dto.request.PostCommentContents;
+import com.example.inflearn.controller.post.dto.request.PostPaging;
+import com.example.inflearn.controller.post.dto.request.PostReplyContents;
 import com.example.inflearn.domain.post.PostSearch;
-import com.example.inflearn.ui.post.dto.request.PostWriteRequest;
+import com.example.inflearn.controller.post.dto.request.PostWriteRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -39,6 +41,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @WebMvcTest(PostRestController.class)
 class PostRestControllerTest {
 
@@ -79,8 +82,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 성공: 중복없는 해시태그 존재")
-    void post_write_success() throws Exception {
+    void 중복_없는_해시태그_입력시_게시글_작성_성공한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -100,8 +102,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 성공: 해시태그 존재하지 않음")
-    void post_write_success2() throws Exception {
+    void 해시태그를_입력하지_않아도_게시글_작성_성공한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of());
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -122,8 +123,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 실패: 로그인 하지 않은 회원")
-    void post_write_fail1() throws Exception {
+    void 로그인_하지_않은_회원은_게시글_작성에_실패한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
 
@@ -142,8 +142,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 실패: 빈 제목이나 빈 본문 작성")
-    void post_write_fail2() throws Exception {
+    void 빈_제목이나_빈_내용을_입력한_게시글은_작성에_실패한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -163,8 +162,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 실패: 중복된 해시태그값 존재")
-    void post_write_fail3() throws Exception {
+    void 중복_해시태그를_입력하면_게시글_작성에_실패한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -185,8 +183,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 성공")
-    void post_update_success() throws Exception {
+    void 게시글_수정_성공() throws Exception {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -206,8 +203,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패: 빈 제목이나 빈 본문 작성")
-    void post_update_fail() throws Exception {
+    void 비어있는_제목이나_본문으로_게시글을_수정요청하면_실패한다() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
