@@ -1,7 +1,7 @@
 ## 소개
 - 인프런의 질문/스터디 게시판을 기능을 먼저 구현하고, 실제로 많은 회원이 사용한다면 어떻게 대응할수 있을지 대응방법을 경험해보기
 
-- 모든 API에서 트래픽이 몰린다고 가정하는것이 아닌, 현실적으로 ``우선순위가 높은 부분부터 순차적으로 생각해보기``
+- 모든 API에서 트래픽이 몰린다고 가정하는것이 아닌, 현실적으로 ``우선순위가 높은 부분``부터 순차적으로 생각해보기
   
 - [국내 커뮤니티 트래픽 정보](https://todaybeststory.com/ranking_monthly.html) 를 참고하여 2등 커뮤니티의 트래픽 수치를 대략적으로 참고하였음
 
@@ -12,7 +12,7 @@
 - [Gmail 서비스에 문제가 생긴다면?](#2-Gmail-서비스에-문제가-생긴다면)
 - [인기글 리스트 갱신은 어떻게 할것인가?](#3-인기글-리스트-갱신은-어떻게-할것인가)
 - [인기글 조회에 트래픽이 엄청나게 몰린다면?](#4-인기글-조회에-트래픽이-엄청나게-몰린다면)
-- [게시글 검색에 대한 고민(LIKE %word%)](#5-게시글-검색에-대한-고민(LIKE-word))
+- [게시글 검색에 대한 고민(LIKE %word%)](#5-게시글-검색에-대한-고민LIKE-word)
 
 ## 1. 회원가입시 회원 저장과 이메일전송의 강결합 + 응답속도 저하 문제를 어떻게 개선할지?
 
@@ -88,7 +88,7 @@ public class MemberService {
       - 이벤트 처리 주체가 스프링이기 때문에 스프링의 리소스가 소요된다. 
       - 사용가능한 비용 내에서 서버 scale-out과 nginx의 부하분산도 고려해본 후,  성능테스트를 진행해보고 예상 트래픽을 받고도 스프링 서버가 멀쩡할수있는지 확인해봐야한다 
   - 메시징 시스템 고려
-      - 스프링의 이벤트핸들러와 달리 메시지를 큐에 저장하고 , 처리하는과정이 비동기로 이뤄지기때문에 테스트 후 고려해볼수 있을것같다.  
+      - 스프링의 이벤트핸들러는 이벤트를를 큐에 저장하고 , 처리하는과정이 동기로 이뤄지기때문에 이벤트 등록과 처리를 비동기로 처리할있는 메시징 시스템에 대해 학습해보고 테스트 후 고려해볼수 있을것같다.  
   - 스레드 풀 튜닝 고려(ec2.medium (2 cpu, 4G ram))
      - 스프링 부트에선 별도의 AsyncConfig을 설정하지않아도 기본적으로 corePoolSize가 8, queueCapacity가 Integer.MAX_VALUE, maxPoolSize가 Integer.MAX_VALUE인  ThreadPoolTastExecutor가 적용된다.
        - corePoolSize 튜닝 : I/O 작업인 메일전송위주라서 cpu보다 더 많은 스레드를 이미 할당한 상태이다.
@@ -234,13 +234,36 @@ try {
 - redis 자체가 SPOF가 될 여지가있으며, redis에서 지원하는 클러스터링 방법에 대한 학습 필요
 
 ## 5. 게시글 검색에 대한 고민(LIKE %word%)
-- LIKE %word% 쿼리는 인덱스를 적용할 수 없어서 테이블 풀 스캔으로 검색결과를 찾아야하는 문제 발견
-- 게시글 테이블의 데이터수가 50만건부터 쿼리 응답속도가 2초, 약 200만건이 넘어가는순간부터 쿼리 응답속도만 3~5초가 소요되는문제 발견
-![image](https://github.com/youngreal/inflearn/assets/59333182/2c384a83-d4a9-4591-a4cb-51fe76c868da)
-    - 현재 페이징으로 20개의 결과만 가져오기때문에 운좋게 테이블 전체를 스캔하지않고 20개의 결과를 먼저 찾는경우 조금더 빠를수있지만, 검색어의 해당하는 결과가 없는 최악의경우 full-table scan으로 5초까지도 소요된다. 
+
+### 문제 발견
+- LIKE %word% 쿼리는 인덱스를 적용할 수 없어서 테이블 풀 스캔으로 검색결과를 찾아야하는 문제를 인식하였고, 수치확인을 위한 테스트 진행
+- 검색결과에 해당하지않는 게시글 검색시 테이블의 데이터수가 50만건일때 쿼리 응답속도가 3초, 약 200만건이 넘어가는순간부터 쿼리 응답속도만 5초이상이 소요되는문제 발견
+![image](https://github.com/youngreal/inflearn/assets/59333182/c0be383a-0bb5-4df9-b196-9c9e008706d7)
+    - 현재 페이징으로 20개의 결과만 가져오기때문에 운좋게 테이블 전체를 스캔하지않고 20개의 결과를 먼저 찾는경우 조금더 빠를수있지만, ``검색어의 해당하는 결과가 없는 최악의경우`` full-table scan으로 5초까지도 소요된다. 
+
 
 **문제 발견후 사고과정** 
-- mysql의 fulltext-search 와 검색엔진으로 해결해볼수 있을것같은데 큰 학습비용, 관리비용, 복잡도를 고려해 fulltext-search를 선택하였음
+- mysql의 fulltext-search 와 검색엔진으로 해결해볼수 있을것같은데 큰 학습비용, 복잡도를 고려해 fulltext-search를 선택하였음
+- like %word% 쿼리와 Full-text search 쿼리의 성능비교 후 , 검색 결과에 따라 성능이 달라지는것을 발견
+  - 검색결과가 0건인경우 쿼리응답 속도
+  ![](https://velog.velcdn.com/images/rodlsdyd/post/ec9ca5c1-bff5-46bc-881c-f421bc5d3351/image.png)
+    - Like%word% : 6.234 sec
+ ![](https://velog.velcdn.com/images/rodlsdyd/post/2372fd9f-7812-469c-a817-68d6593513d9/image.png)
+    - full-text search : 0.515 sec
+  - 검색결과가 77만건인경우 쿼리응답 속도
+![](https://velog.velcdn.com/images/rodlsdyd/post/87e4aa1d-3e96-4665-aaea-af1deb2c7887/image.png)
+    - Like%word% : 1 sec
+![](https://velog.velcdn.com/images/rodlsdyd/post/6057f32d-4df1-4924-8f15-47747bfe9601/image.png)
+    - full-text search : 2 sec
+  - 검색결과가 100만건이 넘어가는경우 쿼리응답 속도
+![](https://velog.velcdn.com/images/rodlsdyd/post/7da5b213-a56b-484d-a3c5-8fa1eee59f12/image.png)
+    - Like%word% : 0.15 sec
+![](https://velog.velcdn.com/images/rodlsdyd/post/4d2c2c2c-70fe-4167-af1f-c4977aa6b4c4/image.png)
+    - full-text search : 2.140 sec
+   
+### 한계, 고려해야할점
+- 실제 서비스를 하게된다면 검색결과들의 분포가 어떤 특성을 가지게 될지 어려웠다.  테이블크기의 30% 이상의 해당하는 결과를 검색하는일이 더 잦다면, 오히려 like%word% 방식이 좋을수도 있다.
+- 다만, 검색결과가 0건인 최악의 경우(6초이상)보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는점에서 좀더 자연스러운 최선의 방법이라 생각하였음.
 
 ### TODO
 
