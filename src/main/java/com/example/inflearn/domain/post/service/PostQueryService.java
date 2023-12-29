@@ -55,15 +55,6 @@ public class PostQueryService {
         return postDtos;
     }
 
-    /**
-     * 성능테스트 비교를 위한 Like검색쿼리
-     */
-    public List<PostDto> searchPostV2(PostSearch postSearch) {
-        List<PostDto> postDtos = postMapper.searchV2(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
-        setHashtagsWithJoin(postDtos);
-        return postDtos;
-    }
-
     public List<PostDto> searchPostWithHashtag(PostSearch postSearch) {
         List<Long> postIds = postRepository.findPostIdsByHashtagSearchWord(postSearch.searchWord());
         List<PostDto> postDtos = postRepository.searchWithHashtag(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort(), postIds);
