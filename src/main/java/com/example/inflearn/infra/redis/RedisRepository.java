@@ -3,7 +3,6 @@ package com.example.inflearn.infra.redis;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.HyperLogLogOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,13 +21,6 @@ public class RedisRepository {
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "lock";
     private static final String UPDATE_VIEW_LOCK_VALUE = "updateViewLock";
     private final RedisTemplate<String, String> redisTemplate;
-//    private final HyperLogLogOperations<String, Long> hyperLogLogOperations;
-
-
-    //    public void test() {
-//        hyperLogLogOperations.add("key", 1L);
-//        Long size = hyperLogLogOperations.size(String.valueOf(1L));
-//    }
 
     // key에는 인스턴스 ID, value에는 lock?
     // 락을 새로 세팅했으면 true, 락이 이미있었으면 false
