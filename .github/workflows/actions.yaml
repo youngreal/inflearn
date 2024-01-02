@@ -7,7 +7,7 @@ on:
 
 env:
   S3_BUCKET_NAME: inflearn-s3
-  CODE_DEPLOY_APPPLICATION_NAME: inflearn-codeDeploy
+  CODE_DEPLOY_APPLICATION_NAME: inflearn-codeDeploy 
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: inflearn-codeDeploy-group
 
 jobs:
