@@ -17,7 +17,7 @@ hooks:
   BeforeInstall:
     - location: scripts/delete_existing_files.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
 
   ApplicationStart:
     - location: scripts/gh_deploy.sh
