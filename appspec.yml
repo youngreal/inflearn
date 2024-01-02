@@ -1,12 +1,11 @@
 #CodeDeploy가 전송한 파일을 실행시키기위해 필요한 설정파일
 
-version: 1.0
+version: 0.0
 os: linux
 files:
   - source: /
     destination: /home/ec2-user/inflearn
     overwrite: yes
-files_exists_behavior: OVERWRITE
 
 permissions:
   - object: /
