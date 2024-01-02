@@ -6,6 +6,7 @@ files:
   - source: /
     destination: /home/ec2-user/inflearn
     overwrite: yes
+files_exists_behavior: OVERWRITE
 
 permissions:
   - object: /
