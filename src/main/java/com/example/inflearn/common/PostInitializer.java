@@ -9,6 +9,7 @@
 //import com.example.inflearn.infra.repository.comment.CommentRepository;
 //import com.example.inflearn.infra.repository.like.LikeRepository;
 //import com.example.inflearn.infra.repository.member.MemberRepository;
+//import com.example.inflearn.infra.repository.post.PostHashtagRepository;
 //import com.example.inflearn.infra.repository.post.PostRepository;
 //import jakarta.annotation.PostConstruct;
 //import java.security.SecureRandom;
@@ -18,7 +19,7 @@
 //import org.springframework.context.annotation.Profile;
 //import org.springframework.stereotype.Component;
 //
-//@Profile("dev")
+//@Profile("local")
 //@RequiredArgsConstructor
 //@Component
 //public class PostInitializer {
@@ -29,25 +30,28 @@
 //    private final LikeRepository likeRepository;
 //    private final CommentRepository commentRepository;
 //    int hashtagCount = 0;
-//    List<String> lists = List.of(
-//            "java", "spring", "spring boot", "aws", "docker",
-//            "elastic search", "백엔드", "로드맵","redis","kafka","쿠버네티스","msa","DB",
-//            "프론트엔드", "ci", "cd", "배포", "무중단", "nest", "타입스크립트", "node", "git",
-//            "서버", "데브옵스", "알고리즘", "자료구조", "운영체제", "스터디", "리액트", "이펙티브 자바",
-//            "typescript", "nestjs", "rest", "python", "김영한", "백기선", "주니어", "신입", "C",
-//            "C++", "바킹독", "코딩테스트", "Ruby", "코테", "온라인", "오프라인", "디스코드"
-//            , "경력", "재직자", "이직준비", "디앱", "블록체인", "솔리디티", "각자도생", "sql", "데브옵스", "퍼블리셔",
-//            "자바스크립트", "웹개발", "CS", "네트워크", "면접", "인터뷰","딥러닝","수학","1달","정처기","정보처리기사","기사시험",
-//            "벌칙비","html","css","jenkins","github actions", "언리얼","tdd","클린코드","협업","프로젝트","백준","릿코드","자바의정석",
-//            "기초","중급","고급","JPA","DBMS","real mysql","우테코","mvc","프리코스","이직러","모각코코","커피챗","비어챗","취준생위주",
-//            "경력자위주","코테초보만","코테중수이상","코테고수들만","해외취업","배포자동화","유료스터디"
-//    );
+////    List<String> lists = List.of(
+////            "java", "spring", "spring boot", "aws", "docker",
+////            "elastic search", "백엔드", "로드맵","redis","kafka","쿠버네티스","msa","DB",
+////            "프론트엔드", "ci", "cd", "배포", "무중단", "nest", "타입스크립트", "node", "git",
+////            "서버", "데브옵스", "알고리즘", "자료구조", "운영체제", "스터디", "리액트", "이펙티브 자바",
+////            "typescript", "nestjs", "rest", "python", "김영한", "백기선", "주니어", "신입", "C",
+////            "C++", "바킹독", "코딩테스트", "Ruby", "코테", "온라인", "오프라인", "디스코드"
+////            , "경력", "재직자", "이직준비", "디앱", "블록체인", "솔리디티", "각자도생", "sql", "데브옵스", "퍼블리셔",
+////            "자바스크립트", "웹개발", "CS", "네트워크", "면접", "인터뷰","딥러닝","수학","1달","정처기","정보처리기사","기사시험",
+////            "벌칙비","html","css","jenkins","github actions", "언리얼","tdd","클린코드","협업","프로젝트","백준","릿코드","자바의정석",
+////            "기초","중급","고급","JPA","DBMS","real mysql","우테코","mvc","프리코스","이직러","모각코코","커피챗","비어챗","취준생위주",
+////            "경력자위주","코테초보만","코테중수이상","코테고수들만","해외취업","배포자동화","유료스터디"
+////    );
+//
+//    List<String> lists = List.of("코테", "코테2");
 //
 //    @PostConstruct
 //    public void init() {
 //        int batchSize = 1000;
 ////        int batchSize = 100;
-//        int numberOfMemberToGenerate = 1_000_000;
+////        int numberOfMemberToGenerate = 1_000_000;
+//        int numberOfMemberToGenerate = 50_000;
 ////        int numberOfMemberToGenerate = 100;
 //        int postsPerMember = 2;
 //
@@ -61,17 +65,18 @@
 //            }
 //            postRepository.saveAll(posts);
 //
-//            List<Like> likes = new ArrayList<>();
-//            for (Post post : posts) {
-//                likes.addAll(generateLikesForPost(post, members)); // 2000 x 3 = 6,000,000
-//            }
-//                likeRepository.saveAll(likes);
 //
-//            List<Comment> comments = new ArrayList<>();
-//            for (Post post : posts) {
-//                comments.addAll(generateCommentsForPost(post, members)); // 2000 x 3
-//            }
-//                commentRepository.saveAll(comments);
+////            List<Like> likes = new ArrayList<>();
+////            for (Post post : posts) {
+////                likes.addAll(generateLikesForPost(post, members)); // 2000 x 3 = 6,000,000
+////            }
+////                likeRepository.saveAll(likes);
+////
+////            List<Comment> comments = new ArrayList<>();
+////            for (Post post : posts) {
+////                comments.addAll(generateCommentsForPost(post, members)); // 2000 x 3
+////            }
+////                commentRepository.saveAll(comments);
 //
 //
 //            List<PostHashtag> postHashtags = new ArrayList<>();
@@ -114,8 +119,8 @@
 //
 //    private List<PostHashtag> generatePostHashtagsForPost(Post post) {
 //        List<PostHashtag> postHashtags = new ArrayList<>();
-//        Hashtag hashtag = Hashtag.createHashtag("java" + hashtagCount);
-//        Hashtag hashtag2 = Hashtag.createHashtag("spring" + hashtagCount);
+//        Hashtag hashtag = Hashtag.createHashtag("javavjavajavzza55123123ㅁ12321" + hashtagCount);
+//        Hashtag hashtag2 = Hashtag.createHashtag("sprsfassaingzz55123213ㅁㄴㅇ13ㅣㅏㅣ" + hashtagCount);
 //        postHashtags.add(PostHashtag.createPostHashtag(post, hashtag));
 //        postHashtags.add(PostHashtag.createPostHashtag(post, hashtag2));
 //        hashtagCount++;
@@ -143,7 +148,7 @@
 //        List<Member> members = new ArrayList<>();
 //        for (int i = start; i < start + count; i++) {
 //            members.add(Member.builder()
-//                    .email(i + "user@naver.com")
+//                    .email(i + "user12321sd1244zzㅓ13@naver.com")
 //                    .password("12345678")
 //                    .build());
 //        }
