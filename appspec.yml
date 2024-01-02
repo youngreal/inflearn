@@ -14,11 +14,6 @@ permissions:
     group: ec2-user
 
 hooks:
-  BeforeInstall:
-    - location: scripts/delete_existing_files.sh
-      timeout: 300
-      runas: ec2-user
-
   ApplicationStart:
     - location: scripts/gh_deploy.sh
       timeout: 60
