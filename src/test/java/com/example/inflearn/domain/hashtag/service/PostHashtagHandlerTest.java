@@ -33,11 +33,7 @@ class PostHashtagHandlerTest {
     @ParameterizedTest
     void 게시글_생성시_새로_저장할_해시태그를_계산한다(Set<Hashtag> inputHashtags, Set<Hashtag> existingDB, Set<Hashtag> newHashtagForInsert, int PostHashtagEntityCount) {
         // given
-        post = Post.builder()
-                .title("제목1")
-                .contents("내용1")
-                .postHashtags(new ArrayList<>())
-                .build();
+        post = createPost(new ArrayList<>());
 
         // when
         Set<Hashtag> actual = sut.hashtagsForInsert(post, inputHashtags, existingDB);
@@ -86,11 +82,7 @@ class PostHashtagHandlerTest {
     @ParameterizedTest
     void 게시글_수정시_새로_저장할_해시태그를_계산한다(Set<Hashtag> inputHashtags, Set<Hashtag> existingDB, Set<Hashtag> newHashtagForInsert, int PostHashtagEntityCount) {
         // given
-        post = Post.builder()
-                .title("제목1")
-                .contents("내용1")
-                .postHashtags(new ArrayList<>(List.of(PostHashtag.createPostHashtag(Post.builder().build(), createHashtag("java")))))
-                .build();
+        post = createPost(new ArrayList<>(List.of(PostHashtag.createPostHashtag(Post.builder().build(), createHashtag("java")))));
 
         // when
         Set<Hashtag> actual = sut.hashtagsWhenPostUpdate(post, inputHashtags, existingDB);
@@ -133,11 +125,9 @@ class PostHashtagHandlerTest {
     @ParameterizedTest
     void 게시글_수정시_삭제할_해시태그를_삭제한다(Set<Hashtag> inputHashtags, Set<Hashtag> hashtagsForDelete) {
         // given
-        post = Post.builder()
-                .title("제목1")
-                .contents("내용1")
-                .postHashtags(new ArrayList<>(List.of(PostHashtag.createPostHashtag(Post.builder().build(), createHashtag("java")))))
-                .build();
+        post = createPost(new ArrayList<>(
+                List.of(PostHashtag.createPostHashtag(Post.builder().build(),
+                        createHashtag("java")))));
 
         // when
         Set<Hashtag> actual = sut.hashtagsForDelete(post.getPostHashtags(), inputHashtags);
@@ -157,5 +147,13 @@ class PostHashtagHandlerTest {
                         Set.of()
                 )
         );
+    }
+
+    private Post createPost(ArrayList<PostHashtag> postHashtags) {
+        return Post.builder()
+                .title("제목1")
+                .contents("내용1")
+                .postHashtags(postHashtags)
+                .build();
     }
 }

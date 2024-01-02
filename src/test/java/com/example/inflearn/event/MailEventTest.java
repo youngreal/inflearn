@@ -55,18 +55,6 @@ class MailEventTest extends AbstractContainerBaseTest {
 
         event = new MailSentEvent(member);
     }
-//    @Test
-//    void test00() throws InterruptedException {
-//        // given
-//        given(memberRepository.existsByEmail(member.getEmail())).willReturn(false);
-//        given(memberRepository.save(any())).willReturn(null);
-//
-//        //when
-//        for (int i = 0; i < 100; i++) {
-//            memberService.signUp(member);
-//        }
-//        Thread.sleep(100000);
-//    }
 
     @DisplayName("회원저장시 예외가 발생하면 메일이 전송되지않는다")
     @Test

@@ -18,14 +18,15 @@ import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
-import com.example.inflearn.ui.post.dto.request.PostUpdateRequest;
+import com.example.inflearn.controller.post.dto.request.PostUpdateRequest;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,8 +37,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
+
+    private final Member member = createMember(1L, "asdf1234@naver.com","password12345678");
 
     @InjectMocks
     private PostService sut;
@@ -52,10 +56,8 @@ class PostServiceTest {
     private HashtagService hashtagService;
 
     @Test
-    @DisplayName("포스트 작성 성공 : DB에 없는 새로운 해시태그를 입력받은경우")
-    void write_success() {
+    void 게시글_작성_성공_DB에_없는_해시태그_입력하는_경우() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","password12345678");
         PostDto postDto = writeDto("글제목1", "글내용1", Set.of("새로운자바", "새로운스프링"));
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
@@ -71,10 +73,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 성공2 : 글 제목, 본문만 있는경우")
-    void write_success2() {
+    void 게시글_작성_성공_해시태그_없는경우() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         PostDto postDto = writeDto("글제목1", "글내용1", new HashSet<>());
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
@@ -90,10 +90,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("포스트 작성 실패 : 존재하지 않는 유저")
-    void write_fail() {
+    void 게시글_작성_실패_존재하지_않는_유저() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         PostDto postDto = writeDto("글제목1", "글내용1", null);
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
@@ -103,13 +101,11 @@ class PostServiceTest {
         then(postRepository).shouldHaveNoInteractions();
     }
     
-    @DisplayName("포스트 수정 성공: FindByHashtagIn 사용시")
     @MethodSource
     @ParameterizedTest
-    void update_success5(Set<String> input) {
+    void 게시글_수정_성공(Set<String> input) {
         // given
         long requestPostId = 1L;
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         Post post = createPost(member, "글제목1", "글내용1");
         PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", List.of("java", "spring"));
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
@@ -128,7 +124,7 @@ class PostServiceTest {
     /**
      * input, existingInDB, saveExpected, deleteExpected
      */
-    static Stream<Arguments> update_success5() {
+    static Stream<Arguments> 게시글_수정_성공() {
         return Stream.of(
                 arguments(Set.of("java", "spring")),
                 arguments(Set.of("java")),
@@ -137,10 +133,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패 : 존재하지 않는 유저")
-    void update_fail() {
+    void 게시글_수정_실패_존재하지_않는_유저() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());
         long requestPostId = 1L;
 
@@ -151,10 +145,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패 : 존재하지 않는 게시글")
-    void update_fail2() {
+    void 게시글_수정_실패_존재하지_않는_게시글() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());
         long requestPostId = 1L;
 
@@ -166,10 +158,8 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패 : 수정권한이 없는 유저")
-    void update_fail3() {
+    void 게시글_수정_실패_권한이_없는_유저의_수정요청() {
         // given
-        Member member = createMember(1L, "asdf1234@naver.com","12345678");
         Member member2 = createMember(2L, "qwer1234@naver.com","12345678");
         Post post = createPost(member2,"글제목1", "글내용1");
         PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());

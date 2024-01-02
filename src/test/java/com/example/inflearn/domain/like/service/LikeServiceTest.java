@@ -15,18 +15,21 @@ import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.like.LikeRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
 class LikeServiceTest {
+
+    private final Member member = getMember();
+    private final Post post = getEntity();
 
     @InjectMocks
     private LikeService sut;
@@ -39,21 +42,8 @@ class LikeServiceTest {
     private LikeRepository likeRepository;
 
     @Test
-    @DisplayName("게시글 좋아요 성공")
-    void test() {
+    void 게시글_좋아요_성공() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
         given(likeRepository.findByMemberAndPost(member, post)).willReturn(null);
@@ -66,21 +56,8 @@ class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 실패 : 존재하지 않는 게시글")
-    void like_fail2() {
+    void 게시글이_존재하지_않으면_좋아요_실패한다() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.empty());
 
@@ -92,21 +69,8 @@ class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 실패 : 존재하지 않는 유저")
-    void like_fail3() {
+    void 존재하지_않는_유저는_좋아요_누를_수_없다() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when
@@ -117,25 +81,11 @@ class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 실패 : 이미 좋아요 누른 게시글")
-    void like_fail_alreadyLikeException() {
+    void 이미_좋아요_누른_게시글은_좋아요_할_수_없다() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
-        given(likeRepository.findByMemberAndPost(member, post)).willReturn(
-                Like.create(member,post));
+        given(likeRepository.findByMemberAndPost(member, post)).willReturn(Like.create(member,post));
 
         // when
         assertThrows(AlreadyLikeException.class, () -> sut.saveLike(member.getId(), post.getId()));
@@ -145,23 +95,9 @@ class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 취소 성공")
-    void unlike_success() {
+    void 게시글_좋아요_취소_성공() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         Like like = Like.create(member, post);
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
         given(likeRepository.findByMemberAndPost(member, post)).willReturn(like);
@@ -174,21 +110,8 @@ class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 취소 실패")
-    void unlike_fail() {
+    void 게시글_좋아요_취소_실패() {
         // given
-        Member member = Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-
-        Post post = Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
-
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
         given(likeRepository.findByMemberAndPost(member, post)).willReturn(null);
@@ -200,4 +123,19 @@ class LikeServiceTest {
         then(likeRepository).shouldHaveNoMoreInteractions();
     }
 
+    private Member getMember() {
+        return Member.builder()
+                .id(1L)
+                .email("email@naver.com")
+                .password("12345678")
+                .build();
+    }
+
+    private Post getEntity() {
+        return Post.builder()
+                .id(1L)
+                .title("제목1234")
+                .contents("본문1234")
+                .build();
+    }
 }

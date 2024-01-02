@@ -9,8 +9,10 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
+import com.example.inflearn.domain.member.domain.Member;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
+import com.example.inflearn.dto.CommentDto;
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
@@ -22,13 +24,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
 class PostQueryServiceTest {
 
@@ -47,26 +51,19 @@ class PostQueryServiceTest {
     @Mock
     private LikeCountRedisRepository likeCountRedisRepository;
 
-    @DisplayName("게시글 상세정보 조회시 조회수가 상승하고, 해시태그와 댓글이 객체에 입력된다")
     @Test
-    void post_detail_success_input_hashtag_and_comment() {
+    void 게시글_상세정보_조회시_조회수가_상승하고_해시태그와_댓글이_객체에_입력된다() {
         // given
         long postId = 1;
-        PostDto postDto = PostDto.builder()
-                .title("글제목")
-                .contents("글내용")
-                .hashtags(new HashSet<>())
-                .comments(new ArrayList<>())
-                .build();
-        Post post = postDto.toEntityForWrite();
-
+        PostDto postDto = createDto("글제목", "글내용", new HashSet<>(), new ArrayList<>());
+        Post post = createPost(null, "글제목", "글내용");
         List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(PostHashtagDto.create("자바"), PostHashtagDto.create("스프링")));
         List<PostCommentDto> postCommentDtos = new ArrayList<>(List.of(PostCommentDto.create("댓글1"), PostCommentDto.create("댓글2")));
+
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(postRepository.postDetail(postId)).willReturn(postDto);
         given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
         given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
-//        given(likeCountRedisRepository.getViewCount(postId)).willReturn(1);
 
         // when
         PostDto actual = sut.postDetail(postId);
@@ -76,7 +73,6 @@ class PostQueryServiceTest {
         assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
     }
 
-    @DisplayName("게시글 상세정보 조회 실패 : 게시글이 존재하지 않는다")
     @Test
     void 게시글_상세정보_조회시_게시글이_존재하지않으면_예외가_발생한다 () {
         // given
@@ -90,25 +86,12 @@ class PostQueryServiceTest {
     //todo 게시글 상세조회시 레디스에 저장하는지 안하는지 테스트 해야한다.
 
 
-    @DisplayName("페이지당 게시글 조회 성공")
     @Test
-    void post_view_per_page_success () {
+    void 페이지_당_게시글_조회_성공 () {
         // given
-        PostDto post = PostDto.builder()
-                .title("게시글제목1")
-                .contents("게시글본문1")
-                .build();
-
-        PostDto post2 = PostDto.builder()
-                .title("게시글제목2")
-                .contents("게시글본문2")
-                .build();
-
-        PostDto post3 = PostDto.builder()
-                .title("게시글제목3")
-                .contents("게시글본문3")
-                .build();
-
+        PostDto post = createDto("게시글제목1", "게시글본문1", new HashSet<>(), new ArrayList<>());
+        PostDto post2 = createDto("게시글제목2", "게시글본문2", new HashSet<>(), new ArrayList<>());
+        PostDto post3 = createDto("게시글제목3", "게시글본문3", new HashSet<>(), new ArrayList<>());
         int page = 1;
         int size = 20;
         String sort = "like";
@@ -127,21 +110,14 @@ class PostQueryServiceTest {
     }
 
 
-    @DisplayName("검색어를 포함해 게시글을 검색하면 해당 검색어를 포함하고있는 게시글들을 반환한다")
     @Test
     void 검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글목록을_반환한다() {
         // given
         PostSearch postSearch = PostSearch.of(1,20,"자바");
-        PostDto postDto = PostDto.builder()
-                .title("자바스터디1")
-                .contents("자바스터디구합니다")
-                .hashtags(Set.of())
-                .build();
-
+        PostDto postDto = createDto("자바스터디1", "자바스터디구합니다", Set.of(), new ArrayList<>());
         List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(new PostHashtagDto(1L, "자바")));
         List<PostDto> postDto1 = List.of(postDto);
 
-        // when
         given(paginationService.calculateOffSet(postSearch.page())).willReturn(0);
         given(postMapper.search(eq(postSearch.searchWord()), anyInt(), eq(postSearch.size()), eq(postSearch.sort()))).willReturn(postDto1);
         given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
@@ -155,9 +131,8 @@ class PostQueryServiceTest {
         assertThat(actual).hasSize(1);
     }
 
-    @DisplayName("검색어를 포함해 게시글을 검색하면 해당 페이지에 표시될 페이지 개수를 계산할수있도록 total을 전해준다")
     @Test
-    void page_count_success() {
+    void 검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글_총_개수를_반환한다() {
         // given
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
@@ -174,17 +149,11 @@ class PostQueryServiceTest {
         assertThat(actual).isEqualTo(1L);
     }
 
-    @DisplayName("검색어를 포함해 게시글을 검색하면 해당 검색어를 포함하고있는 게시글들을 반환한다")
     @Test
     void 해시태그_검색어로_게시글을_검색하면_검색어를_포함하고있는_게시글목록을_반환한다() {
         // given
         PostSearch postSearch = PostSearch.of(1,20,"자바");
-        PostDto postDto = PostDto.builder()
-                .title("자바스터디1")
-                .contents("자바스터디구합니다")
-                .hashtags(Set.of())
-                .build();
-
+        PostDto postDto = createDto("자바스터디1", "자바스터디구합니다", Set.of(), new ArrayList<>());
         List<Long> postIds = new ArrayList<>(List.of(1L, 2L, 3L));
         List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(new PostHashtagDto(1L, "자바")));
         List<PostDto> searchResults = List.of(postDto);
@@ -202,9 +171,8 @@ class PostQueryServiceTest {
         assertThat(actual).hasSize(1);
     }
 
-    @DisplayName("해시태그 검색어를 포함해 게시글을 검색하면 해당 페이지에 표시될 페이지 개수를 계산할수있도록 total을 전해준다")
     @Test
-    void page_count_success_with_hashtag_search() {
+    void 해시태그_검색어로_게시글을_검색하면_페이지_개수계산을_위한_total을_반환한다() {
         // given
         PostSearch postSearch = PostSearch.of(1,20,"자바");
 
@@ -219,5 +187,24 @@ class PostQueryServiceTest {
         // then
         then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
         assertThat(actual).isEqualTo(1L);
+    }
+
+    private PostDto createDto(String title, String contents, Set<String> hashtags, List<CommentDto> comments) {
+        return PostDto.builder()
+                .title(title)
+                .contents(contents)
+                .hashtags(hashtags)
+                .comments(comments)
+                .build();
+    }
+
+    private Post createPost(Member member, String title, String contents) {
+        return Post.builder()
+                .id(1L)
+                .title(title)
+                .contents(contents)
+                .member(member)
+                .postHashtags(new ArrayList<>())
+                .build();
     }
 }

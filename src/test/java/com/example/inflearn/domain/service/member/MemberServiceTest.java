@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
@@ -49,8 +52,7 @@ class MemberServiceTest {
     private ArgumentCaptor<MailSentEvent> mailSentEventCaptor;
 
     @Test
-    @DisplayName("회원가입 성공")
-    void test() {
+    void 회원가입_성공() {
         Member member = Member.builder()
                 .id(1L)
                 .email("asdf1234@naver.com")
@@ -72,8 +74,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("회원가입 실패 : 이미 존재하는 멤버")
-    void test2() {
+    void 회원가입_실패_이미_존재하는_유저() {
         Member member = Member.builder()
                 .id(1L)
                 .email("asdf1234@naver.com")
@@ -88,8 +89,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("이메일 체크 성공하면 Member의 isVerify필드의 상태를 변경한다")
-    void email_check_success() {
+    void 메일_체크_성공시_member의_isVerify필드_상태를_변경한다() {
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -108,8 +108,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("이메일 체크 실패 : 존재하지 않는 이메일 ")
-    void test3() {
+    void 메일_체크_실패_존재하지_않는_이메일() {
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -123,8 +122,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("이메일 체크 실패2 : 유효하지않은 이메일,토큰번호 ")
-    void test4() {
+    void 메일_체크_실패_유효하지_않은_이메일과_토큰번호() {
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -144,8 +142,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 성공후 토큰을 발급한다.")
-    void test5() {
+    void 로그인_성공_후_토큰을_발급한다() {
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -165,8 +162,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 : 존재하지 않는 유저")
-    void test6() {
+    void 로그인_실패_존재하지_않는_유저() {
         // given
         Member member = Member.builder()
                 .email("asdf1234@naver.com")
@@ -182,8 +178,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("로그아웃 성공 후 토큰에 null을 입력한다.")
-    void test7() {
+    void 로그아웃_후_토큰은_null이된다() {
         // given
         Member member = Member.builder()
                 .id(1L)
@@ -202,8 +197,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("로그아웃 실패 : 존재하지 않는 유저")
-    void test8() {
+    void 로그아웃_실패_존재하지_않는_유저() {
         // given
         Member member = Member.builder()
                 .id(1L)
