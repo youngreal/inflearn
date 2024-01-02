@@ -5,12 +5,14 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class PaginationServiceTest {
 
     private PaginationService sut;
@@ -20,10 +22,9 @@ class PaginationServiceTest {
         sut = new PaginationService();
     }
 
-    @DisplayName("게시글 검색을 위한 offSet을 계산한다")
     @MethodSource
     @ParameterizedTest
-    void offset_when_searchPost(int input, int expected) {
+    void 게시글_검색을_위해_offset을_계산한다(int input, int expected) {
         // given& when
         int actual = sut.calculateOffSet(input);
 
@@ -31,7 +32,7 @@ class PaginationServiceTest {
         assertThat(actual).isEqualTo(expected);
     }
 
-    static Stream<Arguments> offset_when_searchPost() {
+    static Stream<Arguments> 게시글_검색을_위해_offset을_계산한다() {
         return Stream.of(
                 arguments(1,0),
                 arguments(5,80),
@@ -41,9 +42,8 @@ class PaginationServiceTest {
         );
     }
 
-    @DisplayName("페이지번호를 구하기위한 size를 계산한다")
     @Test
-    void size_when_getPageNumbers() {
+    void 페이지_번호를_구하기_위해_size를_계산한다() {
         // given
         int size = 20;
 
@@ -55,17 +55,16 @@ class PaginationServiceTest {
     }
 
 
-    @DisplayName("페이지번호를 구하기위한 offset을 계산한다")
     @MethodSource
     @ParameterizedTest
-    void offset_when_getPageNumbers(int input, int expected) {
+    void 페이지_번호를_구하기_위해_offset을_계산한다(int input, int expected) {
         // given & when
         int actual = sut.offsetForTotalPageNumbers(input);
 
         // then
         assertThat(actual).isEqualTo(expected);
     }
-    static Stream<Arguments> offset_when_getPageNumbers() {
+    static Stream<Arguments> 페이지_번호를_구하기_위해_offset을_계산한다() {
         return Stream.of(
                 arguments(3,0),
                 arguments(1,0),

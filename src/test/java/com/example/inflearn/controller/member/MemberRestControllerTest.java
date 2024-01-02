@@ -20,7 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -31,6 +32,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @WebMvcTest(MemberRestController.class)
 class MemberRestControllerTest {
 
@@ -51,8 +53,7 @@ class MemberRestControllerTest {
     private static final String RANDOM_UUID = "RandomUUID-12345678";
 
     @Test
-    @DisplayName("회원가입 성공")
-    void join_success() throws Exception {
+    void 회원가입_성공() throws Exception {
         //given
         MemberJoinRequest request = joinRequest("asdf1234@naver.com", "12345678");
         given(memberService.signUp(any(Member.class))).willReturn(
@@ -71,7 +72,6 @@ class MemberRestControllerTest {
     }
 
 
-    @DisplayName("회원가입 실패 : 잘못된 요청 형식")
     @MethodSource
     @ParameterizedTest(name = "[{index}] \"{0}\" => {2}")
     void 형식에_맞지않는_회원가입_요청시_회원가입에_실패한다(MemberJoinRequest request) throws Exception {
@@ -87,7 +87,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 토큰 확인 성공")
     void 이메일_토큰_유효성_확인_성공() throws Exception {
         //given
         String emailToken = "아무개";
@@ -118,7 +117,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 토큰 유효성 검사 실패 : 잘못된 토큰, 이메일 파라미터입력")
     void 이메일토큰_유효성확인_실패_잘못된토큰이메일() throws Exception {
         //given
         String emailToken = "";
@@ -136,8 +134,7 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 재전송 성공")
-    void resendMail() throws Exception {
+    void 이메일_재전송_API_요청_성공() throws Exception {
         //when & then
         mockMvc.perform(get("/resend-email")
                         .param("email", "string1234"))
@@ -146,8 +143,7 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("로그인 성공시 Set-Cookie 헤더에 토큰을 발급한다")
-    void 로그인_성공() throws Exception {
+    void 로그인_성공시_헤더에_토큰을_발급한다() throws Exception {
         //given
         MemberLoginRequest memberLoginRequest = MemberLoginRequest.builder()
                 .email("asdf1234@naver.com")
@@ -171,7 +167,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 : 잘못된 로그인 요청 폼")
     void 로그인_실패_잘못된_로그인요청_폼() throws Exception {
         //given
         MemberLoginRequest memberLoginRequest = MemberLoginRequest.builder()
@@ -190,7 +185,6 @@ class MemberRestControllerTest {
     //todo 로그아웃 테스트는 어떻게보면 ArgumentResolver의 테스트가 될수있을것같은데.. 여기있는것도 괜찮으려나?
 
     @Test
-    @DisplayName("로그아웃 성공")
     void 로그아웃_성공() throws Exception {
         //given
         Member member = Member.builder()
@@ -208,7 +202,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("로그아웃 실패 : 헤더에 쿠키를 포함하지않고 요청")
     void 로그아웃_실패_헤더에_쿠키를_포함하지않음() throws Exception {
         //given
         Member member = Member.builder()
@@ -224,7 +217,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("로그아웃 실패 : 헤더에 유효하지않은 형식의 쿠키 요청")
     void 로그아웃_실패_유효하지않은_쿠키() throws Exception {
         //given
         Member member = Member.builder()
@@ -242,7 +234,6 @@ class MemberRestControllerTest {
     }
 
     @Test
-    @DisplayName("로그아웃 실패 : 쿠키는 올바르지만 토큰에 일치하는 멤버 존재하지않음")
     void 로그아웃_실패_만료된_세션토큰() throws Exception {
         //given
         Cookie cookie = makeCookie(SESSION_TOKEN_NAME);

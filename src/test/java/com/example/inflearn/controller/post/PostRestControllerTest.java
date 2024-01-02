@@ -223,8 +223,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패: 중복된 해시태그값 존재")
-    void post_update_fail2() throws Exception {
+    void 게시글_수정_실패_중복_해시태그_입력() throws Exception {
         //given
         PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
@@ -244,8 +243,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 수정 실패: 로그인하지 않은 회원")
-    void post_update_fail3() throws Exception {
+    void 게시글_수정_실패_권한이_없는_유저() throws Exception {
         //given
         PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
@@ -263,8 +261,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 조회 성공")
-    void post_view_success() throws Exception {
+    void 게시글_조회_성공() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostDto postDto2 = createDto("게시글제목2", "게시글본문2");
@@ -288,8 +285,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 조회 실패 : page or size값이 1보다 적을때")
-    void post_view_fail() throws Exception {
+    void 게시글_조회_실패_page나_size가_1보다_적음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts?page=-1&size=-1"))
                 .andExpect(status().isBadRequest())
@@ -297,8 +293,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 성공 : 특정 검색어 입력")
-    void post_search_success() throws Exception {
+    void 게시글_검색_성공_특정_검색어_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바");
@@ -315,8 +310,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 성공 : 특정 정렬조건 입력")
-    void post_search_success2() throws Exception {
+    void 포스트_검색_성공_특정_정렬조건_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바", "like");
@@ -333,8 +327,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 실패 : 존재하지 않는 정렬조건 입력")
-    void post_search_fail() throws Exception {
+    void 포스트_검색_실패_존재하지_않는_정렬조건_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바");
@@ -348,8 +341,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 실패 : page or size값이 1보다 적을때")
-    void post_search_fail2() throws Exception {
+    void 포스트_검색_실패_page나_size값이_1보다_작음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search?page=-1&size=-1&searchWord=자바"))
                 .andExpect(status().isBadRequest())
@@ -357,8 +349,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 검색 실패 : 검색어 길이가 2보다 작을때")
-    void post_search_fail3() throws Exception {
+    void 포스트_검색_실패_검색어_길이가_2보다_작음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search?page=1&size=20&searchWord=자"))
                 .andExpect(status().isBadRequest())
@@ -366,8 +357,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 해시태그 검색 성공 : 특정 해시태그 검색어 입력")
-    void post_search_hashtag_success() throws Exception {
+    void 포스트_해시태그_검색_성공_해시태그_검색어_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"aws");
@@ -384,8 +374,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 해시태그 검색 성공 : 특정 정렬조건 입력")
-    void post_search_hashtag_success2() throws Exception {
+    void 포스트_해시태그_검색_성공_해시태그_정렬조건_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"aws", "like");
@@ -402,8 +391,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 해시태그 검색 실패 : 존재하지 않는 정렬조건 입력")
-    void post_search_hashtag_fail() throws Exception {
+    void 포스트_해시태그_검색_실패_존재하지_않는_정렬조건_입력() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=자바&sort=12345"))
                 .andExpect(status().isBadRequest())
@@ -411,8 +399,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 해시태그 검색 실패 : page or size값이 1보다 적을때")
-    void post_search_hashtag_fail2() throws Exception {
+    void 포스트_해시태그_검색_실패_page나_size값이_1보다_작음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=-1&size=-1&searchWord=자바"))
                 .andExpect(status().isBadRequest())
@@ -420,8 +407,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("포스트 해시태그 검색 실패 : 검색어 길이가 2보다 작을때")
-    void post_search_hashtag_fail3() throws Exception {
+    void 포스트_해시태그_검색_실패_검색어_길이가_2보다_작음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=1&size=20&searchWord=자"))
                 .andExpect(status().isBadRequest())
@@ -429,8 +415,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 성공")
-    void post_like_success() throws Exception {
+    void 게시글_좋아요_성공() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -445,8 +430,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 실패: 로그인하지 않은 회원")
-    void post_like_fail() throws Exception {
+    void 게시글_좋아요_실패_로그인_하지_않은_회원() throws Exception {
         //given
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
@@ -460,8 +444,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 취소 성공")
-    void post_unlike_success() throws Exception {
+    void 게시글_좋아요_취소_성공() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -476,8 +459,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 좋아요 취소 실패 : 로그인 하지 않은 회원")
-    void post_unlike_fail() throws Exception {
+    void 게시글_좋아요_취소_실패_로그인_하지_않은_회원() throws Exception {
         //given
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
@@ -491,8 +473,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 댓글 작성 성공")
-    void post_comment_success() throws Exception {
+    void 게시글_댓글_작성_성공() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
         PostCommentContents postCommentContents = new PostCommentContents("이 스터디 어떻게 진행되는건가요?");
@@ -509,8 +490,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 댓글 작성 실패 : 로그인하지않은 회원의 댓글작성요청")
-    void post_comment_fail() throws Exception {
+    void 게시글_댓글_작성_실패_로그인_하지_않은_회원의_댓글작성_요청() throws Exception {
         //given
         PostCommentContents postCommentContents = new PostCommentContents("이 스터디 어떻게 진행되는건가요?");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
@@ -526,24 +506,25 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 댓글 작성 실패 : 댓글 내용을 입력하지 않음")
-    void post_comment_fail2() throws Exception {
+    void 게시글_댓글_작성_실패_내용을_입력하지_않음() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
+        PostCommentContents postCommentContents = new PostCommentContents("");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/posts/1/comments")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postCommentContents))
                 )
                 .andExpect(status().isBadRequest())
                 .andDo(print());
+
     }
 
     @Test
-    @DisplayName("게시글 답글 작성 성공")
-    void post_reply_success() throws Exception {
+    void 게시글_답글_작성_성공() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
         PostReplyContents postReplyContents = new PostReplyContents("이 스터디 어떻게 진행되는건가요?");
@@ -560,8 +541,7 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 답글 작성 실패 : 로그인하지않은 회원의 답글작성요청")
-    void post_reply_fail() throws Exception {
+    void 게시글_답글_작성_실패_로그인_하지않은_회원의_답글_작성_요청() throws Exception {
         //given
         PostReplyContents postReplyContents = new PostReplyContents("이 스터디 어떻게 진행되는건가요?");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
@@ -577,16 +557,17 @@ class PostRestControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 답글 작성 실패 : 댓글 내용을 입력하지 않음")
-    void post_reply_fail2() throws Exception {
+    void 게시글_답글_작성_실패_답글_내용을_입력하지_않음() throws Exception {
         //given
         Member member = member(1L, "asdf1234@naver.com", "12345678");
+        PostCommentContents postCommentContents = new PostCommentContents("");
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when & then
         mockMvc.perform(post("/comments/1/reply")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postCommentContents))
                 )
                 .andExpect(status().isBadRequest())
                 .andDo(print());
