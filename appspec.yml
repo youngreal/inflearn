@@ -15,6 +15,6 @@ permissions:
 
 hooks:
   ApplicationStart:
-    - location: scripts/gh_deploy.sh
+    - location: /home/ec2-user/inflearn/scripts/gh_deploy.sh
       timeout: 60
       runas: ec2-user
