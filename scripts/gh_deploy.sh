@@ -20,25 +20,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 sudo chmod 666 /var/run/docker.sock
 
 echo "==== 배포 시작: $(date +%c) ====" >> $DEPLOY_LOG_PATH
-
-echo "> 현재 동작중인 docker compose pid 체크" >> $DEPLOY_LOG_PATH
-CURRNET_PID=$(docker-compose -f $DEPLOY_PATH/docker-compose.yml ps -q)
-
-# 강제로 죽이는게 최선은 아닌것 같다.
-if [ -z "$CURRNET_PID" ]
-then
-  echo "> 현재 동작중인 어플리케이션 존재 X" >> $DEPLOY_LOG_PATH
-else
-  echo "> 현재 동작중인 어플리케이션 존재 O" >> $DEPLOY_LOG_PATH
-  echo "> 현재 동작중인 어플리케이션 강제 종료 진행" >> $DEPLOY_LOG_PATH
-  echo "docker-compose -f $DEPLOY_PATH/docker-compose.yml down" >> $DEPLOY_LOG_PATH
-  docker-compose -f $DEPLOY_PATH/docker-compose.yml down
-  sleep 3
-fi
-
 echo "> Docker Compose를 이용해 어플리케이션 배포 진행" >> $DEPLOY_LOG_PATH
-
-# Docker Compose로 어플리케이션을 백그라운드에서 실행
 docker-compose -f $DEPLOY_PATH/docker-compose up --build > $DEPLOY_ERR_LOG_PATH
 
 sleep 3
