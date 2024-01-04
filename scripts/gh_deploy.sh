@@ -1,30 +1,28 @@
 #!/bin/bash
 PROJECT_NAME="inflearn"
-JAR_PATH="/home/ec2-user/inflearn/build/libs/*.jar"
 
 # 배포 경로
 DEPLOY_PATH=/home/ec2-user/$PROJECT_NAME/
 
 # 배포 로그
-DEPLOY_LOG_PATH="/home/ec2-user/$PROJECT_NAME/deploy.log"
+DEPLOY_LOG_PATH="$DEPLOY_PATH/deploy.log"
 
 # 배포 에러 로그 관리
-DEPLOY_ERR_LOG_PATH="/home/ec2-user/$PROJECT_NAME/deploy_err.log"
+DEPLOY_ERR_LOG_PATH="$DEPLOY_PATH/deploy_err.log"
 
-# 어플리케이션 로그 관리
-APPLICATION_LOG_PATH="/home/ec2-user/$PROJECT_NAME/application.log"
+# Docker 서비스 시작
+echo 'Docker 서비스를 시작합니다.'
+sudo systemctl start docker
 
-BUILD_JAR=$(ls "$JAR_PATH")
-JAR_NAME=$(basename "$BUILD_JAR")
+# Docker Compose 권한 설정
+echo 'Docker Compose 권한을 설정합니다.'
+sudo chmod +x /usr/local/bin/docker-compose
+sudo chmod 666 /var/run/docker.sock
 
 echo "==== 배포 시작: $(date +%c) ====" >> $DEPLOY_LOG_PATH
 
-echo "> build 파일명: $JAR_NAME" >> $DEPLOY_LOG_PATH
-echo " build 파일 복사" >> $DEPLOY_LOG_PATH
-cp "$BUILD_JAR" $DEPLOY_PATH
-
-echo "> 현재 동작중인 어플리케이션 pid 체크" >> $DEPLOY_LOG_PATH
-CURRENT_PD=$(pgrep -f "$JAR_NAME")
+echo "> 현재 동작중인 docker compose pid 체크" >> $DEPLOY_LOG_PATH
+CURRNET_PID=$(docker-compose -f $DEPLOY_PATH/docker-compose.yml ps -q)
 
 # 강제로 죽이는게 최선은 아닌것 같다.
 if [ -z "$CURRNET_PID" ]
@@ -33,14 +31,18 @@ then
 else
   echo "> 현재 동작중인 어플리케이션 존재 O" >> $DEPLOY_LOG_PATH
   echo "> 현재 동작중인 어플리케이션 강제 종료 진행" >> $DEPLOY_LOG_PATH
-  echo " kill -9 $CURRNET_PID" >> $DEPLOY_LOG_PATH
-  kill -9 "$CURRNET_PID"
+  echo "docker-compose -f $DEPLOY_PATH/docker-compose.yml down" >> $DEPLOY_LOG_PATH
+  docker-compose -f $DEPLOY_PATH/docker-compose.yml down
+  sleep 3
 fi
 
-DEPLOY_JAR=$DEPLOY_PATH$JAR_NAME
-echo "> DEPLOY_JAR 배포" >> $DEPLOY_PATH
-# 백그라운드에서 어플리케이션 실행을 위해 추가
-nohup java -jar -Dspring.profiles.active=prod "$DEPLOY_JAR" >> $APPLICATION_LOG_PATH 2> $DEPLOY_ERR_LOG_PATH &
+echo "> 도커 재빌드"
+docker compose -f $DEPLOY_PATH/docker-compose up --build
+
+echo "> Docker Compose를 이용해 어플리케이션 배포 진행" >> $DEPLOY_LOG_PATH
+
+# Docker Compose로 어플리케이션을 백그라운드에서 실행
+docker-compose -f $DEPLOY_PATH/docker-compose.yml up -d 2> $DEPLOY_ERR_LOG_PATH
 
 sleep 3
 
