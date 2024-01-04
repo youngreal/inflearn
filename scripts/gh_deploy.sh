@@ -39,7 +39,7 @@ fi
 echo "> Docker Compose를 이용해 어플리케이션 배포 진행" >> $DEPLOY_LOG_PATH
 
 # Docker Compose로 어플리케이션을 백그라운드에서 실행
-docker-compose -f $DEPLOY_PATH/docker-compose.yml up -d 2> $DEPLOY_ERR_LOG_PATH
+docker-compose -f $DEPLOY_PATH/docker-compose up --build > $DEPLOY_ERR_LOG_PATH
 
 sleep 3
 
