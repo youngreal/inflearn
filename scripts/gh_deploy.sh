@@ -36,9 +36,6 @@ else
   sleep 3
 fi
 
-echo "> 도커 재빌드"
-docker compose -f $DEPLOY_PATH/docker-compose up --build
-
 echo "> Docker Compose를 이용해 어플리케이션 배포 진행" >> $DEPLOY_LOG_PATH
 
 # Docker Compose로 어플리케이션을 백그라운드에서 실행
