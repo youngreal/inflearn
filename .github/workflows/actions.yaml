@@ -28,10 +28,6 @@ jobs:
         run: chmod +x ./gradlew
         shell: bash
 
-      - name: Grant execute permission for gh_deploy.sh
-        run: chmod +x scripts/gh_deploy.sh
-        shell: bash
-
       - name: Build with Gradle
         run: ./gradlew build
         shell: bash
