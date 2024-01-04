@@ -22,14 +22,14 @@ sudo chmod 666 /var/run/docker.sock
 echo "==== 배포 시작: $(date +%c) ====" >> $DEPLOY_LOG_PATH
 
 echo "Docker Compose가 현재 실행 중인지 확인" >> $DEPLOY_LOG_PATH
-if [ "$(docker-compose ps -q)" ]; then
+if [ "$(docker-compose -f $DEPLOY_PATH/docker-compose.yml ps -q)" ]; then
 echo "실행 중이면 Docker Compose를 종료" >> $DEPLOY_LOG_PATH
-    docker-compose down
+    docker-compose -f $DEPLOY_PATH/docker-compose.yml down
     sleep 6
 fi
 
 echo "Docker Compose로 어플리케이션을 백그라운드에서 실행" >> $DEPLOY_LOG_PATH
-docker-compose up --build -d > $DEPLOY_ERR_LOG_PATH
+docker-compose -f $DEPLOY_PATH/docker-compose.yml up --build -d > $DEPLOY_ERR_LOG_PATH
 
 
 sleep 3
