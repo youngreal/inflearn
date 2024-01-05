@@ -58,7 +58,7 @@ public class MemberService {
   
   3. 스프링 리소스 소요
       - 이벤트 처리 주체가 스프링이기때문에 스프링의 리소스가 소요된다.
-      - 회원가입에 특정 선착순 회원가입 이벤트 기능이 추가된다면 그때 성능테스트를 해보고 메시징 시스템등 다른방법을 도입해볼수 있을것같은데 그 전에 nginx의 부하분산이나 rate limiter를 우선적으로 고려해볼것 같다.
+      - 회원가입에 특정 선착순 회원가입 이벤트 기능이 추가된다면 그때 성능테스트를 해보고 메시징 시스템등 다른방법을 도입해볼수 있을것같은데 그 전에 nginx같은 웹서버의 부하 분산을 우선적으로 고려해볼것 같다.
       - 해당 단점은 충분히 안고 갈수있는 요소라고 판단하였음
 
 ### TO-BE
@@ -94,7 +94,7 @@ public class MemberService {
      - 스프링 부트에선 별도의 AsyncConfig을 설정하지않아도 기본적으로 corePoolSize가 8, queueCapacity가 Integer.MAX_VALUE, maxPoolSize가 Integer.MAX_VALUE인  ThreadPoolTastExecutor가 적용된다.
        - corePoolSize 튜닝 : I/O 작업인 메일전송위주라서 cpu보다 더 많은 스레드를 이미 할당한 상태이다.
        - queueCapacity 튜닝 : 비동기 메일전송은 최대 8개까지만 동시처리가 가능하며, 나머지 모든 요청들은 모두 큐에 담긴다. 이는 큐에 엄청난 요청이 담겨 메모리부족 문제를 야기할것으로 보이기때문에  테스트를 통해 메모리 오류가 발생하지 않을 적절한 큐사이즈로 줄여야한다
-       - maximumPoolSize 튜닝 : 큐 사이즈를 조절했다면 남은요청은 maximumPoolSize크기만큼 스레드를 계속해서 생성해 나갈것이고, 이렇게되면 CPU사용률이 급증하는 문제가 생긴다. 적절한 CPU사용률을 유지할정도의 크기로 줄이고, 나머지 요청은 Reject하거나, keepAlive시간을 늘려 대기시간을 상승시키도록 해봐야할것같다. 
+       - maximumPoolSize 튜닝 : 큐 사이즈를 조절했다면 남은요청은 maximumPoolSize크기만큼 스레드를 계속해서 생성해 나갈것이고, 이렇게되면 메모리 사용률이 급증하는 문제가 생긴다. 적절한크기로 줄이고, 나머지 요청은 Reject하거나, keepAlive시간을 늘려 대기시간을 상승시키도록 해봐야할것같다. 
 
 ## 2. Gmail 서비스에 문제가 생긴다면?
 - 현재 Gmail SMTP 서버를 사용해 메일을 전송하고있는데 확률은 낮겠지만 Gmail에서 장애가 발생하는경우 우리서비스는 메일을 전송해주지못하는 SPOF가 발생할수있다.
@@ -165,17 +165,14 @@ try {
         //해당 게시글이 존재하는지 검증한다
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
-        //게시글 조회수를 +1 상승시킨다
+        //게시글 조회수를 +1 상승시킨다(우려했던부분)
         post.plusViewCount();
 
         //게시글 정보를 가져온다 
-        PostDto postDetail = postRepository.postDetail(postId);
-        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
-        postDetail.inputComments(postRepository.commentsBy(postDetail));
-        return postDetail;
+        ... (추가 쿼리)
     }
 ```
-- 위의 게시글 조회 API 코드에서 게시글검증, 게시글의 조회수 업데이트, 댓글과 해시태그를 가져오는 쿼리등 여러 쿼리가 발생하고, 특히나 매번 update쿼리가 발생하는것이 문제가 될수있다고 판단
+- 위의 게시글 조회 API 코드에서 게시글검증, 게시글의 조회수 업데이트, 댓글과 해시태그를 가져오는 쿼리등 여러 쿼리가 발생하고, 특히나 **매번 update쿼리가 발생**하는것이 문제가 될수있다고 판단
 
 - 가장 트래픽이 많을 API 였기때문에 철저한 테스트가 필요하다고 판단하여 부하테스트 진행
 
