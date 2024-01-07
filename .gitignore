@@ -48,3 +48,5 @@ src/main/java/com/example/inflearn/infra/redis/LettuceLockFacade.java
 ### local docker compose
 docker-compose-local.yml
 
+src/test/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryTest.java
+src/main/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryWithHash.java
