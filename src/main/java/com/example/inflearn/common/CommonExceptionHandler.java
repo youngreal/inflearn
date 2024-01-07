@@ -139,10 +139,10 @@ public class CommonExceptionHandler {
                 .body("Unique 제약조건 위배");
     }
 
-//    @ExceptionHandler(RuntimeException.class)
-//    public ResponseEntity<String> runtimeException(RuntimeException e) {
-//        return ResponseEntity
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(e.getMessage());
-//    }
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> runtimeException(RuntimeException e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+    }
 }
