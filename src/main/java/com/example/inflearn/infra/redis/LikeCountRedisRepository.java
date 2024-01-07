@@ -22,6 +22,10 @@ public class LikeCountRedisRepository {
     private final HyperLogLogOperations<Long, Long> viewCountOperation;
     private final RedisTemplate<String, Long> likeCountOperation; // postId, likeCount
 
+    public Map<Object, Object> getPopularPostEntries() {
+        return likeCountOperation.opsForHash().entries(VIEW_COUNT_KEY);
+    }
+
     public Long getViewCount(Long postId) {
         return viewCountOperation.size(postId);
     }
