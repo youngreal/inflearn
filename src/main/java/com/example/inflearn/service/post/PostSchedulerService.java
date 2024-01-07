@@ -2,7 +2,7 @@ package com.example.inflearn.service.post;
 
 import static java.lang.Boolean.FALSE;
 
-import com.example.inflearn.infra.redis.LikeCountRedisRepositoryWithHash;
+import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,16 +21,14 @@ import org.springframework.stereotype.Service;
 public class PostSchedulerService {
 
     private static final int HOURS = 60 * 60 * 1_000;
-    private static final int THREE_HOURS = 3 * HOURS;
     private static final int MINUTE = 60 * 1_000;
-    private static final int THREE_MINUTE = 1 * MINUTE;
     private final RedisRepository redisRepository;
-    private final LikeCountRedisRepositoryWithHash likeCountRedisRepositoryWithHash;
+    private final LikeCountRedisRepository likeCountRedisRepository;
     private final PostQueryService postQueryService;
     private final PostService postService;
 
     //todo AOP로 개선할수있을것같다. 핵심로직과 락을거는 로직의 분리
-    @Scheduled(fixedDelay = THREE_MINUTE * 5)
+    @Scheduled(fixedDelay = 10 * MINUTE)
     public void updatePopularPosts() {
         // 락 획득에 실패한다면 재시도를 시도하지않고 리턴한다
         if (FALSE.equals(redisRepository.popularPostListUpdateLock())) {
@@ -50,7 +48,7 @@ public class PostSchedulerService {
     /*
     여러 분산 서버에서 동시실행 방지를 위한 분산락
      */
-    @Scheduled(fixedDelay = THREE_MINUTE)
+    @Scheduled(fixedDelay = 3 * MINUTE)
     public void updateViewCountToDatabase() {
         if (FALSE.equals(redisRepository.updateViewCountLock())) {
             log.info("The updateViewCount lock has already been acquired from another server.");
@@ -59,7 +57,7 @@ public class PostSchedulerService {
 
         try {
             log.info("Get Lock : update PopularPostLists");
-            postService.updateViewCountForPopularPosts(likeCountRedisRepositoryWithHash.getPopularPostEntries());
+            postService.updateViewCountForPopularPosts(likeCountRedisRepository.getPopularPostEntries());
         } finally {
             redisRepository.updateViewCountUnLock();
         }
