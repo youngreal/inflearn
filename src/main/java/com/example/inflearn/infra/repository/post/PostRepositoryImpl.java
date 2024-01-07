@@ -1,9 +1,9 @@
 package com.example.inflearn.infra.repository.post;
 
-import static com.example.inflearn.domain.comment.domain.QComment.comment;
-import static com.example.inflearn.domain.hashtag.domain.QHashtag.hashtag;
-import static com.example.inflearn.domain.like.domain.QLike.like;
-import static com.example.inflearn.domain.member.domain.QMember.member;
+import static com.example.inflearn.domain.comment.QComment.comment;
+import static com.example.inflearn.domain.hashtag.QHashtag.hashtag;
+import static com.example.inflearn.domain.like.QLike.like;
+import static com.example.inflearn.domain.member.QMember.member;
 import static com.example.inflearn.domain.post.domain.QPost.post;
 import static com.example.inflearn.domain.post.domain.QPostHashtag.postHashtag;
 
@@ -167,7 +167,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .fetchOne();
     }
 
-    //todo 쿼리 성능 확인
     @Override
     public List<PopularPostDto> findPopularPostByDate(LocalDate firstDay, LocalDate endDay) {
         return jpaQueryFactory.select(Projections.constructor(PopularPostDto.class,
