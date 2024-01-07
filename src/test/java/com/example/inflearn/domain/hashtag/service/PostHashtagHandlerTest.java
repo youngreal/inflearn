@@ -1,12 +1,13 @@
 package com.example.inflearn.domain.hashtag.service;
 
-import static com.example.inflearn.domain.hashtag.domain.Hashtag.createHashtag;
+import static com.example.inflearn.domain.hashtag.Hashtag.createHashtag;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import com.example.inflearn.domain.hashtag.domain.Hashtag;
+import com.example.inflearn.domain.hashtag.Hashtag;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostHashtag;
+import com.example.inflearn.service.hashtag.PostHashtagHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

@@ -1,6 +1,6 @@
 package com.example.inflearn.controller.member.dto.response;
 
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 
 public record MemberJoinResponse(
         String email

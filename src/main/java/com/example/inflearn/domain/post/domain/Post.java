@@ -1,6 +1,6 @@
 package com.example.inflearn.domain.post.domain;
 
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

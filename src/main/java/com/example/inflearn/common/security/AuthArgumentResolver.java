@@ -3,7 +3,7 @@ package com.example.inflearn.common.security;
 import com.example.inflearn.common.exception.EmptyCookieRequestException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
 import com.example.inflearn.common.exception.WrongServletRequestException;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

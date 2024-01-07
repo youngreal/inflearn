@@ -1,8 +1,8 @@
 package com.example.inflearn.controller.member;
 
 import com.example.inflearn.common.security.LoginedMember;
-import com.example.inflearn.domain.member.domain.Member;
-import com.example.inflearn.domain.member.service.MemberService;
+import com.example.inflearn.domain.member.Member;
+import com.example.inflearn.service.member.MemberService;
 import com.example.inflearn.controller.member.dto.request.MemberJoinRequest;
 import com.example.inflearn.controller.member.dto.request.MemberLoginRequest;
 import com.example.inflearn.controller.member.dto.response.MemberJoinResponse;

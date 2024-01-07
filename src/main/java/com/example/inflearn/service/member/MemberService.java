@@ -1,11 +1,11 @@
-package com.example.inflearn.domain.member.service;
+package com.example.inflearn.service.member;
 
 import com.example.inflearn.common.exception.AlreadyExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistEmailException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
 import com.example.inflearn.common.exception.WrongEmailTokenException;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.member.event.Events;
 import com.example.inflearn.domain.member.event.MailSentEvent;
 import com.example.inflearn.infra.repository.member.MemberRepository;

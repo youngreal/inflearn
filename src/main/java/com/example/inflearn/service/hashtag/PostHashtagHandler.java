@@ -1,6 +1,6 @@
-package com.example.inflearn.domain.hashtag.service;
+package com.example.inflearn.service.hashtag;
 
-import com.example.inflearn.domain.hashtag.domain.Hashtag;
+import com.example.inflearn.domain.hashtag.Hashtag;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.domain.PostHashtag;
 import java.util.HashSet;

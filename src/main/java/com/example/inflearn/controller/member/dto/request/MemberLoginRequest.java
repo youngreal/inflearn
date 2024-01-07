@@ -1,6 +1,6 @@
 package com.example.inflearn.controller.member.dto.request;
 
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

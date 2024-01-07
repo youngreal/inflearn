@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.member.domain;
+package com.example.inflearn.domain.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

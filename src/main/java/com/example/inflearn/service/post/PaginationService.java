@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.post.service;
+package com.example.inflearn.service.post;
 
 import org.springframework.stereotype.Component;
 

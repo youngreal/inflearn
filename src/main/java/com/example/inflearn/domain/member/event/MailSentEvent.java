@@ -1,6 +1,6 @@
 package com.example.inflearn.domain.member.event;
 
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.infra.mail.EmailMessage;
 import lombok.Getter;
 
