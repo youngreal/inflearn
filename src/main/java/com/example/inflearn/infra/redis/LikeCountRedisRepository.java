@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.HyperLogLogOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -18,33 +19,25 @@ public class LikeCountRedisRepository {
 
     private static final String VIEW_COUNT_KEY = "viewCountKey";
     private static final String LIKE_COUNT_KEY = "likeCountKey";
-    private final RedisTemplate<String, Long> popularPostsWithViewCount; // postId, viewCount
-    private final RedisTemplate<String, Long> popularPostsWithLikeCount; // postId, likeCount
-
-    //todo Map<Object, Object> 파라미터로 넘겨주는게 좋을지? 아니면 DTO같은 객체를 생성해서 넘겨줄까?
-    //todo 만약 Map으로 반환한다면, Long타입변환은 여기서 하는게 좋을까? 아니면 외부에서 하는게 좋을까?
-    public Map<Object, Object> getPopularPostEntries() {
-        log.info("PostHashEntries = {}", popularPostsWithViewCount.opsForHash().entries(VIEW_COUNT_KEY));
-        return popularPostsWithViewCount.opsForHash().entries(VIEW_COUNT_KEY);
-    }
+    private final HyperLogLogOperations<Long, Long> viewCountOperation;
+    private final RedisTemplate<String, Long> likeCountOperation; // postId, likeCount
 
     public Long getViewCount(Long postId) {
-        log.info("redis 내 진입 2");
-        return (Long) popularPostsWithViewCount.opsForHash().get(VIEW_COUNT_KEY, postId);
+        return viewCountOperation.size(postId);
     }
 
-    public void updateViewCountToCache(long postId) {
-        popularPostsWithViewCount.opsForHash().increment(LIKE_COUNT_KEY, postId, 1L);
+    public void plusViewCountToCache(long postId) {
+        viewCountOperation.add(postId, viewCountOperation.size(postId) + 1);
     }
-
 
     public void updatePopularPosts(Map<Long, Long> popularPostInDB) {
-        popularPostsWithLikeCount.opsForHash().putAll(VIEW_COUNT_KEY, updatePostsInCache(getPostsInCache(), popularPostInDB));
+        likeCountOperation.opsForHash()
+                .putAll(VIEW_COUNT_KEY, updatePostsInCache(getPostsInCache(), popularPostInDB));
     }
 
     private Map<Long, Long> getPostsInCache() {
-        Map<Object, Object> popularPostObjectEntries = popularPostsWithLikeCount.opsForHash().entries(LIKE_COUNT_KEY);
-        return popularPostObjectEntries.entrySet().stream()
+        Map<Object, Object> popularPostEntries = likeCountOperation.opsForHash().entries(LIKE_COUNT_KEY);
+        return popularPostEntries.entrySet().stream()
                 .collect(Collectors.toMap(entry -> (Long) entry.getKey(), entry -> (Long) entry.getValue()));
     }
 
