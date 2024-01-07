@@ -9,7 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.dto.CommentDto;
@@ -19,6 +19,8 @@ import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.domain.post.PostSearch;
+import com.example.inflearn.service.post.PaginationService;
+import com.example.inflearn.service.post.PostQueryService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

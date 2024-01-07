@@ -1,9 +1,9 @@
 //package com.example.inflearn.common;
 //
-//import com.example.inflearn.domain.comment.domain.Comment;
-//import com.example.inflearn.domain.hashtag.domain.Hashtag;
-//import com.example.inflearn.domain.like.domain.Like;
-//import com.example.inflearn.domain.member.domain.Member;
+//import com.example.inflearn.domain.comment.Comment;
+//import com.example.inflearn.domain.hashtag.Hashtag;
+//import com.example.inflearn.domain.like.Like;
+//import com.example.inflearn.domain.member.Member;
 //import com.example.inflearn.domain.post.domain.Post;
 //import com.example.inflearn.domain.post.domain.PostHashtag;
 //import com.example.inflearn.infra.repository.comment.CommentRepository;

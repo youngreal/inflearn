@@ -1,11 +1,11 @@
-package com.example.inflearn.domain.post.service;
+package com.example.inflearn.service.post;
 
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
 import com.example.inflearn.domain.post.domain.PostHashtag;
-import com.example.inflearn.domain.hashtag.service.HashtagService;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.service.hashtag.HashtagService;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;

@@ -13,13 +13,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.inflearn.domain.comment.service.CommentService;
-import com.example.inflearn.domain.like.service.LikeService;
-import com.example.inflearn.domain.member.domain.Member;
-import com.example.inflearn.domain.member.service.MemberService;
+import com.example.inflearn.service.comment.CommentService;
+import com.example.inflearn.service.like.LikeService;
+import com.example.inflearn.domain.member.Member;
+import com.example.inflearn.service.member.MemberService;
 import com.example.inflearn.domain.post.PostDto;
-import com.example.inflearn.domain.post.service.PostQueryService;
-import com.example.inflearn.domain.post.service.PostService;
+import com.example.inflearn.service.post.PostQueryService;
+import com.example.inflearn.service.post.PostService;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.controller.post.dto.request.PostCommentContents;
 import com.example.inflearn.controller.post.dto.request.PostPaging;
@@ -31,7 +31,6 @@ import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;

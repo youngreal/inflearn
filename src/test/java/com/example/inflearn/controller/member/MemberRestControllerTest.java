@@ -11,8 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.inflearn.domain.member.domain.Member;
-import com.example.inflearn.domain.member.service.MemberService;
+import com.example.inflearn.domain.member.Member;
+import com.example.inflearn.service.member.MemberService;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.controller.member.dto.request.MemberJoinRequest;
 import com.example.inflearn.controller.member.dto.request.MemberLoginRequest;

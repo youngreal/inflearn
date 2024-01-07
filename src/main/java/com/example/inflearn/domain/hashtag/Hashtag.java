@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.hashtag.domain;
+package com.example.inflearn.domain.hashtag;
 
 import com.example.inflearn.domain.post.domain.PostHashtag;
 import jakarta.persistence.Column;

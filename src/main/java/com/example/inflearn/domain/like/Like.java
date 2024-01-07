@@ -1,7 +1,6 @@
-package com.example.inflearn.domain.like.domain;
+package com.example.inflearn.domain.like;
 
-import com.example.inflearn.domain.comment.domain.Comment;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

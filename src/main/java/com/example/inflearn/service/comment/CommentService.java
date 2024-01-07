@@ -1,11 +1,11 @@
-package com.example.inflearn.domain.comment.service;
+package com.example.inflearn.service.comment;
 
 import com.example.inflearn.common.exception.CannotCreateReplyException;
 import com.example.inflearn.common.exception.DoesNotExistCommentException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
-import com.example.inflearn.domain.comment.domain.Comment;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.comment.Comment;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.comment.CommentRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;

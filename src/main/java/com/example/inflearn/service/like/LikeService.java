@@ -1,11 +1,11 @@
-package com.example.inflearn.domain.like.service;
+package com.example.inflearn.service.like;
 
 import com.example.inflearn.common.exception.AlreadyLikeException;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.DoesNotLikeException;
-import com.example.inflearn.domain.like.domain.Like;
-import com.example.inflearn.domain.member.domain.Member;
+import com.example.inflearn.domain.like.Like;
+import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.like.LikeRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;
