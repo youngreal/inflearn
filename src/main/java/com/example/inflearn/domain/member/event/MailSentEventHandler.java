@@ -22,7 +22,7 @@ public class MailSentEventHandler {
     @Async
     @Retryable(
             retryFor = CustomMessagingException.class,
-            maxAttempts = 3,
+            maxAttempts = 4,
             backoff = @Backoff(
                     delay = 1000,
                     maxDelay = 20000,
@@ -32,7 +32,6 @@ public class MailSentEventHandler {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋된후에 이벤트가 실행된다.
     public void handle(MailSentEvent event) {
-        log.info("메일 event 실행");
         mailService.send(event.getMessage());
     }
 
