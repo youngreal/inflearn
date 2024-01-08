@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.like.service;
+package com.example.inflearn.service.like;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;

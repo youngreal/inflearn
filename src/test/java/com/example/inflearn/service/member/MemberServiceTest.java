@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.service.member;
+package com.example.inflearn.service.member;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
