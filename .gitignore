@@ -44,9 +44,11 @@ src/main/java/com/example/inflearn/infra/redis/LettuceLockFacade.java
 ###
 .env
 .env.swp
+gradlew.bat
 
 ### local docker compose
 docker-compose-local.yml
 
+### local 전용 테스트 파일들
 src/test/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryTest.java
 src/main/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryWithHash.java
