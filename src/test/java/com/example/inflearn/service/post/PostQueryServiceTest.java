@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.post.service;
+package com.example.inflearn.service.post;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,8 +19,6 @@ import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.domain.post.PostSearch;
-import com.example.inflearn.service.post.PaginationService;
-import com.example.inflearn.service.post.PostQueryService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

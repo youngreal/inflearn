@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.comment.service;
+package com.example.inflearn.service.comment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,7 +16,6 @@ import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.comment.CommentRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
-import com.example.inflearn.service.comment.CommentService;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;

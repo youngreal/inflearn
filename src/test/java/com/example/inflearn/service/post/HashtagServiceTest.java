@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.post.service;
+package com.example.inflearn.service.post;
 
 import static com.example.inflearn.domain.hashtag.Hashtag.createHashtag;
 import static org.mockito.BDDMockito.given;

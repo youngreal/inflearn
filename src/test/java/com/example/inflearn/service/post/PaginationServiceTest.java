@@ -1,9 +1,8 @@
-package com.example.inflearn.domain.post.service;
+package com.example.inflearn.service.post;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import com.example.inflearn.service.post.PaginationService;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;

@@ -1,4 +1,4 @@
-package com.example.inflearn.domain.hashtag.service;
+package com.example.inflearn.service.hashtag;
 
 import static com.example.inflearn.domain.hashtag.Hashtag.createHashtag;
 import static org.assertj.core.api.Assertions.assertThat;
