@@ -6,7 +6,8 @@
 - [국내 커뮤니티 트래픽 정보](https://todaybeststory.com/ranking_monthly.html) 를 참고하여 2등 커뮤니티의 트래픽 수치를 대략적으로 참고하였음
 
 ## Architecture
-![image](https://github.com/youngreal/inflearn/assets/59333182/3801ce7f-2263-4ec0-95fa-94b172752f32)
+![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
+
 
 
 ## 고민했던 내용들
