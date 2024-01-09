@@ -46,6 +46,32 @@ public class PostQueryService {
         return postDetail;
     }
 
+    @Transactional
+    public PostDto postDetail2(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        addViewCount(post);
+
+
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+        PostDto postDetail = postRepository.postDetail(postId);
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
+    }
+
+//    @Transactional
+//    public void postCountingForTest(long postId) {
+//        // 게시글 존재여부 검증
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//
+//        // 조회수 업데이트
+//        addViewCount(post);
+//        log.info("getPopularPostInTestMethod = {}", likeCountRedisRepository.getPopularPostEntries2());
+//    }
+
     public List<PostDto> searchPost(PostSearch postSearch) {
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
         setHashtagsWithJoin(postDtos);
@@ -116,6 +142,14 @@ public class PostQueryService {
             likeCountRedisRepository.addViewCount(post.getId());
         }
     }
-        }
-    }
+
+//    private void addViewCount2(Post post) {
+//        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
+//        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+//        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+//            post.plusViewCount();
+//        } else {
+//            likeCountRedisRepository.addViewCount2(post.getId());
+//        }
+//    }
 }
