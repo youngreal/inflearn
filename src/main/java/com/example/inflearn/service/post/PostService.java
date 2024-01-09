@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ todo 글 수정시 해시태그 수정/삭제가 발생해야하는데 이는 �
  *
  */
 
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -63,10 +65,11 @@ public class PostService {
     }
 
     //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
-    public void updateViewCountForPopularPosts(Map<Object, Object> popularPostEntries) {
-        for (Entry<Object, Object> entry : popularPostEntries.entrySet()) {
+    public void updateViewCountForPopularPosts(Map<Object, Long> popularPostEntries) {
+        for (Entry<Object, Long> entry : popularPostEntries.entrySet()) {
+            log.info("entry = {}", entry);
             Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
-            post.updateViewCountFromCache((Long) entry.getValue());
+            post.updateViewCountFromCache(entry.getValue());
         }
             //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
     }
