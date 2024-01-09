@@ -3,6 +3,7 @@ package com.example.inflearn.controller.post;
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.security.LoginedMember;
+import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.service.comment.CommentService;
 import com.example.inflearn.service.like.LikeService;
 import com.example.inflearn.service.post.PostQueryService;
@@ -41,6 +42,31 @@ public class PostRestController {
     private final PostQueryService postQueryService;
     private final LikeService likeService;
     private final CommentService commentService;
+
+    //test
+    private final LikeCountRedisRepository likeCountRedisRepository;
+
+    @GetMapping("/redis/entry")
+    public void redisTest() {
+        log.info("controller entry = {}", likeCountRedisRepository.getPopularPostEntries());
+    }
+
+    @GetMapping("/redis/{postId}")
+    public void redisTest2(@PathVariable long postId) {
+        log.info("controller viewCount = {}", likeCountRedisRepository.getViewCount(postId));
+    }
+
+    // hyperloglog v3 호환
+    @GetMapping("/redis/v3/entry")
+    public void redisTest3() {
+        log.info("controller entry = {}", likeCountRedisRepository.getPopularPostEntries2());
+    }
+
+    //hyperloglog v3 호환
+    @GetMapping("/redis/v3/{postId}")
+    public void redisTest4(@PathVariable long postId) {
+        log.info("controller viewCount = {}", likeCountRedisRepository.getViewCount2(postId));
+    }
 
     @PostMapping("/posts")
     public void write(
@@ -172,6 +198,16 @@ public class PostRestController {
     @GetMapping("/posts/{postId}")
     public PostDetailPageResponse postDetail(@PathVariable long postId) {
         return PostDetailPageResponse.from(postQueryService.postDetail(postId));
+    }
+
+    @GetMapping("/posts/v2/{postId}")
+    public PostDetailPageResponse postDetail2(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postQueryService.postDetail2(postId));
+    }
+
+    @GetMapping("/posts/v3/{postId}")
+    public PostDetailPageResponse postDetail3(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postQueryService.postDetail3(postId));
     }
 
     /**
