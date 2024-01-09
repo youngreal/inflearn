@@ -62,4 +62,22 @@ public class PostSchedulerService {
             redisRepository.updateViewCountUnLock();
         }
     }
+
+    /*
+    ec2에서 성능테스트를 위한 임시코드
+ */
+    @Scheduled(fixedDelay = MINUTE)
+    public void updateViewCountToDatabaseForTest() {
+        if (FALSE.equals(redisRepository.updateViewCountLock())) {
+            log.info("The updateViewCount lock has already been acquired from another server.");
+            return;
+        }
+
+        try {
+            log.info("Get Lock : update viewCCount to Database.");
+            postService.updateViewCountForPopularPosts(likeCountRedisRepository.getPopularPostEntries2());
+        } finally {
+            redisRepository.updateViewCountUnLock();
+        }
+    }
 }

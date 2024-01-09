@@ -46,14 +46,31 @@ public class PostQueryService {
         return postDetail;
     }
 
+
+    // 성능테스트를위한 테스트용 코드, hyperloglog에 System.currentTimeMillis()와 매핑해서 추적하는방식
     @Transactional
     public PostDto postDetail2(long postId) {
         // 게시글 존재여부 검증
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
         // 조회수 업데이트
-        addViewCount(post);
+        addViewCount2(post);
 
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+        PostDto postDetail = postRepository.postDetail(postId);
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
+    }
+
+    // 성능테스트를위한 테스트용 코드, hyperloglog에 UUID를 만들어 매핑해서 추적하는방식 => 조회수 오차율은 낮지만 성능은 느릴것으로 예상
+    @Transactional
+    public PostDto postDetail3(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        addViewCount3(post);
 
         // 게시글 상세 내용 조회(해시태그, 댓글)
         PostDto postDetail = postRepository.postDetail(postId);
@@ -137,19 +154,33 @@ public class PostQueryService {
         // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
         // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
         if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            log.info("v1 direct");
             post.plusViewCount();
         } else {
+            log.info("v1");
             likeCountRedisRepository.addViewCount(post.getId());
         }
     }
 
-//    private void addViewCount2(Post post) {
-//        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
-//        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
-//        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
-//            post.plusViewCount();
-//        } else {
-//            likeCountRedisRepository.addViewCount2(post.getId());
-//        }
-//    }
+    // for test
+    private void addViewCount2(Post post) {
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            log.info("v2 direct");
+            post.plusViewCount();
+        } else {
+            log.info("v2 ");
+            likeCountRedisRepository.addViewCount2(post.getId());
+        }
+    }
+
+    //for test
+    private void addViewCount3(Post post) {
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            log.info("v3 direct");
+            post.plusViewCount();
+        } else {
+            log.info("v3");
+            likeCountRedisRepository.addViewCount3(post.getId());
+        }
+    }
 }

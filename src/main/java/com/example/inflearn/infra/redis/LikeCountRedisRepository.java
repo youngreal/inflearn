@@ -30,6 +30,15 @@ public class LikeCountRedisRepository {
     private final HyperLogLogOperations<Long, Long> viewCountOperationForTest; // postId, uniqueString
     private final RedisTemplate<String, Long> likeCountOperation; // postId, likeCount
 
+    // for test
+    public Map<Object, Long> getPopularPostEntries2() {
+        Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
+        Map<Object, Long> map = new HashMap<>();
+        for (Object key : keys) {
+            map.put(key, viewCountOperation.size((Long) key));
+        }
+        return map;
+    }
 
     public Map<Object, Long> getPopularPostEntries() {
         Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
@@ -44,9 +53,30 @@ public class LikeCountRedisRepository {
         return viewCountOperation.size(postId);
     }
 
+    public Long getViewCount2(Long postId) {
+        return viewCountOperationForTest.size(postId);
+    }
+
     // Hash자료구조 처럼 사용하는방식, 메리트가 있을까? 성능테스트는 해보자
     public void addViewCount(long postId) {
-        viewCountOperationForTest.add(postId, viewCountOperation.size(postId + 1));
+        viewCountOperationForTest.add(postId, viewCountOperationForTest.size(postId) + 1);
+    }
+
+//    // currentTimeMillis 생성방식 성능테스트 필요
+//    /*
+//     같은 밀리세컨드에 들어온 요청은 중복 카운팅될수있지만 uuid생성비용보단 적을것이다.
+//     */
+    public void addViewCount2(long postId) {
+        Long value = System.currentTimeMillis();
+        viewCountOperationForTest.add(postId, value);
+    }
+//
+//    // uuid 생성방식 성능테스트 필요
+//    /*
+//     조회수 오차가 가장 적을것같은데 uuid 생성비용이 클것으로 예상된다
+//     */
+    public void addViewCount3(long postId) {
+        viewCountOperation.add(postId, UUID.randomUUID().toString());
     }
 
     public void updatePopularPosts(Map<Long, Long> popularPostInDB) {
