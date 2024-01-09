@@ -95,7 +95,7 @@ public class PostQueryService {
 
     private List<PostDto> getPopularPosts() {
         LocalDate endDay = LocalDate.now();
-        LocalDate firstDay = endDay.minusDays(7);
+        LocalDate firstDay = endDay.minusDays(300);
         return PostDto.toDto(postRepository.findPopularPostByDate(firstDay, endDay));
     }
 
@@ -113,7 +113,9 @@ public class PostQueryService {
         if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
             post.plusViewCount();
         } else {
-            likeCountRedisRepository.plusViewCountToCache(post.getId());
+            likeCountRedisRepository.addViewCount(post.getId());
+        }
+    }
         }
     }
 }
