@@ -2,7 +2,7 @@ logging:
   level:
     com.board.board: debug
     #    request /response 정보 볼수있다.
-    org.springframework.web.servlet: debug
+    org.springframework.web.servlet: info
     #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
     org.hibernate.type.descriptor.sql.BasicBinder: trace
 spring:
