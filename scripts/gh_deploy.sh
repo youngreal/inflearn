@@ -24,7 +24,7 @@ echo "==== 배포 시작: $(date +%c) ====" >> $DEPLOY_LOG_PATH
 echo "Docker Compose가 현재 실행 중인지 확인" >> $DEPLOY_LOG_PATH
 if [ "$(docker-compose -f $DEPLOY_PATH/docker-compose.yml ps -q)" ]; then
 echo "실행 중이면 Docker Compose를 종료" >> $DEPLOY_LOG_PATH
-    docker-compose -f $DEPLOY_PATH/docker-compose.yml down
+    docker-compose -f $DEPLOY_PATH/docker-compose.yml stop
     sleep 6
 fi
 
