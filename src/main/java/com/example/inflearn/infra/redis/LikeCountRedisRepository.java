@@ -32,6 +32,7 @@ public class LikeCountRedisRepository {
 
     // for test
     public Map<Object, Long> getPopularPostEntries2() {
+        log.info("call popularEntries2");
         Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
         Map<Object, Long> map = new HashMap<>();
         for (Object key : keys) {
@@ -41,6 +42,7 @@ public class LikeCountRedisRepository {
     }
 
     public Map<Object, Long> getPopularPostEntries() {
+        log.info("call popularEntries");
         Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
         Map<Object, Long> map = new HashMap<>();
         for (Object key : keys) {
