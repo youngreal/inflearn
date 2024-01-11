@@ -64,10 +64,7 @@ public class LikeCountRedisRepository {
 
     // Hash자료구조 처럼 사용하는방식, 메리트가 있을까? 성능테스트는 해보자
     public void addViewCount(long postId) {
-        log.info("addViewCount");
-        log.info("addViewCount before = {}", viewCountOperationForTest.size(postId));
         viewCountOperationForTest.add(postId, viewCountOperationForTest.size(postId) + 1);
-        log.info("addViewCount after = {}", viewCountOperationForTest.size(postId));
     }
 
 //    // currentTimeMillis 생성방식 성능테스트 필요
