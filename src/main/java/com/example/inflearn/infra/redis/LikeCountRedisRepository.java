@@ -64,7 +64,10 @@ public class LikeCountRedisRepository {
 
     // Hash자료구조 처럼 사용하는방식, 메리트가 있을까? 성능테스트는 해보자
     public void addViewCount(long postId) {
+        log.info("addViewCount");
+        log.info("addViewCount before = {}", viewCountOperationForTest.size(postId));
         viewCountOperationForTest.add(postId, viewCountOperationForTest.size(postId) + 1);
+        log.info("addViewCount after = {}", viewCountOperationForTest.size(postId));
     }
 
 //    // currentTimeMillis 생성방식 성능테스트 필요
@@ -72,6 +75,7 @@ public class LikeCountRedisRepository {
 //     같은 밀리세컨드에 들어온 요청은 중복 카운팅될수있지만 uuid생성비용보단 적을것이다.
 //     */
     public void addViewCount2(long postId) {
+        log.info("addViewCount2");
         Long value = System.currentTimeMillis();
         viewCountOperationForTest.add(postId, value);
     }
@@ -81,11 +85,15 @@ public class LikeCountRedisRepository {
 //     조회수 오차가 가장 적을것같은데 uuid 생성비용이 클것으로 예상된다
 //     */
     public void addViewCount3(long postId) {
+        log.info("addViewCount3");
         viewCountOperation.add(postId, UUID.randomUUID().toString());
     }
 
     public void updatePopularPosts(Map<Long, Long> popularPostInDB) {
-        likeCountOperation.opsForHash().putAll(LIKE_COUNT_KEY, updatePostsInCache(getPostsInCache(), popularPostInDB));
+        log.info("posts In Db = {}", popularPostInDB);
+        Map<Long, Long> result = updatePostsInCache(getPostsInCache(), popularPostInDB);
+        log.info("update list = {}", result);
+        likeCountOperation.opsForHash().putAll(LIKE_COUNT_KEY, result);
     }
 
     private Map<Long, Long> getPostsInCache() {
