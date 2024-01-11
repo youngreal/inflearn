@@ -1,6 +1,5 @@
 package com.example.inflearn.infra.redis;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,20 +33,24 @@ public class LikeCountRedisRepository {
     public Map<Object, Long> getPopularPostEntries2() {
         log.info("call popularEntries2");
         Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
+        log.info("keys = {}", keys);
         Map<Object, Long> map = new HashMap<>();
         for (Object key : keys) {
             map.put(key, viewCountOperation.size((Long) key));
         }
+        log.info("map = {}", map);
         return map;
     }
 
     public Map<Object, Long> getPopularPostEntries() {
         log.info("call popularEntries");
         Set<Object> keys = likeCountOperation.opsForHash().keys(LIKE_COUNT_KEY);
+        log.info("keys = {}", keys);
         Map<Object, Long> map = new HashMap<>();
         for (Object key : keys) {
             map.put(key, viewCountOperationForTest.size((Long) key));
         }
+        log.info("map = {}", map);
         return map;
     }
 
