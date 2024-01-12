@@ -52,4 +52,3 @@ docker-compose-local.yml
 ### local 전용 테스트 파일들
 src/main/resources/application.yaml
 src/test/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryTest.java
-src/main/java/com/example/inflearn/infra/redis/LikeCountRedisRepositoryWithHash.java
