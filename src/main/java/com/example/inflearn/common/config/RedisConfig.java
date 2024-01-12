@@ -43,6 +43,16 @@ public class RedisConfig {
         return redisTemplate;
     }
 
+//    @Bean
+//    public RedisTemplate<String, Integer> redisTemplate5() {
+//        RedisTemplate<String, Integer> redisTemplate = new RedisTemplate<>();
+//        redisTemplate.setConnectionFactory(redisConnectionFactory());
+//        redisTemplate.setKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Integer.class));
+//        return redisTemplate;
+//    }
+
+    // 성능테스트용 설정 추가
     @Bean
     public RedisTemplate<Long, Long> redisTemplate3() {
         RedisTemplate<Long, Long> redisTemplate = new RedisTemplate<>();
@@ -56,6 +66,8 @@ public class RedisConfig {
     public HyperLogLogOperations<Long, String> hyperLogLogOperations() {
         return redisTemplate1().opsForHyperLogLog();
     }
+
+    // 성능테스트용 설정 추가
     @Bean
     public HyperLogLogOperations<Long, Long> hyperLogLogOperations2() {
         return redisTemplate3().opsForHyperLogLog();

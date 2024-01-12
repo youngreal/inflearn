@@ -1,6 +1,7 @@
 package com.example.inflearn.controller.post;
 
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
+import com.example.inflearn.infra.redis.LikeCountRedisRepositoryWithHash;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,12 @@ public class TestController {
 
     //test
     private final LikeCountRedisRepository likeCountRedisRepository;
+    private final LikeCountRedisRepositoryWithHash likeCountRedisRepositoryWithHash;
+
+    @GetMapping("/redis/hash")
+    public void redisTest0() {
+        log.info("controller entry = {}", likeCountRedisRepositoryWithHash.getPopularPostEntries());
+    }
 
     @GetMapping("/redis/entry")
     public void redisTest() {
@@ -25,16 +32,10 @@ public class TestController {
         log.info("controller viewCount = {}", likeCountRedisRepository.getViewCount(postId));
     }
 
-    // hyperloglog v3 호환
-    @GetMapping("/redis/v3/entry")
-    public void redisTest3() {
-        log.info("controller entry = {}", likeCountRedisRepository.getPopularPostEntries2());
-    }
-
     //hyperloglog v3 호환
     @GetMapping("/redis/v3/{postId}")
     public void redisTest4(@PathVariable long postId) {
-        log.info("controller viewCount = {}", likeCountRedisRepository.getViewCount2(postId));
+        log.info("controller viewCount = {}", likeCountRedisRepository.getViewCount(postId));
     }
 
 }

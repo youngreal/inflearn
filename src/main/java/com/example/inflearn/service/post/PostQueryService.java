@@ -6,6 +6,7 @@ import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
+import com.example.inflearn.infra.redis.LikeCountRedisRepositoryWithHash;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
@@ -29,6 +30,8 @@ public class PostQueryService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final LikeCountRedisRepository likeCountRedisRepository;
+    //for test
+    private final LikeCountRedisRepositoryWithHash likeCountRedisRepositoryWithHash;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
     @Transactional
@@ -65,12 +68,12 @@ public class PostQueryService {
 
     // 성능테스트를위한 테스트용 코드, hyperloglog에 UUID를 만들어 매핑해서 추적하는방식 => 조회수 오차율은 낮지만 성능은 느릴것으로 예상
     @Transactional
-    public PostDto postDetail3(long postId) {
+    public PostDto postDetail4(long postId) {
         // 게시글 존재여부 검증
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
         // 조회수 업데이트
-        addViewCount3(post);
+        addViewCount4(post);
 
         // 게시글 상세 내용 조회(해시태그, 댓글)
         PostDto postDetail = postRepository.postDetail(postId);
@@ -78,16 +81,6 @@ public class PostQueryService {
         postDetail.inputComments(postRepository.commentsBy(postDetail));
         return postDetail;
     }
-
-//    @Transactional
-//    public void postCountingForTest(long postId) {
-//        // 게시글 존재여부 검증
-//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-//
-//        // 조회수 업데이트
-//        addViewCount(post);
-//        log.info("getPopularPostInTestMethod = {}", likeCountRedisRepository.getPopularPostEntries2());
-//    }
 
     public List<PostDto> searchPost(PostSearch postSearch) {
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
@@ -136,6 +129,15 @@ public class PostQueryService {
         likeCountRedisRepository.updatePopularPosts(popularPosts);
     }
 
+    // 현재 시간으로부터 -7일 사이에 있는 게시글중 좋아요 개수가 가장 많은 게시글을 5개까지만 가져온다
+    public void updatePopularPosts2() {
+        Map<Long, Long> popularPosts = getPopularPosts().stream()
+                .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
+
+        // 레디스에 있는 게시글과 popularPosts의 likeCount들을 비교해서 5개만 레디스에 업데이트한다
+        likeCountRedisRepositoryWithHash.updatePopularPosts(popularPosts);
+    }
+
     private List<PostDto> getPopularPosts() {
         LocalDate endDay = LocalDate.now();
         LocalDate firstDay = endDay.minusDays(300);
@@ -169,18 +171,18 @@ public class PostQueryService {
             post.plusViewCount();
         } else {
             log.info("v2 ");
-            likeCountRedisRepository.addViewCount2(post.getId());
+            likeCountRedisRepository.addViewCount(post.getId());
         }
     }
 
     //for test
-    private void addViewCount3(Post post) {
-        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
-            log.info("v3 direct");
+    private void addViewCount4(Post post) {
+        if (likeCountRedisRepositoryWithHash.getViewCount(post.getId()) == null) {
+            log.info("v4 hash direct");
             post.plusViewCount();
         } else {
-            log.info("v3");
-            likeCountRedisRepository.addViewCount3(post.getId());
+            log.info("v4");
+            likeCountRedisRepositoryWithHash.addViewCount(post.getId());
         }
     }
 }

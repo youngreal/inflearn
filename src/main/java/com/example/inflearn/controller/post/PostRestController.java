@@ -180,9 +180,10 @@ public class PostRestController {
         return PostDetailPageResponse.from(postQueryService.postDetail2(postId));
     }
 
-    @GetMapping("/posts/v3/{postId}")
-    public PostDetailPageResponse postDetail3(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail3(postId));
+    //redis hash
+    @GetMapping("/posts/v4/{postId}")
+    public PostDetailPageResponse postDetail4(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postQueryService.postDetail4(postId));
     }
 
     /**
