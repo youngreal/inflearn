@@ -3,6 +3,7 @@ package com.example.inflearn.service.post;
 import static java.lang.Boolean.FALSE;
 
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
+import com.example.inflearn.infra.redis.LikeCountRedisRepositoryWithHash;
 import com.example.inflearn.infra.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,9 @@ public class PostSchedulerService {
     private final PostQueryService postQueryService;
     private final PostService postService;
 
+    //for test
+    private final LikeCountRedisRepositoryWithHash likeCountRedisRepositoryWithHash;
+
     //todo AOP로 개선할수있을것같다. 핵심로직과 락을거는 로직의 분리
     @Scheduled(fixedDelay = MINUTE)
     public void updatePopularPosts() {
@@ -40,6 +44,23 @@ public class PostSchedulerService {
         try {
             log.info("Get Lock : update PopularPostLists");
             postQueryService.updatePopularPosts();
+        } finally {
+            redisRepository.popularPostListUpdateUnLock();
+        }
+    }
+
+    @Scheduled(fixedDelay = MINUTE)
+    public void updatePopularPosts2() {
+        // 락 획득에 실패한다면 재시도를 시도하지않고 리턴한다
+        if (FALSE.equals(redisRepository.popularPostListUpdateLock())) {
+            log.info("The popularPostList lock has already been acquired from another server.");
+            return;
+        }
+
+        // 락 획득에 성공한다면 인기게시글을 업데이트한다.
+        try {
+            log.info("Get Lock : update PopularPostLists");
+            postQueryService.updatePopularPosts2();
         } finally {
             redisRepository.popularPostListUpdateUnLock();
         }
@@ -63,6 +84,7 @@ public class PostSchedulerService {
         }
     }
 
+
     /*
     ec2에서 성능테스트를 위한 임시코드
  */
@@ -75,7 +97,7 @@ public class PostSchedulerService {
 
         try {
             log.info("Get Lock : update viewCCount to Database.");
-            postService.updateViewCountForPopularPosts(likeCountRedisRepository.getPopularPostEntries2());
+            postService.updateViewCountForPopularPosts2(likeCountRedisRepositoryWithHash.getPopularPostEntries());
         } finally {
             redisRepository.updateViewCountUnLock();
         }
