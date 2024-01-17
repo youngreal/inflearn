@@ -71,16 +71,5 @@ public class PostService {
             Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
             post.updateViewCountFromCache(entry.getValue());
         }
-            //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
-    }
-
-    //for test
-    public void updateViewCountForPopularPosts2(Map<Object, Object> popularPostEntries) {
-        for (Entry<Object, Object> entry : popularPostEntries.entrySet()) {
-            log.info("entry = {}", entry);
-            Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
-            post.updateViewCountFromCache((Long) entry.getValue());
-        }
-        //todo 왜 업데이트 쿼리를 날리지않고 DB에서 가져와야하는가? 제대로 알고 넘어가기
     }
 }
