@@ -3,7 +3,6 @@ package com.example.inflearn.controller.post;
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.security.LoginedMember;
-import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.service.comment.CommentService;
 import com.example.inflearn.service.like.LikeService;
 import com.example.inflearn.service.post.PostQueryService;
@@ -173,17 +172,6 @@ public class PostRestController {
     @GetMapping("/posts/{postId}")
     public PostDetailPageResponse postDetail(@PathVariable long postId) {
         return PostDetailPageResponse.from(postQueryService.postDetail(postId));
-    }
-
-    @GetMapping("/posts/v2/{postId}")
-    public PostDetailPageResponse postDetail2(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail2(postId));
-    }
-
-    //redis hash
-    @GetMapping("/posts/v4/{postId}")
-    public PostDetailPageResponse postDetail4(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail4(postId));
     }
 
     /**
