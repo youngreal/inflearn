@@ -98,6 +98,6 @@ public class Post {
     }
 
     public void updateViewCountFromCache(long viewCount) {
-        this.viewCount = viewCount;
+        this.viewCount += viewCount;
     }
 }
