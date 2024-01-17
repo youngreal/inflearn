@@ -14,20 +14,17 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class RedisRepository {
+public class LettuceLockRepository {
 
     private static final String POPULAR_POST_LIST_UPDATE_LOCK_KEY = "popularPostLock";
+    private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "popularPostLock";
     private static final String UPDATE_VIEW_LOCK_KEY = "updateViewLock";
-    private static final String POPULAR_POST_LIST_UPDATE_LOCK_VALUE = "lock";
     private static final String UPDATE_VIEW_LOCK_VALUE = "updateViewLock";
     private final RedisTemplate<String, String> redisTemplate;
 
-    // key에는 인스턴스 ID, value에는 lock?
-    // 락을 새로 세팅했으면 true, 락이 이미있었으면 false
     public Boolean popularPostListUpdateLock() {
         return redisTemplate.opsForValue()
                 .setIfAbsent(POPULAR_POST_LIST_UPDATE_LOCK_KEY, POPULAR_POST_LIST_UPDATE_LOCK_VALUE, Duration.ofMillis(3_000));
-        //todo 타임아웃은 정확하게 왜 설정하는거지?
     }
 
     public void popularPostListUpdateUnLock() {

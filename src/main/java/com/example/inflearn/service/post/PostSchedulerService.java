@@ -3,7 +3,7 @@ package com.example.inflearn.service.post;
 import static java.lang.Boolean.FALSE;
 
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
-import com.example.inflearn.infra.redis.RedisRepository;
+import com.example.inflearn.infra.redis.LettuceLockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 public class PostSchedulerService {
 
     private static final int MINUTE = 60 * 1_000;
-    private final RedisRepository redisRepository;
+    private final LettuceLockRepository lettuceLockRepository;
     private final LikeCountRedisRepository likeCountRedisRepository;
     private final PostQueryService postQueryService;
     private final PostService postService;
@@ -33,7 +33,7 @@ public class PostSchedulerService {
     @Scheduled(fixedDelay = MINUTE)
     public void updatePopularPosts() {
         // 락 획득에 실패한다면 재시도를 시도하지않고 리턴한다
-        if (FALSE.equals(redisRepository.popularPostListUpdateLock())) {
+        if (FALSE.equals(lettuceLockRepository.popularPostListUpdateLock())) {
             log.info("The popularPostList lock has already been acquired from another server.");
             return;
         }
@@ -43,13 +43,13 @@ public class PostSchedulerService {
             log.info("Get Lock : update PopularPostLists");
             postQueryService.updatePopularPosts();
         } finally {
-            redisRepository.popularPostListUpdateUnLock();
+            lettuceLockRepository.popularPostListUpdateUnLock();
         }
     }
 
     @Scheduled(fixedDelay = MINUTE)
     public void updateViewCountToDatabase() {
-        if (FALSE.equals(redisRepository.updateViewCountLock())) {
+        if (FALSE.equals(lettuceLockRepository.updateViewCountLock())) {
             log.info("The updateViewCount lock has already been acquired from another server.");
             return;
         }
@@ -58,7 +58,7 @@ public class PostSchedulerService {
             log.info("Get Lock : update viewCCount to Database.");
             postService.updateViewCountForPopularPosts(likeCountRedisRepository.getPopularPostEntries());
         } finally {
-            redisRepository.updateViewCountUnLock();
+            lettuceLockRepository.updateViewCountUnLock();
         }
     }
 }
