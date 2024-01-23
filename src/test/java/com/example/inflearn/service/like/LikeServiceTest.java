@@ -85,8 +85,7 @@ class LikeServiceTest {
         // given
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
-        given(likeRepository.findByMemberAndPost(member, post)).willReturn(
-                Optional.ofNullable(Like.create(member, post)));
+        given(likeRepository.findByMemberAndPost(member, post)).willReturn(Like.create(member, post));
 
         // when
         assertThrows(AlreadyLikeException.class, () -> sut.saveLike(member.getId(), post.getId()));
@@ -101,8 +100,7 @@ class LikeServiceTest {
         Like like = Like.create(member, post);
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
-        given(likeRepository.findByMemberAndPost(member, post)).willReturn(
-                Optional.ofNullable(like));
+        given(likeRepository.findByMemberAndPost(member, post)).willReturn(like);
 
         // when
         sut.unLike(member.getId(),post.getId());

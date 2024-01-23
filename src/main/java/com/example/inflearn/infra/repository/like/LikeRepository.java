@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
-    Optional<Like> findByMemberAndPost(Member member, Post post);
+    Like findByMemberAndPost(Member member, Post post);
 }
