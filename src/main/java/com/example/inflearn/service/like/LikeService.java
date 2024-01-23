@@ -27,22 +27,16 @@ public class LikeService {
     public void saveLike(long memberId, long postId) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        Like byMemberAndPost = likeRepository.findByMemberAndPost(member, post);
-        if (byMemberAndPost != null) {
+        likeRepository.findByMemberAndPost(member, post).ifPresent(like -> {
             throw new AlreadyLikeException();
-        }
-
+        });
         likeRepository.save(Like.create(member, post));
     }
 
     public void unLike(long memberId, long postId) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-        Like like = likeRepository.findByMemberAndPost(member, post);
-        if (like == null) {
-            throw new DoesNotLikeException();
-        }
-
+        Like like = likeRepository.findByMemberAndPost(member, post).orElseThrow(DoesNotLikeException::new);
         likeRepository.delete(like);
     }
 }
