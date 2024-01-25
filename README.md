@@ -12,11 +12,11 @@
 ![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
 
 ## 문제 해결
-- [ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기](#1-ApplicationEventListener와-Async로-회원가입-시-회원-저장과-이메일-전송의-강결합-레이턴시-증가-문제-개선하기)
-- [외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기](#2-외부-서비스-Gmail-의-네트워크-지연에-대비해-적절한-retry-전략-도입하기)
+- [ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기](#1-applicationeventlistener와-async로-회원가입-시-회원-저장과-이메일-전송의-강결합-레이턴시-증가-문제-개선하기)
+- [외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기](#2-외부-서비스gmail의-네트워크-지연에-대비해-적절한-retry-전략-도입하기)
 - [redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기](#3-redis-분산락으로-서버-간-동일한-인기글-리스트-갱신을-보장하기)
 - [인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기](#4-인기글-조회에-트래픽이-몰려-대량의-update-쿼리가-발생하는-상황-해결하기)
-- [LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기](#5-LIKE-word-로-게시글-검색-시-full-table-scan이-발생해-레이턴시가-증가하는-문제를-fulltext-search로-개선하기)
+- [LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기](#5-like-word로-게시글-검색-시-full-table-scan이-발생해-레이턴시가-증가하는-문제를-fulltext-search로-개선하기)
 
 ## 1. ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기
 
