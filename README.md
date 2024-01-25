@@ -1,23 +1,24 @@
 ## 소개
-- 인프런의 질문/스터디 게시판을 기능을 구현하고 **단일 인스턴스에서 최대한** 트래픽을 받아보도록 고민하되, 서버 scale-out 을 고려 했을때도 최대한 문제가 없을수 있는 방법으로 구현해보기
+- 인프런의 질문/스터디 게시판을 기능을 구현하고 서버 scale-out 을 고려 했을때도 최대한 문제가 없을수 있는 방법으로 구현해보는 **개인 프로젝트**
 
 - ``우선순위가 높은 부분``부터 순차적으로 생각해보기
   
 - 트래픽 관련 정보는 [국내 커뮤니티 트래픽 정보](https://todaybeststory.com/ranking_monthly.html) 를 참고해 대략적으로 계산하였음
 
+### 개발 기간
+- 2023.08 ~ 2024.01
+
 ## Architecture
 ![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
 
+## 문제 해결
+- [ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기](#1-ApplicationEventListener와-Async로-회원가입-시-회원-저장과-이메일-전송의-강결합-레이턴시-증가-문제-개선하기)
+- [외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기](#2-외부-서비스-Gmail-의-네트워크-지연에-대비해-적절한-retry-전략-도입하기)
+- [redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기](#3-redis-분산락으로-서버-간-동일한-인기글-리스트-갱신을-보장하기)
+- [인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기](#4-인기글-조회에-트래픽이-몰려-대량의-update-쿼리가-발생하는-상황-해결하기)
+- [LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기](#5-LIKE-word-로-게시글-검색-시-full-table-scan이-발생해-레이턴시가-증가하는-문제를-fulltext-search로-개선하기)
 
-
-## 고민했던 내용들
-- [회원가입시 회원 저장과 이메일전송의 강결합 + 응답속도 저하 문제를 어떻게 개선할지?](#1-회원가입시-회원-저장과-이메일전송의-강결합--응답속도-저하-문제를-어떻게-개선할지)
-- [Gmail 서비스에 문제가 생긴다면?](#2-Gmail-서비스에-문제가-생긴다면)
-- [인기글 리스트 갱신은 어떻게 할것인가?](#3-인기글-리스트-갱신은-어떻게-할것인가)
-- [인기글 조회에 트래픽이 엄청나게 몰린다면?](#4-인기글-조회에-트래픽이-엄청나게-몰린다면)
-- [게시글 검색에 대한 고민(LIKE %word%)](#5-게시글-검색에-대한-고민LIKE-word)
-
-## 1. 회원가입시 회원 저장과 이메일전송의 강결합 + 응답속도 저하 문제를 어떻게 개선할지?
+## 1. ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기
 
 ### 문제 발견
 
@@ -69,7 +70,34 @@ public class MemberService {
 
 **@Async를 선택하고 고려해야 했던점**
   1. 회원 저장에 실패했는데 메일은 보내지는 경우
-      - 두 작업을 비동기로 처리하면서 위와같은 경우가 발생할수있어서 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 사용하여 회원저장에 성공하는경우에만 메일을 보내게끔 해주었다.
+
+      - 두 작업을 비동기로 처리하면서 위와같은 경우가 발생할수있어서 **@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)** 을 사용하여 회원저장에 성공하는경우에만 메일을 보내게끔 해주었다.
+```java
+@RequiredArgsConstructor
+@Service
+public class MailSentEventHandler {
+
+    private final MailService mailService;
+
+    @Async
+    @Retryable(
+            retryFor = CustomMessagingException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 1000,
+                    maxDelay = 20000,
+                    multiplier = 2.0,
+                    random = true // jitter
+            )
+    )
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋되어야만 메일 전송
+    public void handle(MailSentEvent event) {
+        mailService.send(event.getMessage());
+    }
+
+    ...
+}
+```
 
   2. 스프링 MVC 예외핸들러로 메일전송시 생길수있는 비동기 동작시 예외를 잡을수 없는 문제
       - AsyncUncaughtExceptionHandler를 정의한후 예외 핸들링
@@ -109,7 +137,7 @@ public class MemberService {
        - queueCapacity 튜닝 : 비동기 메일전송은 최대 8개까지만 동시처리가 가능하며, 나머지 모든 요청들은 모두 큐에 담긴다. 이는 큐에 엄청난 요청이 담겨 메모리부족 문제를 야기할것으로 보이기때문에  테스트를 통해 메모리 오류가 발생하지 않을 적절한 큐사이즈로 줄여야한다
        - maximumPoolSize 튜닝 : 큐 사이즈를 조절했다면 남은요청은 maximumPoolSize크기만큼 스레드를 계속해서 생성해 나갈것이고, 이렇게되면 메모리 사용률이 급증하는 문제가 생긴다. 적절한크기로 줄이고, 나머지 요청은 Reject하거나, keepAlive시간을 늘려 대기시간을 상승시키도록 해봐야할것같다. 
 
-## 2. Gmail 서비스에 문제가 생긴다면?
+## 2. 외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기
 ### 문제 발견
 - 현재 Gmail SMTP 서버를 사용해 메일을 전송하고있는데 확률은 낮겠지만 Gmail에서 장애가 발생하는경우 우리서비스는 메일을 전송해주지못하는 SPOF가 발생할수있다.
 - 메일전송 실패시 대응할 여러 정책이 있지만, 사용자에게 재전송 요청을 하는것보단 편의성을 고려하여 사용자는 한번만 요청하도록 하고싶었다. 
@@ -163,7 +191,7 @@ try {
 ### 한계, 고려해야할점
 - 외부 메일서버가 장애 상황이라면, retry횟수를 채우는것 자체가 의미없을수있다. 불필요한 retry 요청조차 차단해버리도록 할수있게끔 구축 해볼수도 있다. 
 
-## 3. 인기글 리스트 갱신은 어떻게 할것인가?
+## 3. redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기
 ### 문제 발견
 - likes 테이블과 post테이블은 분리되어있고, likes테이블의 개수 (게시글의 좋아요 개수)순으로 정렬해 스케줄링 서비스로 5분에 한번씩 DB에서 여러 서버가 가져오는 상황
 ![image](https://github.com/youngreal/inflearn/assets/59333182/7829334f-856c-415e-a436-e0472b603670)
@@ -196,7 +224,7 @@ try {
 
 - 락을 redis로 관리하게 되면서 레디스에 문제가 생긴다면 데이터 손실등의 위험이있지만, 인기글의 조회수의 손실은 크리티컬 하지않기 때문에 천천히 개선해보자. 
 
-## 4. 인기글 조회에 트래픽이 엄청나게 몰린다면?
+## 4. 인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기
 ### AS-IS 
 ```java
     @Transactional
@@ -262,7 +290,7 @@ try {
 ### 한계, 고려해야할점
 - 게시글 조회와 update는 반드시 같은 트랜잭션에 묶일 필요가 없는 성질이므로, 비동기로 처리해보고 성능 측정해볼 예정이다. 
 
-## 5. 게시글 검색에 대한 고민(LIKE %word%)
+## 5. LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기
 
 ### 문제 발견
 - LIKE %word% 쿼리는 인덱스를 적용할 수 없어서 테이블 풀 스캔으로 검색결과를 찾아야하는 문제를 인식하였고, 수치확인을 위한 테스트 진행
