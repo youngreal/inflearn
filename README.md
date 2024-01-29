@@ -221,6 +221,8 @@ public class MailSentEventHandler {
         ... (추가 쿼리)
     }
 ```
+
+### 문제 발견
 - 위의 게시글 조회 API 코드에서 게시글 검증, 게시글의 조회 수 업데이트, 댓글과 해시태그를 가져오는 쿼리 등 여러 쿼리가 발생하고, 특히나 **매번 update 쿼리가 발생**하여 레코드락이 걸리는 것을 [확인하였음](https://velog.io/@rodlsdyd/%EA%B2%8C%EC%8B%9C%EA%B8%80-%EC%A1%B0%ED%9A%8C%EC%88%98-update-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0%ED%95%B4%EB%B3%B4%EA%B8%B0)
 
 - 가장 트래픽이 많을 API였기 때문에 철저한 테스트가 필요하다고 판단하여 부하 테스트 진행
