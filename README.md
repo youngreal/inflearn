@@ -8,6 +8,12 @@
 ### 개발 기간
 - 2023.08 ~ 2024.01
 
+### 기술 스택
+- Application : Java 17, Spring boot 3, JPA, Querydsl
+- DB : MySQL, Redis
+- Test : JUnit5, Mockito
+- Infra : AWS, Docker, Grafana, promethus, github actions
+
 ## Architecture
 ![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
 
@@ -80,16 +86,6 @@ public class MailSentEventHandler {
     private final MailService mailService;
 
     @Async
-    @Retryable(
-            retryFor = CustomMessagingException.class,
-            maxAttempts = 4,
-            backoff = @Backoff(
-                    delay = 1000,
-                    maxDelay = 20000,
-                    multiplier = 2.0,
-                    random = true // jitter
-            )
-    )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋되어야만 메일 전송
     public void handle(MailSentEvent event) {
         mailService.send(event.getMessage());
@@ -139,7 +135,7 @@ public class MemberService {
 
 ## 2. 외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기
 ### 문제 발견
-- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고있는데 확률은 낮겠지만 Gmail에서 장애가 발생하는경우 우리서비스는 메일을 전송해주지못하는 SPOF가 발생할수있다.
+- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고있는데 확률은 낮겠지만 Gmail에서 지연이나 장애가 발생하는경우 우리서비스는 메일을 전송해주지못하는 SPOF가 발생할수있다.
 - 메일전송 실패시 대응할 여러 정책이 있지만, 사용자에게 재전송 요청을 하는것보단 편의성을 고려하여 사용자는 한번만 요청하도록 하고싶었다. 
 
 ### 해결과정
@@ -163,6 +159,33 @@ public class MemberService {
           - Jitter 라는 개념을 추가해 각 retry들은 backOff 대기시간 + 랜덤 대기시간을 부여받아 동시에 retry가 몰리는것을 분산,방지 할수있게 되었음
           
 ### To-BE
+```java
+@RequiredArgsConstructor
+@Service
+public class MailSentEventHandler {
+
+    private final MailService mailService;
+
+    @Async
+    @Retryable(
+            retryFor = CustomMessagingException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 1000,
+                    maxDelay = 20000,
+                    multiplier = 2.0,
+                    random = true // jitter
+            )
+    )
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋되어야만 메일 전송
+    public void handle(MailSentEvent event) {
+        mailService.send(event.getMessage());
+    }
+
+    ...
+}
+```
+
 - retry의 재 전송 대기시간(1-1-1-1 -> 2-3-7-10로 개선)의 간격을두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄수 있게 되었음
 - 외부 gmail 서비스의 큰 장애 발생시에 secondary 메일서버를 두고,  선착순 이벤트 등과같은 이벤트가 예정되어있더라도 추가로 어떻게 대응할지 고려해볼 수 있음
 
