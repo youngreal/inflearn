@@ -7,10 +7,10 @@
 - 2023.08 ~ 2024.01
 
 ## 기술 스택
-- Application : Java 17, Spring boot 3, JPA, Querydsl
+- Application : Java 17, Springboot 3, JPA, Querydsl
 - DB : MySQL, Redis
 - Test : JUnit5, Mockito
-- Infra : AWS, Docker, Grafana, prometheus, github actions
+- Infra : AWS LoadBalancer,AWS AutoScaling, Docker, Grafana, Prometheus, Github Actions
 
 ## Architecture
 ![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
@@ -54,7 +54,7 @@ public class MemberService {
 **결합을 줄이고 응답속도 개선하기**
   - 메일 전송과 회원 저장, 두 작업을 비동기적으로 실행하는 것이 효율적이라고 판단하였고,  메일 전송을 스프링의 @Async를 사용하여 비동기로 처리해야겠다고 판단했습니다.
     
-  - 트랜잭션 분리만 고려했을 때는 @Transactional(propagation = Propagation.REQUIRES_NEW)도 고려하였으나, 강한 결합, 회원가입의 확장성(회원가입 시 추가 이벤트가 생긴다면?) 등을 고려했을 때 Mail이 아닌 다른 모듈에 대한 의존도 생길 여지가 있다고 판단하여 스프링의 이벤트 핸들러인 ApplicationEventListenr를 선택하게 되었습니다.
+  - 트랜잭션 분리만 고려했을 때는 @Transactional(propagation = Propagation.REQUIRES_NEW)도 고려하였으나, 회원저장에 성공해야만 메일전송해야하는 시나리오에 대응이 불가능했으며, 회원가입의 확장성(회원가입 시 추가 이벤트가 생긴다면?) 등을 고려했을 때 Mail이 아닌 다른 모듈에 대한 의존도 생길 여지가 있다고 판단하여 스프링의 이벤트 핸들러인 ApplicationEventListenr를 선택하게 되었습니다.
     
   - 당장 응답속도와 메일과 회원의 강결합문제는 ApplicationEventListener와 @Async를 사용하여 해결할 수 있다고 생각하였으나 추후 문제가 될 수있는 여지들을 아래와 같이 살펴보기로 했습니다.
 
@@ -66,16 +66,10 @@ public class MemberService {
   
   2. scale-out
       - 각자 서버에서 이벤트를 발행하고 처리하고 공유하지 않기 때문에 스프링 서버를 scale-out 하더라도 문제 되지 않는다고 판단했습니다.
-  
-  3. 스프링 리소스 소요
-      - 이벤트 처리 주체가 스프링이기 때문에 스프링의 리소스가 소요됩니다.
-      - 회원가입에 특정 선착순 회원가입 이벤트 기능이 추가된다면 그때 성능 테스트를 해보고 메시징 시스템 등 다른 방법을 도입해 볼 수 있을 것 같은데 그전에 nginx 같은 웹서버의 부하 분산을 우선적으로 고려해 볼 것 같습니다.
-      - 해당 단점은 충분히 안고 갈 수 있는 요소라고 판단했습니다.
 
-**@Async를 선택하고 고려해야 했던점**
-  1. 회원 저장에 실패했는데 메일은 보내지는 경우
+  3. 회원 저장에 실패했는데 메일은 보내지는 경우
+      - 두 작업을 @Async로 처리하면서 위와 같은 경우가 발생할 수 있어서 **@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)** 을 사용하여 회원 저장에 성공하는 경우에만 메일을 보내게끔하는 요구사항을 충족했습니다.
 
-      - 두 작업을 비동기로 처리하면서 위와 같은 경우가 발생할 수 있어서 **@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)** 을 사용하여 회원 저장에 성공하는 경우에만 메일을 보내게끔 해줬습니다.
 ```java
 @RequiredArgsConstructor
 @Service
@@ -92,6 +86,13 @@ public class MailSentEventHandler {
     ...
 }
 ```
+
+**@Async를 선택하고 고려해야 했던점**
+  1. Async 스레드풀 설정(ec2.medium (2 cpu, 4G ram))
+     - 별도 설정하지 않았습니다.  스프링 부트에선 별도의 AsyncConfig을 설정하지 않아도 기본적으로 corePoolSize가 8, queueCapacity가 Integer.MAX_VALUE, maxPoolSize가 Integer.MAX_VALUE인  ThreadPoolTastExecutor가 적용되기 때문입니다.
+       - corePoolSize 튜닝 : I/O 작업인 메일전송위주라서 cpu보다 더 많은 스레드를 이미 할당한 상태입니다.
+       - queueCapacity 튜닝 : 비동기 메일전송은 최대 8개까지만 동시처리가 가능하며, 나머지 모든 요청들은 모두 큐에 담깁니다. 만약 회원가입 이벤트같은 엄청난 요청이 담겨 메모리부족 문제를 야기할 정도가 된다면,  테스트를 통해 메모리 오류가 발생하지 않을 적절한 큐사이즈로 줄여야합니다.
+       - maximumPoolSize 튜닝 : 큐 사이즈를 조절했다면 남은요청은 maximumPoolSize크기만큼 스레드를 계속해서 생성해 나갈것이고, 이렇게되면 메모리 사용률이 급증하는 문제가 생깁니다. 적절한크기로 줄이고, 나머지 요청은 Reject하거나, keepAlive시간을 늘려 대기시간을 상승시키도록 해봐야할것같습니다.
 
   2. 스프링 MVC 예외 핸들러로 메일 전송 시 생길 수 있는 비동기 동작시 예외를 잡을 수 없는 문제
       - AsyncUncaughtExceptionHandler를 정의한 후 예외 핸들링 했습니다.
@@ -154,7 +155,7 @@ public class MailSentEventHandler {
                     random = true // jitter
             )
     )
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋되어야만 메일 전송
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(MailSentEvent event) {
         mailService.send(event.getMessage());
     }
@@ -164,7 +165,6 @@ public class MailSentEventHandler {
 ```
 
 - retry의 재 전송 대기시간(1-1-1-1 -> 2-3-7-10로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
-- 외부 gmail 서비스의 큰 장애 발생 시에 secondary 메일 서버를 두고,  선착순 이벤트 등과 같은 이벤트가 예정되어 있더라도 추가로 어떻게 대응할지 고려해 볼 수 있습니다.
 
 ![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
 2-3-7-10 의 retry 대기시간
@@ -295,24 +295,11 @@ public class MailSentEventHandler {
    
 ### 한계, 고려해야할점
 - 실제 서비스를 하게 된다면 검색 결과들의 분포가 어떤 특성을 가지게 될지 어려웠습니다.  테이블 크기의 30% 이상의 해당하는 결과를 검색하는 일이 더 잦다면, 오히려 like%word% 방식이 좋을 수도 있습니다.
-- 다만, 검색 결과가 0건인 최악의 경우(6초이상)보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는 점에서 좀 더 자연스러운 최선의 방법이라 생각하였습니다.
+- 다만, **검색 결과가 0건인 최악의 경우(6초이상)**보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는 점에서 좀 더 자연스러운 최선의 방법이라 생각하였습니다.
 
 ### TODO
-- 선착순 회원가입 이벤트가 생겨 트래픽이 몰린다면 아래와 같은 점들을 고려해야 합니다.
-  - 스프링 이벤트 핸들러의 리소스 소모량 확인
-      - 이벤트 처리 주체가 스프링이기 때문에 스프링의 리소스가 소요됩니다.
-      - 사용 가능한 비용 내에서 서버 scale-out과 nginx의 부하 분산도 고려해 본 후,  성능 테스트를 진행해 보고 예상 트래픽을 받고도 스프링 서버가 멀쩡할 수 있는지 확인해 봐야 합니다.
-  - 메시징 시스템 고려
-      - 스프링의 이벤트 핸들러는 이벤트를 큐에 저장하고 , 처리하는 과정이 동기로 이뤄지기 때문에 이벤트 등록과 처리를 비동기로 처리할 수 있는 메시징 시스템에 대해 학습해 보고 테스트 후 고려해 볼 수 있을 것 같습니다.
-  - 스레드 풀 튜닝 고려(ec2.medium (2 cpu, 4G ram))
-     - 스프링 부트에선 별도의 AsyncConfig을 설정하지 않아도 기본적으로 corePoolSize가 8, queueCapacity가 Integer.MAX_VALUE, maxPoolSize가 Integer.MAX_VALUE인  ThreadPoolTastExecutor가 적용됩니다.
-       - corePoolSize 튜닝 : I/O 작업인 메일전송위주라서 cpu보다 더 많은 스레드를 이미 할당한 상태입니다.
-       - queueCapacity 튜닝 : 비동기 메일전송은 최대 8개까지만 동시처리가 가능하며, 나머지 모든 요청들은 모두 큐에 담깁니다. 이는 큐에 엄청난 요청이 담겨 메모리부족 문제를 야기할것으로 보이기때문에  테스트를 통해 메모리 오류가 발생하지 않을 적절한 큐사이즈로 줄여야합니다.
-       - maximumPoolSize 튜닝 : 큐 사이즈를 조절했다면 남은요청은 maximumPoolSize크기만큼 스레드를 계속해서 생성해 나갈것이고, 이렇게되면 메모리 사용률이 급증하는 문제가 생깁니다. 적절한크기로 줄이고, 나머지 요청은 Reject하거나, keepAlive시간을 늘려 대기시간을 상승시키도록 해봐야할것같습니다.
-
 - Gmail에 큰 장애가 발생한 경우, 혹은 gmail 서버로 메일을 보낼 수 없게 되는 경우
   - 이 경우엔 메일 전송에 몰리는 트래픽이 어느 정도인지에 따라 해결 방법이 다를 수 있습니다.
-  
     1. 선착순 회원가입 이벤트가 예정되어있는경우
         - 이 경우엔 gmail서버의 장애가 발생했는데도 불구하고 모든 요청이 retry회수를 강제로 채워야만 보조메일서버로 전송되기때문에 retry 트래픽 자체가 문제될수있습니다.     
     2. 외부 메일 서버가 장애 상황이라면, retry 횟수를 채우는 것 자체가 의미 없을 수 있습니다. 불필요한 retry 요청조차 차단해버리도록 할 수 있게끔 구축 해 볼 수도 있습니다. 
