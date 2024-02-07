@@ -10,7 +10,7 @@
 - Application : Java 17, Springboot 3, JPA, Querydsl
 - DB : MySQL, Redis
 - Test : JUnit5, Mockito
-- Infra : AWS LoadBalancer,AWS AutoScaling, Docker, Grafana, Prometheus, Github Actions
+- Infra : AWS LoadBalancer, AWS AutoScaling, Docker, Grafana, Prometheus, Github Actions
 
 ## Architecture
 ![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
@@ -27,7 +27,7 @@
 ### 문제 발견
 
 - 메일 전송에 실패하는 경우 회원가입을 재요청 해야 한다는 문제를 최초로 인식하였고 이는 한 트랜잭션에 묶인 것이 원인이라고 판단하였습니다.
-- 이로 인해 회원가입에 대한 응답을 메일 전송이 끝나야만 받아볼 수 있는 단점도 인식했습니다.(부가적으로 DB 커넥션을 오래 소유하게 되어 커넥션 반납이 늦어질 수 있다는 점도 인식)
+- 이로 인해 회원가입에 대한 응답을 메일 전송이 끝나야만 받아볼 수 있는 단점도 인식했습니다.
 - 회원은 메일에 대해 알 필요가 없으며 회원가입 시 메일 전송 이외의 추가적인 이벤트가 발생한다면 AService, BService 등의 추가적인 의존이 생길 여지가 있는데 이를 MemberService가 의존할 대상은 아니라고 판단했습니다.
 
 ### AS-IS
@@ -56,8 +56,6 @@ public class MemberService {
     
   - 트랜잭션 분리만 고려했을 때는 @Transactional(propagation = Propagation.REQUIRES_NEW)도 고려하였으나, 회원저장에 성공해야만 메일전송해야하는 시나리오에 대응이 불가능했으며, 회원가입의 확장성(회원가입 시 추가 이벤트가 생긴다면?) 등을 고려했을 때 Mail이 아닌 다른 모듈에 대한 의존도 생길 여지가 있다고 판단하여 스프링의 이벤트 핸들러인 ApplicationEventListenr를 선택하게 되었습니다.
     
-  - 당장 응답속도와 메일과 회원의 강결합문제는 ApplicationEventListener와 @Async를 사용하여 해결할 수 있다고 생각하였으나 추후 문제가 될 수있는 여지들을 아래와 같이 살펴보기로 했습니다.
-
 **ApplicationEventListener를 선택하고 고려해야 했던점**
 - 서버 간 이벤트를 공유하는가?   
   1. 이벤트 성질 고려
