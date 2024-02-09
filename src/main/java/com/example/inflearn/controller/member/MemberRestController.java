@@ -32,7 +32,7 @@ public class MemberRestController {
 
     @PostMapping("/members")
     public MemberJoinResponse sendSignUpEmail(@RequestBody @Valid MemberJoinRequest memberJoinRequest) {
-        Member member = memberService.signUp(memberJoinRequest.toEntity(memberJoinRequest));
+        Member member = memberService.signUp(memberJoinRequest.toEntity());
         return MemberJoinResponse.from(member);
     }
 
@@ -56,7 +56,7 @@ public class MemberRestController {
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
-        String sessionToken = memberService.login(memberLoginRequest.toEntity(memberLoginRequest));
+        String sessionToken = memberService.login(memberLoginRequest.toEntity());
         return responseWithCookie(sessionToken);
     }
 

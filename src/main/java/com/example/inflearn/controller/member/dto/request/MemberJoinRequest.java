@@ -16,10 +16,10 @@ public record MemberJoinRequest(
         String password
 ) {
 
-        public Member toEntity(MemberJoinRequest memberJoinRequest) {
+        public Member toEntity() {
                 return Member.builder()
-                        .email(memberJoinRequest.email)
-                        .password(memberJoinRequest.password)
+                        .email(this.email)
+                        .password(this.password)
                         .build();
         }
 

@@ -17,10 +17,10 @@ public record MemberLoginRequest(
 
 ) {
 
-    public Member toEntity(MemberLoginRequest memberLoginRequest) {
+    public Member toEntity() {
         return Member.builder()
-                .email(memberLoginRequest.email)
-                .password(memberLoginRequest.password)
+                .email(this.email)
+                .password(this.password)
                 .build();
     }
 
