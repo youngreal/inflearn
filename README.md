@@ -25,9 +25,8 @@
 ## 1. ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기
 
 ### 문제 발견
-- 메일 전송에 실패하는 경우 회원가입을 재요청 해야 한다는 문제를 최초로 인식하였고 이는 한 트랜잭션에 묶인 것이 원인이라고 판단하였습니다.
-- 이로 인해 회원가입에 대한 응답을 메일 전송이 끝나야만 받아볼 수 있는 단점도 인식했습니다.
-- 회원은 메일에 대해 알 필요가 없으며 회원가입 시 메일 전송 이외의 추가적인 이벤트가 발생한다면 AService, BService 등의 추가적인 의존이 생길 여지가 있는데 이를 MemberService가 의존할 대상은 아니라고 판단했습니다.
+- 회원가입에 대한 응답을 메일 전송이 끝나야만 받을 수 있는 문제가 있습니다. 또한 메일전송에 실패하는경우 회원가입을 재요청해야합니다.
+- 회원가입 시 메일 전송 이외의 추가적인 이벤트가 발생한다면 AService, BService 등의 추가적인 의존이 생길 여지가 있는데 이를 MemberService가 의존할 대상은 아니라고 판단했습니다.
 
 ### AS-IS
 ```java
@@ -54,26 +53,66 @@ public class MemberService {
 - 메일은 최대한 가입 후 빨리 받아봐야한다
 
 ### 해결 과정
-**회원과 메일의 결합을 줄이기위한 사고과정**
-  - 가장 먼저 이벤트의 성질을 고려했고, 회원가입 메일전송은 후속행위가 있는 성질이 아니기때문에(예를 들어 주문 이벤트 발생 -> 이벤트 확인후 결제 진행 등의 후속행위가 없으며, 이벤트를 공유하지 않음) 서버간 이벤트를 공유할일이 없으므로 메시징 시스템같은 아키텍처를 추가하는것 보단 비용이 적은 DB나 스프링 이벤트 핸들러, AOP를 고려하게 되었습니다.
-  - DB에 이벤트 발생을 알리고 주기적인 스케줄링 서비스로 메일을 전송하는 방법은 사용자가 메일을 늦게 받아보는 경우가 생길 수 있으며, 인프런의 경우 메일인증을 하지 않으면 정상적인 서비스를 사용할 수 없었기에 적합하지 못하다고 판단했습니다. 
-  - 회원 저장에 성공하는 경우에만 메일 전송 + 회원과 메일의 결합을 줄여보는 방법을 고려할때는 AOP와 ThreadLocal을 사용하는 방식과 스프링의 이벤트 리스너를 고려했습니다.  두 방식 모두 회원과 메일의 결합을 제거하고 빠르게 메일전송을 받아볼 수 있었습니다.
-  todo AOP로 어떻게 구현했는지
-  - 두 방법은 모두 코드에 침투하지 않는 특성을 가져 디버깅하기 어렵고 복잡해진다는 단점은 있었지만, AOP방식은 회원을 Aspect로 전달하기위해 ThreadLocal을 직접 사용해야했습니다. 개발자가 직접 사용이 끝난 정보를 제거해야하는 리스크를 감수해야한다는점이 찝찝했고 휴먼오류 발생지점을 만들 필요는 없다고 판단해 최종적으로 Spring이벤트를 선택했습니다.
-    
+**우선 순위**가 더 높은문제를 먼저 해결했습니다. 결합을 줄이는 문제도 중요하지만, API응답이 늦어지는 문제가 더 중요하다고 생각했습니다.
+
 **회원가입 API응답 자체가 늦어지는 문제**    
-- 
+- 메일전송 자체가 늦어서 응답이 늦는거라면 즉시 메일을 보내지않고 요청이 들어왔다는 의미를 DB에 저장해두고 스케줄링 서비스로 차례로 메일을 보내주는 방법도 있으나, 인프런 서비스 상 회원가입후 메일인증을 하지않으면 서비스 이용에 제한이 있기때문에 이 방법은 회원가입후 최대한 빨리 메일을 받아야하는 요구사항을 충족시키지 못했습니다.
+- 메일 전송을 비동기로 보내는 방법을 고려했습니다. 이중 스레드 풀, 작업을 등록하는 코드를 서비스코드에 침투시키지 않고 편하게 관리해 준다는점에서 @Async를 선택했습니다.  
+
+**회원과 메일의 결합을 줄이기위한 사고과정**
+  - 메일전송 이벤트를 생각해 봤을때, 서버간 이벤트를 공유할일이 없으므로 메시징 시스템같은 아키텍처를 추가하는것 보단 비용이 적은 스프링 이벤트 핸들러, AOP를 고려하게 되었습니다.
+    - ex) 주문 이벤트 발생시 결제를 해야하는 상황에 서버1이 주문 이벤트를 발행하면 서버2가 이벤트를 확인하고 결제를 진행하는 등의 시나리오가 아닌, 각 서버가 메일전송 이벤트를 발행하고 해당서버에서 메일을 전송합니다. 
+```java
+// AOP 방식 + ThreadLocal
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class MemberService {
+
+    ...
+    ...
+
+	@Transactional
+	@AfterCommit(task = "sendMailWithAsync") // 해당 메서드 종료후 Aspect 실행
+	public void signUp(Member member) {
+        ...
+		...
+		memberRepository.save(member); //회원 저장
+		MemberThreadLocal.set(member);
+	}
+
+@Component
+@Aspect
+public class MailSendingAspect {
+
+	private final MailService gmailService;
+
+	public MailSendingAspect(@Qualifier("gmailService")MailService gmailService) {
+		this.gmailService = gmailServiceAOP;
+	}
+
+	@AfterReturning(pointcut = "@annotation(org.springframework.transaction.annotation.Transactional)")
+	public void sendMail(JoinPoint joinPoint) {
+		if (joinPoint.getSignature().getName().equals("signUp")) {
+			try {
+				Member member = MemberThreadLocal.get();
+				gmailService.send(new MailSentEvent(member).getMessage());
+			} finally {
+				MemberThreadLocal.clear();
+			}
+		}
+	}
+}
+```
+  - AOP방식은 회원을 Aspect로 전달하기위해 ThreadLocal을 직접 사용해야했습니다. 개발자가 직접 사용이 끝난 정보를 제거해야하는 리스크를 감수해야한다는점이 찝찝했고 휴먼오류 발생지점을 만들 필요는 없다고 판단했고, 또한 트랜잭션이 커밋시에는 정상동작하지만 롤백되는경우에도 ThreadLocal에 데이터가 저장되는 문제가 있었습니다. 최종적으로 Spring이벤트를 선택했습니다.
+    
 
 **ApplicationEventListener를 선택하고 고려해야 했던점**
-- 서버 간 이벤트를 공유하는가?   
-  1. 이벤트 성질 고려
-      - 메일 전송이라는 이벤트의 성질을 고려해 보면, 이벤트를 발행하고 서버 간 이벤트를 공유하지 않고 독립적으로 처리되는 성질로 인식하였습니다.
-      - 메시징 시스템을 학습하여 도입하지 않고 ApplicationEventListener를 사용해도 크게 문제가 되지 않을 거라고 판단하였습니다.
   
-  2. scale-out
-      - 각자 서버에서 이벤트를 발행하고 처리하고 공유하지 않기 때문에 스프링 서버를 scale-out 하더라도 문제 되지 않는다고 판단했습니다.
+  1. scale-out
+      - 각자 서버에서 이벤트를 발행하고 처리하고 서버간 공유하지 않기 때문에 스프링 서버를 scale-out 하더라도 문제 되지 않는다고 판단했습니다. 
 
-  3. 회원 저장에 실패했는데 메일은 보내지는 경우
+  2. 회원 저장에 실패했는데 메일은 보내지는 경우
       - 두 작업을 @Async로 처리하면서 위와 같은 경우가 발생할 수 있어서 **@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)** 을 사용하여 회원 저장에 성공하는 경우에만 메일을 보내게끔하는 요구사항을 충족했습니다.
 
 ```java
@@ -127,15 +166,17 @@ public class MemberService {
 
 ## 2. 외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기
 ### 문제 발견
-- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고 있는데 확률은 낮겠지만 Gmail에서 지연이나 장애가 발생하는 경우 우리 서비스는 메일을 전송해 주지 못하는 SPOF가 발생할 수 있습니다.
+- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고 있는데 확률은 낮겠지만 Gmail에서 지연이나 장애가 발생하는 경우 우리 서비스는 메일을 전송해 주지 못하는 문제가 발생할 수 있습니다.
 - 메일 전송 실패 시 대응할 여러 정책이 있지만, 사용자에게 재전송 요청을 하는 것보단 편의성을 고려하여 사용자는 한 번만 요청하도록 하고 싶었습니다.
 
+### 요구사항
+- 사용자의 회원가입 요청 단한번만으로 Gmail에 문제가 생기더라도 정상응답을 받아야한다. 
+
 ### 해결과정
-            
-  1. **네트워크 일시적 장애(ex. read timeout)인 경우**
-     - 외부 서비스의 일시적 장애 때문에 유저가 직접 재요청을 보내는 것보다는, 실패한 메일 전송 이벤트를 retry 해주는 게 좋다고 판단하였습니다.
+- 메일 전송은 SMTP 프로토콜로 구현되어있었고, retry나 보조 메일서버를 추가로 두는 방법을 고려했습니다. SMTP 프로토콜의 일일 메일 전송량이 500개로 한정되어있기때문에(개인 계정 기준) 메일서버에 문제 생길시 바로 보조메일 서버로 요청을 보내는 방법보다는, 일시적인 지연같이 retry로 해결이 가능한경우에는 실패한 메일 전송 이벤트를 retry 해주는 게 좋다고 판단하였습니다.
     
-  2. **retry를 도입하고 고려했던점**
+**retry를 도입하고 고려했던점**
+  - 우리 서버에서 try-catch로 직접 Retry 해줄 수도있지만, 이는 Retry의 재전송 텀과 횟수를 지정할 수 없는 문제가 있었습니다. 
   - 만약 요청 지연인 상황이라면, retry 자체가 네트워크에 부담을 더할 수 있기 때문에 retry 전략을 효율적으로 가져가야 된다고 판단했습니다.
        1. retry의 회수와 간격
           - Exponential Backoff라는 지수에 비례해 retry의 재전송 대기시간을 늘리는 방법(100ms, 200ms, 400ms ...)으로 개선할 수 있었습니다.
@@ -143,12 +184,15 @@ public class MemberService {
           - Jitter라는 개념을 추가해 각 retry들은 backOff 대기시간 + 랜덤 대기시간을 부여받아 동시에 retry가 몰리는 것을 분산, 방지 할수있게 되었습니다.
           
 ### To-BE
+- retry의 재 전송 대기시간(1-1-1-1 -> 1-3-5-14로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
+- retry를 모두 소진하고도 실패한 메일전송은 보조 메일전송서버로 전송되어 사용자는 한번의 요청으로 최대한 손실되지않고 메일을 받을 수 있게 되었습니다.
 ```java
 @RequiredArgsConstructor
 @Service
 public class MailSentEventHandler {
 
-    private final MailService mailService;
+    private final GMailService gmailService;
+    private final NaverMailService naverMailService;
 
     @Async
     @Retryable(
@@ -163,20 +207,24 @@ public class MailSentEventHandler {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(MailSentEvent event) {
-        mailService.send(event.getMessage());
+        gmailService.send(event.getMessage());
+    }
+
+    @Recover
+    public void recoverMailSend(MailSentEvent event) {
+        log.warn("recover start : retry 소진후 메일 전송실패");
+        naverMailService.send(event.getMessage());
     }
 
     ...
 }
 ```
 
-- retry의 재 전송 대기시간(1-1-1-1 -> 2-3-7-10로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
-
 ![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
-2-3-7-10 의 retry 대기시간
+1-3-5-14 의 retry 대기시간
 
 ![image](https://github.com/youngreal/inflearn/assets/59333182/4a85833e-14ab-497b-af9b-ccfabedd6950)
-1-3-5-14 의 retry 대기시간
+2-2-8-14 의 retry 대기시간
 
 
 ## 3. redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기
