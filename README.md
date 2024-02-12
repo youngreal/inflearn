@@ -186,6 +186,11 @@ public class MemberService {
           
 ### To-BE
 - retry의 재 전송 대기시간(1-1-1-1 -> 1-3-5-14로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
+![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
+1-3-5-14 의 retry 대기시간   
+![image](https://github.com/youngreal/inflearn/assets/59333182/4a85833e-14ab-497b-af9b-ccfabedd6950)
+2-2-8-14 의 retry 대기시간
+
 - retry를 모두 소진하고도 실패한 메일전송은 보조 메일전송서버로 전송되어 사용자는 한번의 요청으로 최대한 손실되지않고 메일을 받을 수 있게 되었습니다.
 ```java
 @RequiredArgsConstructor
@@ -221,30 +226,67 @@ public class MailSentEventHandler {
 }
 ```
 
-![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
-1-3-5-14 의 retry 대기시간
-
-![image](https://github.com/youngreal/inflearn/assets/59333182/4a85833e-14ab-497b-af9b-ccfabedd6950)
-2-2-8-14 의 retry 대기시간
-
-
 ## 3. redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기
+
+**당시 상황**
+
+![image](https://github.com/youngreal/inflearn/assets/59333182/513b5263-5b07-4373-941e-a074cf28edea)   
+- post 테이블과 likes 테이블은 1:M관계로 분리된 상태입니다.
+
+```java
+    @Scheduled(fixedDelay = 5 * MINUTE)
+    public void updatePopularPosts() {
+            postQueryService.updatePopularPosts();
+    }
+```
+```sql
+select
+...
+(select count(likes.id) from likes l where p.id=l.post_id),
+...
+from post p
+where .. 
+```
+- 5분에 한번씩 게시글의 좋아요 개수순으로 정렬해 likes 스케줄링 서비스로 5분에 한 번씩 DB에서 여러 서버가 가져오는 상황에서 likes 테이블과 post테이블을 조인한 로우의 개수를 계산하는 상황입니다.
+
 ### 문제 발견
-- likes 테이블과 post 테이블은 분리되어 있고, likes 테이블의 개수 (게시글의 좋아요 개수)순으로 정렬해 스케줄링 서비스로 5분에 한 번씩 DB에서 여러 서버가 가져오는 상황입니다.
 ![image](https://github.com/youngreal/inflearn/assets/59333182/7829334f-856c-415e-a436-e0472b603670)
 
-- 서버 간 select이 발생하는 사이 중간에 likes 테이블에 insert가 발생하면 서버 간 서로 다른 인기글 리스트를 갱신하는 문제를 발견했습니다.
+- 서버 간 select이 발생하는 사이 중간에 likes 테이블에 insert가 발생하면 **서버 간 서로 다른 인기글 리스트를 select**하는 문제를 발견했습니다.
 
 ### 해결과정
 
 1. **꼭 서버 간 인기글 리스트가 같게 맞춰줘야 하는가?**
-
 - 현재 게시글 조회 API는 GET /posts/{postId} 로, postId만 받아서 게시글을 조회합니다.
-- 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고, 캐시 미스가 나면 db에 update가 발생합니다.
+- 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고 캐시에서 업데이트하며, 캐시 미스가 나면 db에 update가 발생합니다.
+```java
+    @Transactional
+    public PostDto postDetail(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        addViewCount(post);
+
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+	...
+    }
+
+    private void addViewCount(Post post) {
+        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            log.info("v1 direct");
+            post.plusViewCount();
+        } else {
+            log.info("v1");
+            likeCountRedisRepository.addViewCount(post.getId());
+        }
+    }
+```
    
 만약 서버 간 인기글 리스트가 아래와 같이 다르다고 가정해 보겠습니다.
-서버 1: 1,2,3,4,5 (postId)
-서버 2: 2,3,4,5,6 (postId) 
+서버 1의 인기글 리스트: 1,2,3,4,5 (postId)
+서버 2의 인기글 리스트: 2,3,4,5,6 (postId) 
 
 이때, postId가 1인 게시글에 조회가 엄청 발생해 서버 2로 몰리게 된다면, 의도와 다르게 캐시 미스가 발생해 성능이 저하됩니다.
 이 문제 때문에, 서버 간 인기글 리스트를 맞춰주는 게 적절하다고 결론지었습니다.
