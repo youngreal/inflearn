@@ -1,6 +1,7 @@
 ## 소개
-- 인프런의 질문/스터디 게시판을 기능을 구현하고 서버 scale-out 을 고려했을 때도 최대한 문제가 없을 수 있는 방법으로 구현해 보는 **개인 프로젝트** 입니다.
-
+- 인프런 교육 플랫폼의 질문/스터디 모집 서비스를 모토로 한 개인프로젝트 입니다.
+- 현재 단일 인스턴스로 배포되어있지만 scale-out 가능성을 염두하고 단일 인스턴스에서만 해결되는 문제해결 방법은 지양하는 챌린지를 했습니다.
+- 문제 해결에 추가적인 비용(아키텍처 추가, 학습비용 등)이 드는 방법들은 최후의 방법으로 두는 방식으로 진행했습니다.
 - 트래픽 관련 정보는 [국내 커뮤니티 트래픽 정보](https://todaybeststory.com/ranking_monthly.html) 를 참고해 대략적으로 계산하였습니다.
 
 ## 개발 기간
@@ -17,7 +18,7 @@
 
 ## 문제 해결
 - [ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기](#1-applicationeventlistener와-async로-회원가입-시-회원-저장과-이메일-전송의-강결합--레이턴시-증가-문제-개선하기)
-- [외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기](#2-외부-서비스gmail의-네트워크-지연에-대비해-적절한-retry-전략-도입하기)
+- [외부 서비스(Gmail)의 지연과 장애를 대비한 retry전략과 recover작성](#2-외부-서비스gmail의-지연과-장애를-대비한-retry전략과-recover작성)
 - [redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기](#3-redis-분산락으로-서버-간-동일한-인기글-리스트-갱신을-보장하기)
 - [인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기](#4-인기글-조회에-트래픽이-몰려-대량의-update-쿼리가-발생하는-상황-해결하기)
 - [LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기](#5-like-word로-게시글-검색-시-full-table-scan이-발생해-레이턴시가-증가하는-문제를-fulltext-search로-개선하기)
@@ -25,10 +26,8 @@
 ## 1. ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기
 
 ### 문제 발견
-
-- 메일 전송에 실패하는 경우 회원가입을 재요청 해야 한다는 문제를 최초로 인식하였고 이는 한 트랜잭션에 묶인 것이 원인이라고 판단하였습니다.
-- 이로 인해 회원가입에 대한 응답을 메일 전송이 끝나야만 받아볼 수 있는 단점도 인식했습니다.
-- 회원은 메일에 대해 알 필요가 없으며 회원가입 시 메일 전송 이외의 추가적인 이벤트가 발생한다면 AService, BService 등의 추가적인 의존이 생길 여지가 있는데 이를 MemberService가 의존할 대상은 아니라고 판단했습니다.
+- 회원가입에 대한 응답을 메일 전송이 끝나야만 받을 수 있는 문제가 있습니다. 또한 메일전송에 실패하는경우 회원가입을 재요청해야합니다.
+- 회원가입 시 메일 전송 이외의 추가적인 이벤트가 발생한다면 AService, BService 등의 추가적인 의존이 생길 여지가 있는데 이를 MemberService가 의존할 대상은 아니라고 판단했습니다.
 
 ### AS-IS
 ```java
@@ -50,22 +49,71 @@ public class MemberService {
 }
 ```
 
-### 해결 과정
-**결합을 줄이고 응답속도 개선하기**
-  - 메일 전송과 회원 저장, 두 작업을 비동기적으로 실행하는 것이 효율적이라고 판단하였고,  메일 전송을 스프링의 @Async를 사용하여 비동기로 처리해야겠다고 판단했습니다.
-    
-  - 트랜잭션 분리만 고려했을 때는 @Transactional(propagation = Propagation.REQUIRES_NEW)도 고려하였으나, 회원저장에 성공해야만 메일전송해야하는 시나리오에 대응이 불가능했으며, 회원가입의 확장성(회원가입 시 추가 이벤트가 생긴다면?) 등을 고려했을 때 Mail이 아닌 다른 모듈에 대한 의존도 생길 여지가 있다고 판단하여 스프링의 이벤트 핸들러인 ApplicationEventListenr를 선택하게 되었습니다.
-    
-**ApplicationEventListener를 선택하고 고려해야 했던점**
-- 서버 간 이벤트를 공유하는가?   
-  1. 이벤트 성질 고려
-      - 메일 전송이라는 이벤트의 성질을 고려해 보면, 이벤트를 발행하고 서버 간 이벤트를 공유하지 않고 독립적으로 처리되는 성질로 인식하였습니다.
-      - 메시징 시스템을 학습하여 도입하지 않고 ApplicationEventListener를 사용해도 크게 문제가 되지 않을 거라고 판단하였습니다.
-  
-  2. scale-out
-      - 각자 서버에서 이벤트를 발행하고 처리하고 공유하지 않기 때문에 스프링 서버를 scale-out 하더라도 문제 되지 않는다고 판단했습니다.
+### 요구사항
+- 회원 저장에 성공하는 경우에만 메일 전송해야한다
+- 메일은 최대한 가입 후 빨리 받아봐야한다
 
-  3. 회원 저장에 실패했는데 메일은 보내지는 경우
+### 해결 과정
+**우선 순위**가 더 높은문제를 먼저 해결했습니다. 결합을 줄이는 문제도 중요하지만, API응답이 늦어지는 문제가 더 중요하다고 생각했습니다.
+
+**회원가입 API응답 자체가 늦어지는 문제**    
+- 메일전송 자체가 늦어서 응답이 늦는거라면 즉시 메일을 보내지않고 요청이 들어왔다는 의미를 DB에 저장해두고 스케줄링 서비스로 차례로 메일을 보내주는 방법도 있으나, 인프런 서비스 상 회원가입후 메일인증을 하지않으면 서비스 이용에 제한이 있기때문에 이 방법은 회원가입후 최대한 빨리 메일을 받아야하는 요구사항을 충족시키지 못했습니다.
+- 메일 전송을 비동기로 보내는 방법을 고려했습니다. 이중 스레드 풀, 작업을 등록하는 코드를 서비스코드에 침투시키지 않고 편하게 관리해 준다는점에서 @Async를 선택했습니다.  
+
+**회원과 메일의 결합을 줄이기위한 사고과정**
+  - 메일전송 이벤트를 생각해 봤을때, 서버간 이벤트를 공유할일이 없으므로 메시징 시스템같은 아키텍처를 추가하는것 보단 비용이 적은 스프링 이벤트 핸들러, AOP를 고려하게 되었습니다.
+    - ex) 주문 이벤트 발생시 결제를 해야하는 상황에 서버1이 주문 이벤트를 발행하면 서버2가 이벤트를 확인하고 결제를 진행하는 등의 시나리오가 아닌, 각 서버가 메일전송 이벤트를 발행하고 해당서버에서 메일을 전송합니다. 
+```java
+// AOP 방식 + ThreadLocal
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class MemberService {
+
+    ...
+    ...
+
+	@Transactional
+	@AfterCommit(task = "sendMailWithAsync") // 해당 메서드 종료후 Aspect 실행
+	public void signUp(Member member) {
+        ...
+		...
+		memberRepository.save(member); //회원 저장
+		MemberThreadLocal.set(member);
+	}
+
+@Component
+@Aspect
+public class MailSendingAspect {
+
+	private final MailService gmailService;
+
+	public MailSendingAspect(@Qualifier("gmailService")MailService gmailService) {
+		this.gmailService = gmailServiceAOP;
+	}
+
+	@AfterReturning(pointcut = "@annotation(org.springframework.transaction.annotation.Transactional)")
+	public void sendMail(JoinPoint joinPoint) {
+		if (joinPoint.getSignature().getName().equals("signUp")) {
+			try {
+				Member member = MemberThreadLocal.get();
+				gmailService.send(new MailSentEvent(member).getMessage());
+			} finally {
+				MemberThreadLocal.clear();
+			}
+		}
+	}
+}
+```
+  - AOP방식은 회원을 Aspect로 전달하기위해 ThreadLocal을 직접 사용해야했습니다. 개발자가 직접 사용이 끝난 정보를 제거해야하는 리스크를 감수해야한다는점이 찝찝했고 휴먼오류 발생지점을 만들 필요는 없다고 판단했고, 또한 트랜잭션이 커밋시에는 정상동작하지만 롤백되는경우에도 ThreadLocal에 데이터가 저장되는 문제가 있었습니다. 최종적으로 Spring이벤트를 선택했습니다.
+    
+
+**ApplicationEventListener를 선택하고 고려해야 했던점**
+  
+  1. scale-out
+      - 각자 서버에서 이벤트를 발행하고 처리하고 서버간 공유하지 않기 때문에 스프링 서버를 scale-out 하더라도 문제 되지 않는다고 판단했습니다. 
+
+  2. 회원 저장에 실패했는데 메일은 보내지는 경우
       - 두 작업을 @Async로 처리하면서 위와 같은 경우가 발생할 수 있어서 **@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)** 을 사용하여 회원 저장에 성공하는 경우에만 메일을 보내게끔하는 요구사항을 충족했습니다.
 
 ```java
@@ -115,19 +163,25 @@ public class MemberService {
         return memberRepository.save(member);
     }
 }
-```
+``` 
 
-## 2. 외부 서비스(Gmail)의 네트워크 지연에 대비해 적절한 retry 전략 도입하기
+### 잠재적 문제 & 한계
+- 회원가입 이벤트라도 생긴다면 Async스레드풀의 큐사이즈와 메모리 사용량을 조절해가며 반드시 조율해야합니다. 
+ 
+
+## 2. 외부 서비스(Gmail)의 지연과 장애를 대비한 retry전략과 recover작성
 ### 문제 발견
-- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고 있는데 확률은 낮겠지만 Gmail에서 지연이나 장애가 발생하는 경우 우리 서비스는 메일을 전송해 주지 못하는 SPOF가 발생할 수 있습니다.
+- 현재 Gmail SMTP 서버를 사용해 메일을 전송하고 있는데 확률은 낮겠지만 Gmail에서 지연이나 장애가 발생하는 경우 우리 서비스는 메일을 전송해 주지 못하는 문제가 발생할 수 있습니다.
 - 메일 전송 실패 시 대응할 여러 정책이 있지만, 사용자에게 재전송 요청을 하는 것보단 편의성을 고려하여 사용자는 한 번만 요청하도록 하고 싶었습니다.
 
+### 요구사항
+- 사용자의 회원가입 요청 단한번만으로 메일서버에 문제가 생기더라도 정상응답을 받아야한다. 정말 특별한 경우가 아니라면 회원가입 재전송요청을 하는일이 없도록하자. 
+
 ### 해결과정
-            
-  1. **네트워크 일시적 장애(ex. read timeout)인 경우**
-     - 외부 서비스의 일시적 장애 때문에 유저가 직접 재요청을 보내는 것보다는, 실패한 메일 전송 이벤트를 retry 해주는 게 좋다고 판단하였습니다.
+- 메일 전송은 SMTP 프로토콜로 구현되어있었고, retry나 보조 메일서버를 추가로 두는 방법을 고려했습니다. SMTP 프로토콜의 일일 메일 전송량이 500개로 한정되어있기때문에(개인 계정 기준) 메일서버에 문제 생길시 바로 보조메일 서버로 요청을 보내는 방법보다는, 일시적인 지연같이 retry로 해결이 가능한경우에는 실패한 메일 전송 이벤트를 retry 해주는 게 좋다고 판단하였습니다.
     
-  2. **retry를 도입하고 고려했던점**
+**retry를 도입하고 고려했던점**
+  - 우리 서버에서 try-catch로 직접 Retry 해줄 수도있지만, 이는 Retry의 재전송 텀과 횟수를 지정할 수 없는 문제가 있었습니다. 
   - 만약 요청 지연인 상황이라면, retry 자체가 네트워크에 부담을 더할 수 있기 때문에 retry 전략을 효율적으로 가져가야 된다고 판단했습니다.
        1. retry의 회수와 간격
           - Exponential Backoff라는 지수에 비례해 retry의 재전송 대기시간을 늘리는 방법(100ms, 200ms, 400ms ...)으로 개선할 수 있었습니다.
@@ -135,12 +189,20 @@ public class MemberService {
           - Jitter라는 개념을 추가해 각 retry들은 backOff 대기시간 + 랜덤 대기시간을 부여받아 동시에 retry가 몰리는 것을 분산, 방지 할수있게 되었습니다.
           
 ### To-BE
+- retry의 재 전송 대기시간(1-1-1-1 -> 1-3-5-14로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
+![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
+1-3-5-14 의 retry 대기시간   
+![image](https://github.com/youngreal/inflearn/assets/59333182/4a85833e-14ab-497b-af9b-ccfabedd6950)
+2-2-8-14 의 retry 대기시간
+
+- retry를 모두 소진하고도 실패한 메일전송은 보조 메일전송서버로 전송되어 사용자는 한번의 요청으로 최대한 손실되지않고 메일을 받을 수 있게 되었습니다.
 ```java
 @RequiredArgsConstructor
 @Service
 public class MailSentEventHandler {
 
-    private final MailService mailService;
+    private final GMailService gmailService;
+    private final NaverMailService naverMailService;
 
     @Async
     @Retryable(
@@ -155,39 +217,85 @@ public class MailSentEventHandler {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(MailSentEvent event) {
-        mailService.send(event.getMessage());
+        gmailService.send(event.getMessage());
+    }
+
+    @Recover
+    public void recoverMailSend(MailSentEvent event) {
+        log.warn("recover start : retry 소진후 메일 전송실패");
+        naverMailService.send(event.getMessage());
     }
 
     ...
 }
 ```
 
-- retry의 재 전송 대기시간(1-1-1-1 -> 2-3-7-10로 개선)의 간격을 두고 각 간격들도 골고루 분산시켜서 일시적인 네트워크 부담을 줄여줄 수 있게 되었습니다.
-
-![image](https://github.com/youngreal/inflearn/assets/59333182/b701c7d2-f7fd-42aa-82bc-c9f0d390f7e8)
-2-3-7-10 의 retry 대기시간
-
-![image](https://github.com/youngreal/inflearn/assets/59333182/4a85833e-14ab-497b-af9b-ccfabedd6950)
-1-3-5-14 의 retry 대기시간
-
+### 잠재적 문제 & 한계
+- 큰 장애가 나서 당분간 복구가 안되는 상황이라면, retry자체가 낭비가 될수있으며 쓸데없는 응답시간이 길어지는 상황이 발생할수있습니다. 이 경우를 고려해야한다면 서킷브레이커나 fallbacak이라는 키워드를 학습해서 해결해 볼수 있습니다.
+- Jitter라는 retry의 랜덤 재전송값을 부여하여 순서가 보장되질 않습니다. 예를들어 요청1,2가 각각 4시 30분 20, 25초에 메일전송 요청이 들어오고, 요청에 실패해 4시 30분 40초, 4시 30분 37초에 retry될수 있습니다. 
 
 ## 3. redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기
+
+**당시 상황**
+
+![image](https://github.com/youngreal/inflearn/assets/59333182/513b5263-5b07-4373-941e-a074cf28edea)   
+- post 테이블과 likes 테이블은 1:M관계로 분리된 상태입니다.
+
+```java
+    @Scheduled(fixedDelay = 5 * MINUTE)
+    public void updatePopularPosts() {
+            postQueryService.updatePopularPosts();
+    }
+```
+```sql
+select
+...
+(select count(likes.id) from likes l where p.id=l.post_id),
+...
+from post p
+where .. 
+```
+- 5분에 한번씩 게시글의 좋아요 개수순으로 정렬해 likes 스케줄링 서비스로 5분에 한 번씩 DB에서 여러 서버가 가져오는 상황에서 likes 테이블과 post테이블을 조인한 로우의 개수를 계산하는 상황입니다.
+
 ### 문제 발견
-- likes 테이블과 post 테이블은 분리되어 있고, likes 테이블의 개수 (게시글의 좋아요 개수)순으로 정렬해 스케줄링 서비스로 5분에 한 번씩 DB에서 여러 서버가 가져오는 상황입니다.
 ![image](https://github.com/youngreal/inflearn/assets/59333182/7829334f-856c-415e-a436-e0472b603670)
 
-- 서버 간 select이 발생하는 사이 중간에 likes 테이블에 insert가 발생하면 서버 간 서로 다른 인기글 리스트를 갱신하는 문제를 발견했습니다.
+- 서버 간 select이 발생하는 사이 중간에 likes 테이블에 insert가 발생하면 **서버 간 서로 다른 인기글 리스트를 select**하는 문제를 발견했습니다.
 
 ### 해결과정
 
 1. **꼭 서버 간 인기글 리스트가 같게 맞춰줘야 하는가?**
+![image](https://github.com/youngreal/inflearn/assets/59333182/c92e240a-304d-493b-b5ec-9634411d07b3)
+
 
 - 현재 게시글 조회 API는 GET /posts/{postId} 로, postId만 받아서 게시글을 조회합니다.
-- 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고, 캐시 미스가 나면 db에 update가 발생합니다.
+- 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고 캐시에서 업데이트하며, 캐시 미스가 나면 db에 update가 발생합니다.
+```java
+    @Transactional
+    public PostDto postDetail(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        addViewCount(post);
+
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+	...
+    }
+
+    private void addViewCount(Post post) {
+        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+            post.plusViewCount();
+        } else {
+            likeCountRedisRepository.addViewCount(post.getId());
+        }
+    }
+```
    
 만약 서버 간 인기글 리스트가 아래와 같이 다르다고 가정해 보겠습니다.
-서버 1: 1,2,3,4,5 (postId)
-서버 2: 2,3,4,5,6 (postId) 
+서버 1의 인기글 리스트: 1,2,3,4,5 (postId)
+서버 2의 인기글 리스트: 2,3,4,5,6 (postId) 
 
 이때, postId가 1인 게시글에 조회가 엄청 발생해 서버 2로 몰리게 된다면, 의도와 다르게 캐시 미스가 발생해 성능이 저하됩니다.
 이 문제 때문에, 서버 간 인기글 리스트를 맞춰주는 게 적절하다고 결론지었습니다.
@@ -196,13 +304,15 @@ public class MailSentEventHandler {
 - select for update나 mysql의 네임드락으로 시도해 봤을 때, 결국 서버 1 select -> 좋아요 insert 발생 -> 서버 2 select 순서로 요청이 들어오면 이 문제를 해결해 주지 못한다고 판단하였습니다.
 
 3. **redis 도입**
-- redis를 도입해 각 서버에서 여러 번 select 해서 데이터를 일치시키려는 것보다는, 분산락으로 락이 걸려있다면 재시도 하지 않고 1번만 select 하는 게 쉽게 해결하는 방법이라고 판단하였습니다.
-
-- 락을 걸고 해제할 때마다 네트워크 통신 비용이 들지만 5분에 한 번씩만 실행되는 성질이므로 크게 문제 되지 않을 것 같다고 판단했습니다.
-
-- DB가 락을 보장하는 등의 성질이 아닌 개발자가 직접 구현해야 하므로 휴먼에러 발생 지점을 신경 써봐야 합니다.
-
+- redis를 도입해 각 서버에서 여러 번 select 해서 데이터를 일치시키려는 것보다는, 락을걸고 1번만 select 하는 게 쉽게 해결하는 방법이라고 판단하였습니다. 또한 현재 조회수 갱신을 위해 외부 라이브러리인 hyperloglog를 쓰고있었는데 redis에서 자체지원 한다는점도 메리트로 고려했습니다. 
 - 락을 redis로 관리하게 되면서 레디스에 문제가 생긴다면 데이터 손실 등의 위험이 있지만, 인기글의 조회 수의 손실은 크리티컬 하지않기 때문에 천천히 개선해 보고자 했습니다.
+
+### 잠재적 문제 & 한계
+- 락을 얻은 하나의 서버가 만약 인기글 조회를 select하면서 문제가 생기면 다른 서버는 그걸 알방법이 없으며 결국 어떤 서버에서도 인기글을 select하지 못하는 문제가 발생합니다. 다만, 주기적으로 인기글 리스트를 갱신하는 서비스가 크게 중요하지 않다고 판단하여 문제를 잠재적으로만 인식하고있습니다.  
+### 24.02.15 추가
+스케줄러를 Quartz로 변경하고 redis를 철회하는방법 고려
+- 여러 서버에서 스케줄러 코드를 여러번 실행하지말고, 한번의 스케줄링 코드만 실행해 결과를 DB에 넣고 각 서버에서 이 결과를 select 하는방법도 고려했습니다. 현재는 redis에서 hyperloglog를 지원하고있어서 사용중인데, 만약 redis가 없다면 외부 라이브러리를 사용해야합니다. Quartz로 해결이 되는 문제라면 아예 Redis를 도입하지 않아도 되기때문에 해당방법을 시도중입니다. 
+
 
 ## 4. 인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기
 ### AS-IS 
@@ -248,11 +358,7 @@ public class MailSentEventHandler {
 - 해당 트랜잭션에서 발생하는 쿼리의 실행계획에서는 크게 문제가 없었고, 결국 언젠가 기능이 추가된다면 또다시 직면할 문제라고 판단하였습니다.
  
 2. update 쿼리 발생 자체를 줄여보는 게 좋을 것 같다.
-- redis를 이미 사용 중이기 때문에 어떤 자료구조를 사용할지 결정해야 합니다.
-
-- 조회 수 정합성 맞출 필요도 없기 때문에 정확도를 잃지만 빠른 속도(레디스내 연산속도가 O(1)로 고정)와 적은 메모리를 사용하는 hyperloglog의 존재를 알게 되었고 사용해 볼 수 있겠다고 생각했습니다.
-    - 캐시 메모리의 용량을 엄청 적게 사용한다는 점도 메리트로 다가왔습니다.
-
+- 조회 수 정합성 맞출 필요도 없기 때문에 정확도를 잃지만 빠른 속도와 적은 메모리(최대 12KB)를 사용하는 hyperloglog의 존재를 알게 되었고 사용해 볼 수 있겠다고 생각했습니다.
 - redis의 hash를 사용했을때와 성능 비교/측정 후  조회수 정확도가 조금 떨어지는대신 속도가 빠른것을 확인하였습니다.
 
 ### TO-BE
@@ -291,33 +397,7 @@ public class MailSentEventHandler {
     - Like%word% : 0.15 sec
     - full-text search : 2.140 sec
    
-### 한계, 고려해야할점
+### 잠재적 문제 & 한계
 - 실제 서비스를 하게 된다면 검색 결과들의 분포가 어떤 특성을 가지게 될지 어려웠습니다.  테이블 크기의 30% 이상의 해당하는 결과를 검색하는 일이 더 잦다면, 오히려 like%word% 방식이 좋을 수도 있습니다.
-- 다만, **검색 결과가 0건인 최악의 경우(6초이상)**보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는 점에서 좀 더 자연스러운 최선의 방법이라 생각하였습니다.
-
-### TODO
-- Gmail에 큰 장애가 발생한 경우, 혹은 gmail 서버로 메일을 보낼 수 없게 되는 경우
-  - 이 경우엔 메일 전송에 몰리는 트래픽이 어느 정도인지에 따라 해결 방법이 다를 수 있습니다.
-    1. 선착순 회원가입 이벤트가 예정되어있는경우
-        - 이 경우엔 gmail서버의 장애가 발생했는데도 불구하고 모든 요청이 retry회수를 강제로 채워야만 보조메일서버로 전송되기때문에 retry 트래픽 자체가 문제될수있습니다.     
-    2. 외부 메일 서버가 장애 상황이라면, retry 횟수를 채우는 것 자체가 의미 없을 수 있습니다. 불필요한 retry 요청조차 차단해버리도록 할 수 있게끔 구축 해 볼 수도 있습니다. 
-    3. 적당한 트래픽이 메일 전송에 몰리는 경우
-        - 적절한 retry 전략을 준비시키고 retry 회수가 소진되면 보조 메일 서버를 이용하는 방법을 고려할 수 있습니다.
-```java
-try {
-    sendEmailWithSMTP();
-} catch (SMTPException smtpException) {
-    log.error("primary 메일서버 전송실패", smtpException);
-    
-    try {
-        sendEmailWithNaver();
-    } catch (NaverMailException naverMailException) {
-        log.error("secondary 메일서버 전송실패 ", naverMailException);
-        // todo 예외 처리
-    }
-}
-```
-
-- 게시글 조회 로직에서  update는 반드시 같은 트랜잭션에 묶일 필요가 없는 성질이므로, 비동기로 처리해 보고 성능 측정해 볼 수 있을 것 같습니다. 
-- 분산락 휴먼에러를 최대한 줄이기 위해 AOP 적용하면 좋을 것 같습니다.
-- 실제 scale-out을 고려한다면 DB나 redis, 모니터링 도구 들은 분리해야 합니다.
+- 다만, **검색 결과가 0건인 최악의 경우(6초이상)** 보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는 점에서 좀 더 자연스러운 최선의 방법이라 생각하였습니다.
+- fulltext-search의 결과는 메모리에서 처리됩니다. 테이블 데이터 200만건 기준으로 "FTS query exceeds result cache limit" 문제가 발생해 innodb_ft_result_cache_limit의 최대값을 4GB로 설정해두어 해결했지만, 만약 테이블의 크기가 더 커진다면 어느순간 같은  오류가 발생해 한계점이 올것입니다.
