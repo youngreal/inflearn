@@ -179,7 +179,6 @@ public class MemberService {
 
 ### 해결과정
 - 메일 전송은 SMTP 프로토콜로 구현되어있었고, retry나 보조 메일서버를 추가로 두는 방법을 고려했습니다. SMTP 프로토콜의 일일 메일 전송량이 500개로 한정되어있기때문에(개인 계정 기준) 메일서버에 문제 생길시 바로 보조메일 서버로 요청을 보내는 방법보다는, 일시적인 지연같이 retry로 해결이 가능한경우에는 실패한 메일 전송 이벤트를 retry 해주는 게 좋다고 판단하였습니다.
-  - todo 메일 전송을 smtp 프로토콜을 선택한이유
     
 **retry를 도입하고 고려했던점**
   - 우리 서버에서 try-catch로 직접 Retry 해줄 수도있지만, 이는 Retry의 재전송 텀과 횟수를 지정할 수 없는 문제가 있었습니다. 
@@ -266,7 +265,8 @@ where ..
 ### 해결과정
 
 1. **꼭 서버 간 인기글 리스트가 같게 맞춰줘야 하는가?**
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/888a1abf-28d6-4b6c-ade3-b77cccf8614b/5e47d94f-fb51-4d15-9393-4894927c0b3e/Untitled.png)
+![image](https://github.com/youngreal/inflearn/assets/59333182/c92e240a-304d-493b-b5ec-9634411d07b3)
+
 
 - 현재 게시글 조회 API는 GET /posts/{postId} 로, postId만 받아서 게시글을 조회합니다.
 - 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고 캐시에서 업데이트하며, 캐시 미스가 나면 db에 update가 발생합니다.
