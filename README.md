@@ -162,7 +162,11 @@ public class MemberService {
         return memberRepository.save(member);
     }
 }
-```
+``` 
+
+### 잠재적 문제 & 한계
+- 회원가입 이벤트라도 생긴다면 Async스레드풀의 큐사이즈와 메모리 사용량을 조절해가며 반드시 조율해야합니다. 
+ 
 
 ## 2. 외부 서비스(Gmail)의 지연과 장애를 대비한 retry전략과 recover작성
 ### 문제 발견
@@ -226,6 +230,10 @@ public class MailSentEventHandler {
 }
 ```
 
+### 잠재적 문제 & 한계
+- 큰 장애가 나서 당분간 복구가 안되는 상황이라면, retry자체가 낭비가 될수있으며 쓸데없는 응답시간이 길어지는 상황이 발생할수있습니다. 이 경우를 고려해야한다면 서킷브레이커나 fallbacak이라는 키워드를 학습해서 해결해 볼수 있습니다.
+- Jitter라는 retry의 랜덤 재전송값을 부여하여 순서가 보장되질 않습니다. 예를들어 요청1,2가 각각 4시 30분 20, 25초에 메일전송 요청이 들어오고, 요청에 실패해 4시 30분 40초, 4시 30분 37초에 retry될수 있습니다. 
+
 ## 3. redis 분산락으로 서버 간 동일한 인기글 리스트 갱신을 보장하기
 
 **당시 상황**
@@ -257,6 +265,8 @@ where ..
 ### 해결과정
 
 1. **꼭 서버 간 인기글 리스트가 같게 맞춰줘야 하는가?**
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/888a1abf-28d6-4b6c-ade3-b77cccf8614b/5e47d94f-fb51-4d15-9393-4894927c0b3e/Untitled.png)
+
 - 현재 게시글 조회 API는 GET /posts/{postId} 로, postId만 받아서 게시글을 조회합니다.
 - 캐시 히트에 성공하는 postId인 경우 db에 update 하지않고 캐시에서 업데이트하며, 캐시 미스가 나면 db에 update가 발생합니다.
 ```java
@@ -275,10 +285,8 @@ where ..
     private void addViewCount(Post post) {
         // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
         if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
-            log.info("v1 direct");
             post.plusViewCount();
         } else {
-            log.info("v1");
             likeCountRedisRepository.addViewCount(post.getId());
         }
     }
@@ -295,13 +303,15 @@ where ..
 - select for update나 mysql의 네임드락으로 시도해 봤을 때, 결국 서버 1 select -> 좋아요 insert 발생 -> 서버 2 select 순서로 요청이 들어오면 이 문제를 해결해 주지 못한다고 판단하였습니다.
 
 3. **redis 도입**
-- redis를 도입해 각 서버에서 여러 번 select 해서 데이터를 일치시키려는 것보다는, 분산락으로 락이 걸려있다면 재시도 하지 않고 1번만 select 하는 게 쉽게 해결하는 방법이라고 판단하였습니다.
-
-- 락을 걸고 해제할 때마다 네트워크 통신 비용이 들지만 5분에 한 번씩만 실행되는 성질이므로 크게 문제 되지 않을 것 같다고 판단했습니다.
-
-- DB가 락을 보장하는 등의 성질이 아닌 개발자가 직접 구현해야 하므로 휴먼에러 발생 지점을 신경 써봐야 합니다.
-
+- redis를 도입해 각 서버에서 여러 번 select 해서 데이터를 일치시키려는 것보다는, 락을걸고 1번만 select 하는 게 쉽게 해결하는 방법이라고 판단하였습니다. 또한 현재 조회수 갱신을 위해 외부 라이브러리인 hyperloglog를 쓰고있었는데 redis에서 자체지원 한다는점도 메리트로 고려했습니다. 
 - 락을 redis로 관리하게 되면서 레디스에 문제가 생긴다면 데이터 손실 등의 위험이 있지만, 인기글의 조회 수의 손실은 크리티컬 하지않기 때문에 천천히 개선해 보고자 했습니다.
+
+### 잠재적 문제 & 한계
+- 락을 얻은 하나의 서버가 만약 인기글 조회를 select하면서 문제가 생기면 다른 서버는 그걸 알방법이 없으며 결국 어떤 서버에서도 인기글을 select하지 못하는 문제가 발생합니다. 다만, 주기적으로 인기글 리스트를 갱신하는 서비스가 크게 중요하지 않다고 판단하여 문제를 잠재적으로만 인식하고있습니다.  
+### 24.02.15 추가
+스케줄러를 Quartz로 변경하고 redis를 철회하는방법 고려
+- 여러 서버에서 스케줄러 코드를 여러번 실행하지말고, 한번의 스케줄링 코드만 실행해 결과를 DB에 넣고 각 서버에서 이 결과를 select 하는방법도 고려했습니다. 현재는 redis에서 hyperloglog를 지원하고있어서 사용중인데, 만약 redis가 없다면 외부 라이브러리를 사용해야합니다. Quartz로 해결이 되는 문제라면 아예 Redis를 도입하지 않아도 되기때문에 해당방법을 시도중입니다. 
+
 
 ## 4. 인기글 조회에 트래픽이 몰려 대량의 update 쿼리가 발생하는 상황 해결하기
 ### AS-IS 
@@ -390,33 +400,7 @@ where ..
     - Like%word% : 0.15 sec
     - full-text search : 2.140 sec
    
-### 한계, 고려해야할점
+### 잠재적 문제 & 한계
 - 실제 서비스를 하게 된다면 검색 결과들의 분포가 어떤 특성을 가지게 될지 어려웠습니다.  테이블 크기의 30% 이상의 해당하는 결과를 검색하는 일이 더 잦다면, 오히려 like%word% 방식이 좋을 수도 있습니다.
 - 다만, **검색 결과가 0건인 최악의 경우(6초이상)**보다는 평균적으로 1~2초내에 검색이 가능한 방식이라는 점에서 좀 더 자연스러운 최선의 방법이라 생각하였습니다.
-
-### TODO
-- Gmail에 큰 장애가 발생한 경우, 혹은 gmail 서버로 메일을 보낼 수 없게 되는 경우
-  - 이 경우엔 메일 전송에 몰리는 트래픽이 어느 정도인지에 따라 해결 방법이 다를 수 있습니다.
-    1. 선착순 회원가입 이벤트가 예정되어있는경우
-        - 이 경우엔 gmail서버의 장애가 발생했는데도 불구하고 모든 요청이 retry회수를 강제로 채워야만 보조메일서버로 전송되기때문에 retry 트래픽 자체가 문제될수있습니다.     
-    2. 외부 메일 서버가 장애 상황이라면, retry 횟수를 채우는 것 자체가 의미 없을 수 있습니다. 불필요한 retry 요청조차 차단해버리도록 할 수 있게끔 구축 해 볼 수도 있습니다. 
-    3. 적당한 트래픽이 메일 전송에 몰리는 경우
-        - 적절한 retry 전략을 준비시키고 retry 회수가 소진되면 보조 메일 서버를 이용하는 방법을 고려할 수 있습니다.
-```java
-try {
-    sendEmailWithSMTP();
-} catch (SMTPException smtpException) {
-    log.error("primary 메일서버 전송실패", smtpException);
-    
-    try {
-        sendEmailWithNaver();
-    } catch (NaverMailException naverMailException) {
-        log.error("secondary 메일서버 전송실패 ", naverMailException);
-        // todo 예외 처리
-    }
-}
-```
-
-- 게시글 조회 로직에서  update는 반드시 같은 트랜잭션에 묶일 필요가 없는 성질이므로, 비동기로 처리해 보고 성능 측정해 볼 수 있을 것 같습니다. 
-- 분산락 휴먼에러를 최대한 줄이기 위해 AOP 적용하면 좋을 것 같습니다.
-- 실제 scale-out을 고려한다면 DB나 redis, 모니터링 도구 들은 분리해야 합니다.
+- fulltext-search의 결과는 메모리에서 처리됩니다. 테이블 데이터 200만건 기준으로 "FTS query exceeds result cache limit" 문제가 발생해 innodb_ft_result_cache_limit의 최대값을 4GB로 설정해두어 해결했지만, 만약 테이블의 크기가 더 커진다면 어느순간 같은  오류가 발생해 한계점이 올것입니다.
