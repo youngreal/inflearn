@@ -1,13 +1,13 @@
 logging:
   level:
-    com.board.board: info
     #    쿼리로그를 디버그모드로 볼수있고 '?' 파라미터를 볼수있다.
     org.hibernate.orm.jdbc.bind: trace
 spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:mysql://host.docker.internal:3306/inflearn
+#    url: jdbc:mysql://host.docker.internal:3306/inflearn
+    url: jdbc:mysql://localhost:3306/inflearn
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,8 +25,8 @@ spring:
     open-in-view: false
   data:
     redis:
-      host: host.docker.internal
-#      host: localhost
+#      host: host.docker.internal
+      host: localhost
       port: 6379
 
 # 액추에이터에서 톰캣 스레드 보는 설정 추가 -> 프로테메우스로 전달
@@ -52,3 +52,19 @@ management:
     metrics:
       export:
         enabled: true
+
+# 메일 설정
+google:
+  mail:
+    host: smtp.gmail.com
+    username: dudwls0505@gmail.com
+    password: ${GOOGLE_EMAIL_SMPT_PASSWORD}
+    port: 587
+
+
+naver:
+  mail:
+    host: smtp.naver.com
+    username: dudwls0505@naver.com
+    password: ${NAVER_EMAIL_SMPT_PASSWORD}
+    port: 465

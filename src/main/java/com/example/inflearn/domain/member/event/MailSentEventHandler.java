@@ -1,7 +1,9 @@
 package com.example.inflearn.domain.member.event;
 
 import com.example.inflearn.common.exception.CustomMessagingException;
+import com.example.inflearn.infra.mail.GmailService;
 import com.example.inflearn.infra.mail.MailService;
+import com.example.inflearn.infra.mail.NaverMailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
@@ -17,7 +19,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Service
 public class MailSentEventHandler {
 
-    private final MailService mailService;
+    private final GmailService gmailService;
+    private final NaverMailService naverMailService;
 
     @Async
     @Retryable(
@@ -32,11 +35,22 @@ public class MailSentEventHandler {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋된후에 이벤트가 실행된다.
     public void handle(MailSentEvent event) {
-        mailService.send(event.getMessage());
+        gmailService.send(event.getMessage());
     }
 
+    @Retryable(
+            retryFor = CustomMessagingException.class,
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 1000,
+                    maxDelay = 20000,
+                    multiplier = 2.0,
+                    random = true // jitter
+            )
+    )
     @Recover
-    public void recoverMailSend(CustomMessagingException e) {
-        log.warn("recover start : exception msg = {}", e.getMessage());
+    public void recoverMailSend(MailSentEvent event) {
+        log.warn("recover start : retry 소진후 메일 전송실패");
+        naverMailService.send(event.getMessage());
     }
 }
