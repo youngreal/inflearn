@@ -1,11 +1,11 @@
 spring:
-  profiles:
-    active: default
   datasource:
-    url: jdbc:mysql://localhost:3306/inflearn
-    username: root
-    password: Abcd123@
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:mysql:8:///
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 google:
   mail:
