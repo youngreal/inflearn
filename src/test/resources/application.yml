@@ -1,7 +1,9 @@
 spring:
   datasource:
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:tc:mysql:8:///
+    url: jdbc:mysql://localhost:3306/inflearn
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
