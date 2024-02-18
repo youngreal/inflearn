@@ -150,7 +150,7 @@ class MemberRestControllerTest {
                 .password("12345678")
                 .build();
 
-        Member member = memberLoginRequest.toEntity(memberLoginRequest);
+        Member member = memberLoginRequest.toEntity();
         given(memberService.login(member)).willReturn(RANDOM_UUID);
 
         //when & then
