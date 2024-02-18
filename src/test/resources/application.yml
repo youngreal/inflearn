@@ -1,6 +1,23 @@
 spring:
+  profiles:
+    active: default
   datasource:
     url: jdbc:mysql://localhost:3306/inflearn
     username: root
     password: Abcd123@
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+google:
+  mail:
+    host: smtp.gmail.com
+    username: dudwls0505@gmail.com
+    password: eowhtimjvtqwgudp
+    port: 587
+
+
+naver:
+  mail:
+    host: smtp.naver.com
+    username: dudwls0505@naver.com
+    password: dkfmrlsls@
+    port: 465
