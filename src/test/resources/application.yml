@@ -4,13 +4,9 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
 
   mail:
     host: smtp.gmail.com
-    username: ${EMAIL_SMTP_ACCOUNT}
-    password: ${EMAIL_SMTP_PASSWORD}
+    username: ${GOOGLE_EMAIL_ACCOUNT}
+    password: ${GOOGLE_EMAIL_PASSWORD}
     port: 587
