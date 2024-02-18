@@ -8,7 +8,6 @@
 //import static org.mockito.Mockito.times;
 //import static org.mockito.Mockito.verify;
 //
-//import com.example.inflearn.AbstractContainerBaseTest;
 //import com.example.inflearn.common.config.RedisConfig;
 //import com.example.inflearn.common.exception.CustomMessagingException;
 //import com.example.inflearn.domain.member.Member;
