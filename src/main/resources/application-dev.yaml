@@ -26,23 +26,20 @@ spring:
       host: inflearn-redis
       port: 6379
 
+
+google:
   mail:
     host: smtp.gmail.com
-    username: ${EMAIL_SMTP_ACCOUNT}
-    password: ${EMAIL_SMTP_PASSWORD}
+    username: ${GOOGLE_EMAIL_ACCOUNT}
+    password: ${GOOGLE_EMAIL_PASSWORD}
     port: 587
 
-    properties:
-      mail:
-        smtp:
-          auth: true
-          timeout: 5000
-          starttls:
-              enable: true
-              # SSL용 포트
-          socketFactory:
-            port: 465
-            class: javax.net.ssl.SSLSocketFactory
+naver:
+  mail:
+    host: smtp.naver.com
+    username: ${NAVER_EMAIL_ACCOUNT}
+    password: ${NAVER_EMAIL_PASSWORD}
+    port: 465
 
 mybatis:
   mapper-locations: classpath:/mapper/*.xml
