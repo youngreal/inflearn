@@ -57,14 +57,14 @@ management:
 google:
   mail:
     host: smtp.gmail.com
-    username: dudwls0505@gmail.com
-    password: ${GOOGLE_EMAIL_SMPT_PASSWORD}
+    username: ${GOOGLE_EMAIL_ACCOUNT}
+    password: ${GOOGLE_EMAIL_PASSWORD}
     port: 587
 
 
 naver:
   mail:
     host: smtp.naver.com
-    username: dudwls0505@naver.com
-    password: ${NAVER_EMAIL_SMPT_PASSWORD}
+    username: ${NAVER_EMAIL_ACCOUNT}
+    password: ${NAVER_EMAIL_PASSWORD}
     port: 465
