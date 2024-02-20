@@ -29,7 +29,6 @@ public class PostQueryService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final LikeCountRedisRepository likeCountRedisRepository;
-    private final ViewCountCache viewCountCache;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
     @Transactional
@@ -140,13 +139,5 @@ public class PostQueryService {
 //            likeCountRedisRepository.addViewCount(post.getId());
 //        }
 //    }
-
-    private void addViewCount(Post post) {
-        // 캐싱중인 인기글이 아니라면 조회수 +1 update쿼리 발생, 캐싱중이면 메모리에서 조회수 +1카운팅
-        if (!viewCountCache.isExistInMemory(post.getId())) {
-            post.addViewCount();
-        } else {
-            viewCountCache.addViewCount(post.getId());
-        }
-    }
+//
 }
