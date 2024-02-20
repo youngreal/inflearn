@@ -93,7 +93,7 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void plusViewCount() {
+    public void addViewCount() {
         this.viewCount += 1;
     }
 
