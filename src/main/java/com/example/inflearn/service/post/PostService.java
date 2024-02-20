@@ -12,7 +12,6 @@ import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,7 @@ public class PostService {
     private final HashtagService hashtagService;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final PostMemoryService postMemoryService;
 
     public void write(PostDto dto, long id) {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
@@ -65,11 +65,20 @@ public class PostService {
     }
 
     //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
-    public void updateViewCountForPopularPosts(Map<Object, Long> popularPostEntries) {
-        for (Entry<Object, Long> entry : popularPostEntries.entrySet()) {
-            log.info("entry = {}", entry);
-            Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
-            post.updateViewCountFromCache(entry.getValue());
+//    public void updateViewCountForPopularPosts(Map<Object, Long> popularPostEntries) {
+//        for (Entry<Object, Long> entry : popularPostEntries.entrySet()) {
+//            log.info("entry = {}", entry);
+//            Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
+//            post.updateViewCountFromCache(entry.getValue());
+//        }
+//    }
+
+    public void updateViewCountForPopularPosts() {
+        for (Entry<Long, Long> memoryCacheEntry : postMemoryService.getViewCountStore().entrySet()) {
+            log.info("entry = {}", memoryCacheEntry);
+            Post post = postRepository.findById(memoryCacheEntry.getKey()).orElseThrow(DoesNotExistPostException::new);
+            post.updateViewCountFromCache(memoryCacheEntry.getValue());
+            postMemoryService.initViewCount(memoryCacheEntry.getKey());
         }
     }
 }
