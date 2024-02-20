@@ -27,13 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PostPerpormance {
 
-    private final PaginationService paginationService;
     private final PostRepository postRepository;
     private final PopularPostRepository popularPostRepository;
-    private final PostMapper postMapper;
     private final PostMemoryService postMemoryService;
-    private final LikeCountRedisRepository likeCountRedisRepository;
-    private final ViewCountCache viewCountCache;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
     @Transactional
