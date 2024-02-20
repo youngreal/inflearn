@@ -29,6 +29,7 @@ public class PostQueryService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final LikeCountRedisRepository likeCountRedisRepository;
+    private final ViewCountCache viewCountCache;
 
     //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
     @Transactional
@@ -37,7 +38,7 @@ public class PostQueryService {
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
         // 조회수 업데이트
-        addViewCount(post);
+//        addViewCount(post);
 
         // 게시글 상세 내용 조회(해시태그, 댓글)
         PostDto postDetail = postRepository.postDetail(postId);
@@ -45,6 +46,21 @@ public class PostQueryService {
         postDetail.inputComments(postRepository.commentsBy(postDetail));
         return postDetail;
     }
+
+//    @Transactional
+//    public PostDto postDetail2(long postId) {
+//        // 게시글 존재여부 검증
+//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+//
+//        // 조회수 업데이트
+//        addViewCount(post);
+//
+//        // 게시글 상세 내용 조회(해시태그, 댓글)
+//        PostDto postDetail = postRepository.postDetail(postId);
+//        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+//        postDetail.inputComments(postRepository.commentsBy(postDetail));
+//        return postDetail;
+//    }
 
     public List<PostDto> searchPost(PostSearch postSearch) {
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
@@ -86,14 +102,20 @@ public class PostQueryService {
 
     // 현재 시간으로부터 -7일 사이에 있는 게시글중 좋아요 개수가 가장 많은 게시글을 5개까지만 가져온다
     public void updatePopularPosts() {
-        Map<Long, Long> popularPosts = getPopularPosts().stream()
+        Map<Long, Long> popularPosts = popularPosts().stream()
                 .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
 
         // 레디스에 있는 게시글과 popularPosts의 likeCount들을 비교해서 5개만 레디스에 업데이트한다
+
         likeCountRedisRepository.updatePopularPosts(popularPosts);
     }
 
-    private List<PostDto> getPopularPosts() {
+    public Map<Long, Long> updatePopularPostsForSchedulerTest() {
+        return popularPosts().stream()
+                .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
+    }
+
+    private List<PostDto> popularPosts() {
         LocalDate endDay = LocalDate.now();
         LocalDate firstDay = endDay.minusDays(300);
         return PostDto.toDto(postRepository.findPopularPostByDate(firstDay, endDay));
@@ -107,15 +129,24 @@ public class PostQueryService {
         postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
     }
 
+//    private void addViewCount(Post post) {
+//        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
+//        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
+//        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
+//            log.info("v1 direct");
+//            post.plusViewCount();
+//        } else {
+//            log.info("v1");
+//            likeCountRedisRepository.addViewCount(post.getId());
+//        }
+//    }
+
     private void addViewCount(Post post) {
-        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
-        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
-        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
-            log.info("v1 direct");
-            post.plusViewCount();
+        // 캐싱중인 인기글이 아니라면 조회수 +1 update쿼리 발생, 캐싱중이면 메모리에서 조회수 +1카운팅
+        if (!viewCountCache.isExistInMemory(post.getId())) {
+            post.addViewCount();
         } else {
-            log.info("v1");
-            likeCountRedisRepository.addViewCount(post.getId());
+            viewCountCache.addViewCount(post.getId());
         }
     }
 }
