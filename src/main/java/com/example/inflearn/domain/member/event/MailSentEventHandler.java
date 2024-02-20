@@ -2,7 +2,6 @@ package com.example.inflearn.domain.member.event;
 
 import com.example.inflearn.common.exception.CustomMessagingException;
 import com.example.inflearn.infra.mail.GmailService;
-import com.example.inflearn.infra.mail.MailService;
 import com.example.inflearn.infra.mail.NaverMailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
