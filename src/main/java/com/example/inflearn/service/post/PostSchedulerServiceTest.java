@@ -44,7 +44,15 @@ public class PostSchedulerServiceTest {
         log.info("1번 스케줄러 시작시간 ={}", LocalDateTime.now());
         // 7일간 좋아요 많은 5개 DB에서 가져오기
         Map<Long, Long> newPopularPosts = postQueryService.updatePopularPostsForSchedulerTest();
+        for (Entry<Long, Long> entry : newPopularPosts.entrySet()) {
+            log.info("new PopularPosts Key = {}", entry.getKey());
+            log.info("new PopularPosts Value= {}", entry.getValue());
+        }
         Map<Long, Long> beforePopularPosts = getBeforePopularPostMap();
+        for (Entry<Long, Long> entry : beforePopularPosts.entrySet()) {
+            log.info("before PopularPosts Key = {}", entry.getKey());
+            log.info("before PopularPosts Value= {}", entry.getValue());
+        }
 
         // 새롭게 맵을 만들지않고 두 Map을 add하게되면 서로의 Map의 변화에 서로 영향을 받기때문에 UnsupportedOperationException발생
         updatePosts(sortEntriesByValue(beforePopularPosts, newPopularPosts));
@@ -60,6 +68,7 @@ public class PostSchedulerServiceTest {
 
     private void updatePosts(List<Entry<Long, Long>> entries) {
         int popularPostId = 1;
+        log.info("updatePosts entries = {}", entries);
         for (Entry<Long, Long> sortedEntry : entries) {
             popularPostRepository.updatePopularIds(sortedEntry.getKey(), popularPostId);
             popularPostRepository.updatePopularlikeCount(sortedEntry.getValue(), popularPostId);
@@ -71,7 +80,6 @@ public class PostSchedulerServiceTest {
         Map<Long, Long> addMap = new HashMap<>();
         addMap.putAll(beforePopularPosts);
         addMap.putAll(newPopularPosts);
-
 
         return newPopularPosts.entrySet().stream()
                 .sorted(Entry.<Long, Long>comparingByValue().reversed())
