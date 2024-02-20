@@ -16,4 +16,21 @@ public class TestController {
     public void test(@PathVariable long postId) {
         postPerpormance.postDetail(postId);
     }
+
+    /**
+     * 게시글 상세조회 제외하고 테스트
+     * @
+     */
+    @GetMapping("/viewCount2/{postId}")
+    public void test2(@PathVariable long postId) {
+        postPerpormance.postDetail2(postId);
+    }
+
+    /**
+     * 조회수 업데이트 제외하고 테스트
+     */
+    @GetMapping("/viewCount3/{postId}")
+    public void test3(@PathVariable long postId) {
+        postPerpormance.postDetail3(postId);
+    }
 }

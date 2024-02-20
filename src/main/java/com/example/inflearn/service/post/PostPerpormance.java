@@ -47,6 +47,29 @@ public class PostPerpormance {
         return postDetail;
     }
 
+    @Transactional
+    public void postDetail2(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        addViewCount(post);
+
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+    }
+
+    @Transactional
+    public PostDto postDetail3(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 게시글 상세 내용 조회(해시태그, 댓글)
+        PostDto postDetail = postRepository.postDetail(postId);
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
+    }
+
     private void addViewCount(Post post) {
         PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
         // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
