@@ -19,6 +19,11 @@ public interface PostRepositoryCustom {
 
     PostDto postDetail(long postId);
 
+    PostDto postDetail2(long postId);
+
+    Long likeCountWithScheduler(long postId);
+
+    Long commentCountWithScheduler(long postId);
     List<PostCommentDto> commentsBy(PostDto postDto);
 
     List<PostDto> searchWithHashtag(String searchWord, int page, int size, String sort, List<Long> postIds);
@@ -28,4 +33,5 @@ public interface PostRepositoryCustom {
     Long countPageWithHashtagSearchWord(String searchWord, int page, int size);
 
     List<PopularPostDto> findPopularPostByDate(LocalDate firstDay, LocalDate endDay);
+
 }

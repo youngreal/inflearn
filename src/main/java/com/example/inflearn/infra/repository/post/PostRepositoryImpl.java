@@ -214,7 +214,6 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         ExpressionUtils.as(JPAExpressions
                                 .select(comment.id.count())
                                 .from(comment)
-//                                .where(post.id.eq(comment.post.id)), "commentCount"),
                                 .where(comment.post.id.eq(postId)), "commentCount"),
                         post.createdAt,
                         post.updatedAt,
@@ -223,6 +222,40 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .from(post)
                 .where(post.id.eq(postId))
                 .join(post.member, member)
+                .fetchOne();
+    }
+
+    @Override
+    public PostDto postDetail2(long postId) {
+        return jpaQueryFactory.select(Projections.fields(PostDto.class,
+                                post.id.as("postId"),
+                                member.nickname,
+                                post.title,
+                                post.contents,
+                                post.viewCount,
+                                post.createdAt,
+                                post.updatedAt,
+                                post.postStatus)
+                )
+                .from(post)
+                .where(post.id.eq(postId))
+                .join(post.member, member)
+                .fetchOne();
+    }
+
+    @Override
+    public Long likeCountWithScheduler(long postId) {
+        return jpaQueryFactory.select(like.id.count())
+                .from(like)
+                .where(like.post.id.eq(postId))
+                .fetchOne();
+    }
+
+    @Override
+    public Long commentCountWithScheduler(long postId) {
+        return jpaQueryFactory.select(comment.id.count())
+                .from(comment)
+                .where(comment.post.id.eq(postId))
                 .fetchOne();
     }
 

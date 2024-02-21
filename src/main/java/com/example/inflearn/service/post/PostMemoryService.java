@@ -1,7 +1,9 @@
 package com.example.inflearn.service.post;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +15,14 @@ import org.springframework.stereotype.Component;
 @Getter
 public class PostMemoryService {
 
+    // postId, viewCount
     private final Map<Long, Long> viewCountStore = new ConcurrentHashMap<>();
+    // postId, likeCount
+    private final Map<Long, Long> likeCountStore = new HashMap<>();
+    // postId, commentCount
+    private final Map<Long, Long> commentCountStore = new HashMap<>();
 
-    public void addViewCount(long postId) {
+    public void addViewCount(Long postId) {
         for (Entry<Long, Long> entry : viewCountStore.entrySet()) {
             log.info("before entry Key = {}", entry.getKey());
             log.info("after entry Value = {}", entry.getValue());
@@ -28,7 +35,27 @@ public class PostMemoryService {
         }
     }
 
-    public void initViewCount(long postId) {
+    public void initViewCount(Long postId) {
         viewCountStore.replace(postId, 0L);
+    }
+
+    public Long likeCount(Long postId) {
+        return likeCountStore.getOrDefault(postId, 0L);
+    }
+
+    public Long commentCount(Long postId) {
+        return commentCountStore.getOrDefault(postId, 0L);
+    }
+
+    public Set<Long> getEntry() {
+        return viewCountStore.keySet();
+    }
+
+    public void saveLikeCount(Long popularPostKey, Long likeCount) {
+        likeCountStore.put(popularPostKey, likeCount);
+    }
+
+    public void saveCommentCount(Long popularPostKey, Long commentCount) {
+        commentCountStore.put(popularPostKey, commentCount);
     }
 }
