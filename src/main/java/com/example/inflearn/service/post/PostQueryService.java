@@ -2,10 +2,8 @@ package com.example.inflearn.service.post;
 
 import static java.util.stream.Collectors.toMap;
 
-import com.example.inflearn.common.exception.DoesNotExistPostException;
+import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.domain.post.PostDto;
-import com.example.inflearn.domain.post.domain.Post;
-import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
@@ -25,49 +23,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PostQueryService {
 
+    private static final int SEARCH_WORD_MIN_LENGTH = 2;
     private final PaginationService paginationService;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
-    private final LikeCountRedisRepository likeCountRedisRepository;
-
-    //todo 게시글 조회와 조회수가 +1 되는 로직은 트랜잭션 분리되어도 될것같은데..? 분리를 고려해보는게 맞을까?
-    @Transactional
-    public PostDto postDetail(long postId) {
-        // 게시글 존재여부 검증
-        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-
-        // 조회수 업데이트
-//        addViewCount(post);
-
-        // 게시글 상세 내용 조회(해시태그, 댓글)
-        PostDto postDetail = postRepository.postDetail(postId);
-        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
-        postDetail.inputComments(postRepository.commentsBy(postDetail));
-        return postDetail;
-    }
-
-//    @Transactional
-//    public PostDto postDetail2(long postId) {
-//        // 게시글 존재여부 검증
-//        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
-//
-//        // 조회수 업데이트
-//        addViewCount(post);
-//
-//        // 게시글 상세 내용 조회(해시태그, 댓글)
-//        PostDto postDetail = postRepository.postDetail(postId);
-//        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
-//        postDetail.inputComments(postRepository.commentsBy(postDetail));
-//        return postDetail;
-//    }
 
     public List<PostDto> searchPost(PostSearch postSearch) {
+        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+            throw new SearchWordLengthException();
+        }
+
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
     public List<PostDto> searchPostWithHashtag(PostSearch postSearch) {
+        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+            throw new SearchWordLengthException();
+        }
+
         List<Long> postIds = postRepository.findPostIdsByHashtagSearchWord(postSearch.searchWord());
         List<PostDto> postDtos = postRepository.searchWithHashtag(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort(), postIds);
         setHashtagsWithJoin(postDtos);
@@ -99,16 +74,6 @@ public class PostQueryService {
         return pageCount.size();
     }
 
-    // 현재 시간으로부터 -7일 사이에 있는 게시글중 좋아요 개수가 가장 많은 게시글을 5개까지만 가져온다
-    public void updatePopularPosts() {
-        Map<Long, Long> popularPosts = popularPosts().stream()
-                .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
-
-        // 레디스에 있는 게시글과 popularPosts의 likeCount들을 비교해서 5개만 레디스에 업데이트한다
-
-        likeCountRedisRepository.updatePopularPosts(popularPosts);
-    }
-
     public Map<Long, Long> updatePopularPostsForSchedulerTest() {
         return popularPosts().stream()
                 .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
@@ -127,17 +92,4 @@ public class PostQueryService {
 
         postDtos.forEach(postDto -> postDto.inputHashtags(postHashtagMap.get(postDto.getPostId())));
     }
-
-//    private void addViewCount(Post post) {
-//        // validation: 레디스에서 인기글을 가져오고, 레디스에 없다면 DB에서 가져오자
-//        // 인기글이아니라면(레디스에없다면) 조회수 +1 업데이트, 레디스에있으면 레디스에 조회수 카운팅
-//        if (likeCountRedisRepository.getViewCount(post.getId()) == null) {
-//            log.info("v1 direct");
-//            post.plusViewCount();
-//        } else {
-//            log.info("v1");
-//            likeCountRedisRepository.addViewCount(post.getId());
-//        }
-//    }
-//
 }

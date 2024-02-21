@@ -36,6 +36,7 @@ dependencies {
     // async test
     testImplementation 'org.awaitility:awaitility:4.2.0'
 
+    // querydsl
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     implementation "com.querydsl:querydsl-core"
     implementation "com.querydsl:querydsl-collections"
