@@ -100,4 +100,12 @@ public class PostDto {
             }
         }
     }
+
+    public void inputLikeCount(Long postId) {
+        this.likeCount = postId;
+    }
+
+    public void inputCommentCount(Long postId) {
+        this.commentCount = postId;
+    }
 }

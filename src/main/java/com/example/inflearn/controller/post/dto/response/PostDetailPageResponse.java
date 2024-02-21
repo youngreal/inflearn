@@ -15,6 +15,7 @@ public record PostDetailPageResponse(
         String contents,
         long viewCount,
         long likeCount,
+        long commentCount,
         Set<String> hashtags,
         List<CommentDto> commentDtoList,
         LocalDateTime createdAt,
@@ -29,6 +30,7 @@ public record PostDetailPageResponse(
                 .contents(postDto.getContents())
                 .viewCount(postDto.getViewCount())
                 .likeCount(postDto.getLikeCount())
+                .commentCount(postDto.getCommentCount())
                 .hashtags(postDto.getHashtags())
                 .commentDtoList(postDto.getComments())
                 .createdAt(postDto.getCreatedAt())

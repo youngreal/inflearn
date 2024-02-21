@@ -2,11 +2,13 @@ package com.example.inflearn.service.post;
 
 import com.example.inflearn.domain.post.domain.PopularPost;
 import com.example.inflearn.infra.repository.post.PopularPostRepository;
+import com.example.inflearn.infra.repository.post.PostRepository;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,9 @@ public class PostSchedulerServiceTest {
     private static final int POPULAR_POST_SIZE = 5;
     private final PostService postService;
     private final PostQueryService postQueryService;
+    private final PostMemoryService postMemoryService;
     private final PopularPostRepository popularPostRepository;
+    private final PostRepository postRepository;
 
     /**
      * param : id
@@ -63,6 +67,20 @@ public class PostSchedulerServiceTest {
         //memory에있는 viewCount들을 post엔티티에 30초마다 반영해준다
         log.info("스케줄러 2 시작");
         postService.updateViewCountForPopularPosts();
+    }
+
+    /**
+     * 3초마다 인기글 개수(현재5개 x 2) 만큼 count쿼리발생 vs 1초당 200번의 count쿼리 발생의 트레이드오프
+     */
+    @Scheduled(fixedDelay = 3000)
+    public void getLikeCountFromDB() {
+        //likes테이블과
+        log.info("스케줄러 3 시작, 좋아요 카운트와 댓글카운트를 메모리에 저장해두기");
+        Set<Long> popularPostKeys = postMemoryService.getEntry();
+        for (Long popularPostKey : popularPostKeys) {
+            postMemoryService.saveLikeCount(popularPostKey, postRepository.likeCountWithScheduler(popularPostKey));
+            postMemoryService.saveCommentCount(popularPostKey, postRepository.commentCountWithScheduler(popularPostKey));
+        }
     }
 
 
