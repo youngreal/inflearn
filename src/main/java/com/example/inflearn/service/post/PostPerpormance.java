@@ -57,6 +57,8 @@ public class PostPerpormance {
         addViewCount(post);
 
         // 게시글 상세 내용 조회(해시태그, 댓글)
+        postMemoryService.likeCount(postId);
+        postMemoryService.commentCount(postId);
     }
 
     @Transactional
@@ -172,6 +174,23 @@ public class PostPerpormance {
         }
     }
 
+
+
+    @Transactional
+    public PostDto postDetail8(long postId) {
+        // 게시글 존재여부 검증
+        // 조회수 업데이트
+        // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
+            postMemoryService.addViewCount(postId);
+            PostDto postDetail = postRepository.postDetail2(postId);
+            postDetail.inputLikeCount(postMemoryService.likeCount(postId));
+            postDetail.inputCommentCount(postMemoryService.commentCount(postId));
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+
+    }
+
     private void addViewCount(Post post) {
         PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
         // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
@@ -179,6 +198,8 @@ public class PostPerpormance {
             post.addViewCount();
         } else {
             postMemoryService.addViewCount(popularPost.getPostId());
+            postMemoryService.likeCount(popularPost.getPostId());
+            postMemoryService.commentCount(popularPost.getPostId());
         }
     }
 }
