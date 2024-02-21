@@ -4,6 +4,7 @@ import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
 import com.example.inflearn.domain.post.domain.PostHashtag;
+import com.example.inflearn.infra.repository.post.PopularPostRepository;
 import com.example.inflearn.service.hashtag.HashtagService;
 import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
@@ -34,6 +35,7 @@ public class PostService {
     private final HashtagService hashtagService;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final PopularPostRepository popularPostRepository;
     private final PostMemoryService postMemoryService;
 
     public void write(PostDto dto, long id) {
@@ -64,15 +66,17 @@ public class PostService {
         post.updateTitleAndContents(dto.getTitle(), dto.getContents());
     }
 
-    //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
-//    public void updateViewCountForPopularPosts(Map<Object, Long> popularPostEntries) {
-//        for (Entry<Object, Long> entry : popularPostEntries.entrySet()) {
-//            log.info("entry = {}", entry);
-//            Post post = postRepository.findById((Long) entry.getKey()).orElseThrow();
-//            post.updateViewCountFromCache(entry.getValue());
-//        }
-//    }
+    public PostDto postDetail(long postId) {
+        if (isPopularPost(postId)) {
+            updateViewCountInMemory(postId);
+            return popularPostDetail(postId);
+        } else {
+            updateViewCountInDb(postId);
+            return regularPostDetail(postId);
+        }
+    }
 
+    //todo 만약 관리해야할 인기글이 엄청많아진다면? => 성능을 테스트해보고 벌크업데이트성 로직이 추가될것같다.
     public void updateViewCountForPopularPosts() {
         for (Entry<Long, Long> memoryCacheEntry : postMemoryService.getViewCountStore().entrySet()) {
             log.info("entry = {}", memoryCacheEntry);
@@ -80,5 +84,35 @@ public class PostService {
             post.updateViewCountFromCache(memoryCacheEntry.getValue());
             postMemoryService.initViewCount(memoryCacheEntry.getKey());
         }
+    }
+
+
+    private boolean isPopularPost(long postId) {
+        return popularPostRepository.findByPostId(postId) != null;
+    }
+
+    private void updateViewCountInMemory(long postId) {
+        postMemoryService.addViewCount(postId);
+    }
+
+    private void updateViewCountInDb(long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+        post.addViewCount();
+    }
+
+    private PostDto regularPostDetail(long postId) {
+        PostDto postDetail = postRepository.postDetail(postId);
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
+    }
+
+    private PostDto popularPostDetail(long postId) {
+        PostDto postDetail = postRepository.postDetail2(postId);
+        postDetail.inputLikeCount(postMemoryService.likeCount(postId));
+        postDetail.inputCommentCount(postMemoryService.commentCount(postId));
+        postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+        postDetail.inputComments(postRepository.commentsBy(postDetail));
+        return postDetail;
     }
 }

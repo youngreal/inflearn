@@ -12,6 +12,10 @@ import static org.mockito.BDDMockito.then;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
+import com.example.inflearn.dto.CommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
+import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
+import com.example.inflearn.infra.repository.post.PopularPostRepository;
 import com.example.inflearn.service.hashtag.HashtagService;
 import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.domain.Post;
@@ -51,6 +55,12 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private PopularPostRepository popularPostRepository;
+
+    @Mock
+    private PostMemoryService postMemoryService;
 
     @Mock
     private HashtagService hashtagService;
@@ -170,6 +180,47 @@ class PostServiceTest {
 
         // when & then
         assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+    }
+
+    @Test
+    void 게시글_상세정보_조회시_조회수가_상승하고_해시태그와_댓글이_객체에_입력된다() {
+        // given
+        long postId = 1;
+        PostDto postDto = createDto("글제목", "글내용", new HashSet<>(), new ArrayList<>());
+        Post post = createPost(null, "글제목", "글내용");
+        List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(PostHashtagDto.create("자바"), PostHashtagDto.create("스프링")));
+        List<PostCommentDto> postCommentDtos = new ArrayList<>(List.of(PostCommentDto.create("댓글1"), PostCommentDto.create("댓글2")));
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(postRepository.postDetail(postId)).willReturn(postDto);
+        given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
+        given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
+
+        // when
+        PostDto actual = sut.postDetail(postId);
+
+        // then
+        assertThat(actual.getHashtags().size()).isEqualTo(postHashtagDtos.size());
+        assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
+    }
+
+    @Test
+    void 게시글_상세정보_조회시_게시글이_존재하지않으면_예외가_발생한다 () {
+        // given
+        long postId = 1;
+        given(postRepository.findById(postId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThrows(DoesNotExistPostException.class, () -> sut.postDetail(postId));
+    }
+
+    private PostDto createDto(String title, String contents, Set<String> hashtags, List<CommentDto> comments) {
+        return PostDto.builder()
+                .title(title)
+                .contents(contents)
+                .hashtags(hashtags)
+                .comments(comments)
+                .build();
     }
 
     private Post createPost(Member member, String title, String contents) {

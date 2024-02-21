@@ -169,7 +169,7 @@ public class PostRestController {
      */
     @GetMapping("/posts/{postId}")
     public PostDetailPageResponse postDetail(@PathVariable long postId) {
-        return PostDetailPageResponse.from(postQueryService.postDetail(postId));
+        return PostDetailPageResponse.from(postService.postDetail(postId));
     }
 
     /**
