@@ -42,4 +42,28 @@ public class TestController {
     public PostDetailPageResponse test4(@PathVariable long postId) {
         return PostDetailPageResponse.from(postPerpormance.postDetail4(postId));
     }
+
+    /**
+     * 메모리에 조회수 카운트하는 부분 배제한 테스트
+     */
+    @GetMapping("/viewCount5/{postId}")
+    public PostDetailPageResponse test5(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postPerpormance.postDetail5(postId));
+    }
+
+    /**
+     * 좋아요,댓글개수를 반영하는 부분 배제한 테스트
+     * */
+    @GetMapping("/viewCount6/{postId}")
+    public PostDetailPageResponse test6(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postPerpormance.postDetail6(postId));
+    }
+
+    /**
+     * 해시태그, 댓글 조인을 배제한 테스트
+     * */
+    @GetMapping("/viewCount7/{postId}")
+    public PostDetailPageResponse test7(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postPerpormance.postDetail7(postId));
+    }
 }
