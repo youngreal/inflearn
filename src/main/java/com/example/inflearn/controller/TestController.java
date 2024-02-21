@@ -74,4 +74,12 @@ public class TestController {
     public PostDetailPageResponse test8(@PathVariable long postId) {
         return PostDetailPageResponse.from(postPerpormance.postDetail8(postId));
     }
+
+    /**
+     * I/O횟수를 줄인 테스트
+     * */
+    @GetMapping("/viewCount9/{postId}")
+    public PostDetailPageResponse test9(@PathVariable long postId) {
+        return PostDetailPageResponse.from(postPerpormance.postDetail9(postId));
+    }
 }
