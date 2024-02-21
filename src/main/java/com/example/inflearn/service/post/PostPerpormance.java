@@ -97,6 +97,81 @@ public class PostPerpormance {
         }
     }
 
+    @Transactional
+    public PostDto postDetail5(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
+        // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
+        if (popularPost == null) {
+            post.addViewCount();
+            PostDto postDetail = postRepository.postDetail(postId);
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        } else {
+//            postMemoryService.addViewCount(popularPost.getPostId());
+            PostDto postDetail = postRepository.postDetail2(postId);
+            postDetail.inputLikeCount(postMemoryService.likeCount(postId));
+            postDetail.inputCommentCount(postMemoryService.commentCount(postId));
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        }
+    }
+
+    @Transactional
+    public PostDto postDetail6(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
+        // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
+        if (popularPost == null) {
+            post.addViewCount();
+            PostDto postDetail = postRepository.postDetail(postId);
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        } else {
+            postMemoryService.addViewCount(popularPost.getPostId());
+            PostDto postDetail = postRepository.postDetail2(postId);
+//            postDetail.inputLikeCount(postMemoryService.likeCount(postId));
+//            postDetail.inputCommentCount(postMemoryService.commentCount(postId));
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        }
+    }
+
+    @Transactional
+    public PostDto postDetail7(long postId) {
+        // 게시글 존재여부 검증
+        Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
+
+        // 조회수 업데이트
+        PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
+        // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
+        if (popularPost == null) {
+            post.addViewCount();
+            PostDto postDetail = postRepository.postDetail(postId);
+            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        } else {
+            postMemoryService.addViewCount(popularPost.getPostId());
+            PostDto postDetail = postRepository.postDetail2(postId);
+            postDetail.inputLikeCount(postMemoryService.likeCount(postId));
+            postDetail.inputCommentCount(postMemoryService.commentCount(postId));
+//            postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));
+//            postDetail.inputComments(postRepository.commentsBy(postDetail));
+            return postDetail;
+        }
+    }
+
     private void addViewCount(Post post) {
         PopularPost popularPost = popularPostRepository.findByPostId(post.getId());
         // 인기글 테이블에 존재하지 않으면 update쿼리 발생, 존재하면 메모리에서 카운팅
