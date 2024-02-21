@@ -1,7 +1,6 @@
 package com.example.inflearn.controller.post;
 
 import com.example.inflearn.common.exception.DuplicatedHashtagException;
-import com.example.inflearn.common.exception.SearchWordLengthException;
 import com.example.inflearn.common.security.LoginedMember;
 import com.example.inflearn.service.comment.CommentService;
 import com.example.inflearn.service.like.LikeService;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PostRestController {
 
-    private static final int SEARCH_WORD_MIN_LENGTH = 2;
     private final PostService postService;
     private final PostQueryService postQueryService;
     private final LikeService likeService;
@@ -200,10 +198,6 @@ public class PostRestController {
 
     @GetMapping("/posts/search")
     public PostResponseWithPageCount searchedPosts(@ModelAttribute @Valid PostSearch postSearch) {
-        //todo 이 친구의 위치는 service가 맞는것같다.
-        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
-            throw new SearchWordLengthException();
-        }
         /*
         파라미터 타입을 풀어서쓸까, 객체로 넘길까 고민하다가 파라미터로 넘기게되면 PostSearch가 변경되는경우 아래의 레이어에도 변경의 영향이 미칠수있으며
          객체로 넘기게되면 PostSearch에 추가요구사항(필드추가)이 생기더라도 이 아래의 레이어에선 코드변경이 없을수도 있는경우가 있기때문에 우선 객체로 넘기는 방식을 선택해본다.
@@ -218,10 +212,6 @@ public class PostRestController {
 
     @GetMapping("/posts/search-hashtag")
     public PostResponseWithPageCount searchedPostsWithHashtag(@ModelAttribute @Valid PostSearch postSearch) {
-        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
-            throw new SearchWordLengthException();
-        }
-
         List<PostResponse> posts = postQueryService.searchPostWithHashtag(postSearch).stream()
                 .map(PostResponse::from)
                 .toList();
