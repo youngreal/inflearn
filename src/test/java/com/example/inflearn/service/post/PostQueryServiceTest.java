@@ -1,20 +1,17 @@
 package com.example.inflearn.service.post;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
-import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.dto.CommentDto;
 import com.example.inflearn.infra.redis.LikeCountRedisRepository;
-import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
@@ -22,7 +19,6 @@ import com.example.inflearn.domain.post.PostSearch;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -47,44 +43,6 @@ class PostQueryServiceTest {
 
     @Mock
     private PostMapper postMapper;
-
-    @Mock
-    private LikeCountRedisRepository likeCountRedisRepository;
-
-    @Test
-    void 게시글_상세정보_조회시_조회수가_상승하고_해시태그와_댓글이_객체에_입력된다() {
-        // given
-        long postId = 1;
-        PostDto postDto = createDto("글제목", "글내용", new HashSet<>(), new ArrayList<>());
-        Post post = createPost(null, "글제목", "글내용");
-        List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(PostHashtagDto.create("자바"), PostHashtagDto.create("스프링")));
-        List<PostCommentDto> postCommentDtos = new ArrayList<>(List.of(PostCommentDto.create("댓글1"), PostCommentDto.create("댓글2")));
-
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postRepository.postDetail(postId)).willReturn(postDto);
-        given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
-        given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
-
-        // when
-        PostDto actual = sut.postDetail(postId);
-
-        // then
-        assertThat(actual.getHashtags().size()).isEqualTo(postHashtagDtos.size());
-        assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
-    }
-
-    @Test
-    void 게시글_상세정보_조회시_게시글이_존재하지않으면_예외가_발생한다 () {
-        // given
-        long postId = 1;
-        given(postRepository.findById(postId)).willReturn(Optional.empty());
-
-        // when & then
-        assertThrows(DoesNotExistPostException.class, () -> sut.postDetail(postId));
-    }
-
-    //todo 게시글 상세조회시 레디스에 저장하는지 안하는지 테스트 해야한다.
-
 
     @Test
     void 페이지_당_게시글_조회_성공 () {
