@@ -3,7 +3,6 @@ package com.example.inflearn.service.post;
 import com.example.inflearn.domain.post.domain.PopularPost;
 import com.example.inflearn.infra.repository.post.PopularPostRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,20 +44,10 @@ public class PostSchedulerServiceTest {
     @Scheduled(fixedDelay = 15000)
     @Transactional
     public void updatePopularPosts() {
-        log.info("1번 스케줄러 시작시간 ={}", LocalDateTime.now());
+        log.info("1번 스케줄러 시작");
         // 7일간 좋아요 많은 5개 DB에서 가져오기
         Map<Long, Long> newPopularPosts = postQueryService.updatePopularPostsForSchedulerTest();
-        for (Entry<Long, Long> entry : newPopularPosts.entrySet()) {
-            log.info("new PopularPosts Key = {}", entry.getKey());
-            log.info("new PopularPosts Value= {}", entry.getValue());
-        }
         Map<Long, Long> beforePopularPosts = getBeforePopularPostMap();
-        for (Entry<Long, Long> entry : beforePopularPosts.entrySet()) {
-            log.info("before PopularPosts Key = {}", entry.getKey());
-            log.info("before PopularPosts Value= {}", entry.getValue());
-        }
-
-        // 새롭게 맵을 만들지않고 두 Map을 add하게되면 서로의 Map의 변화에 서로 영향을 받기때문에 UnsupportedOperationException발생
         updatePosts(sortEntriesByValue(beforePopularPosts, newPopularPosts));
     }
 
@@ -95,6 +84,7 @@ public class PostSchedulerServiceTest {
     }
 
     private List<Entry<Long, Long>> sortEntriesByValue(Map<Long,Long> beforePopularPosts, Map<Long, Long> newPopularPosts) {
+        // 새롭게 맵을 만들지않고 두 Map을 add하게되면 서로의 Map의 변화에 서로 영향을 받기때문에 UnsupportedOperationException발생
         Map<Long, Long> addMap = new HashMap<>();
         addMap.putAll(beforePopularPosts);
         addMap.putAll(newPopularPosts);
