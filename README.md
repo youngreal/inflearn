@@ -350,15 +350,11 @@ where ..
    
 
 ### TO-BE
+- API응답속도가 3초미만인 구간기준으로 최대 처리량이 3배가량 상승했습니다
+  - tps200 -> 600, 실제 서비스 트래픽 시나리오에서 2배 상승(10초동안 2000명의 요청) 
+
 ![image](https://github.com/youngreal/inflearn/assets/59333182/471695a2-5aaf-47ed-9123-dc2ee347cfad)
 ![image](https://github.com/youngreal/inflearn/assets/59333182/0d70cc47-4e90-4324-96d6-24109904e583)
-
-
-
- 200vuser / 1sec / 1loop
- - **latency 2.9초 -> 0.7초**
- 
-![image](https://github.com/youngreal/inflearn/assets/59333182/f077eca2-52ca-4f4d-8c73-a725b6c963b1)
 
 600vuser / 1sec / 1loop (3초미만의 응답속도를 보이는 최대구간)
 ![image](https://github.com/youngreal/inflearn/assets/59333182/eb427dd4-a72a-4180-a5bf-b8c8641908de)
@@ -370,7 +366,6 @@ where ..
 2000vuser / 10sec / 1loop (3초미만의 응답속도를 보이는 최대구간)
 ![image](https://github.com/youngreal/inflearn/assets/59333182/99dd1c54-9cc1-433d-ac74-bbd030fa95a5)
 
-- API응답속도 3초미만인 최대 처리량이 3배가량 상승했습니다. 
 
 ### 잠재적 문제 & 한계
 - 특정 서버에서 장애발생시 해당 서버에서 카운팅된 조회수가 손실될수 있습니다. 조회수는 어느정도 손실되도 괜찮은 성질이므로 감당 가능합니다.
