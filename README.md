@@ -9,12 +9,13 @@
 
 ## 기술 스택
 - Application : Java 17, Springboot 3, JPA, Querydsl
-- DB : MySQL, Redis
+- DB : MySQL
 - Test : JUnit5, Mockito
 - Infra : AWS LoadBalancer, AWS AutoScaling, Docker, Grafana, Prometheus, Github Actions
 
 ## Architecture
-![image](https://github.com/youngreal/inflearn/assets/59333182/ffe17a9e-c1f3-49b4-868d-253e5955ee2a)
+![image](https://github.com/youngreal/inflearn/assets/59333182/7959ee11-890d-4133-8ecf-850aa081a371)
+
 
 ## 문제 해결
 - [ApplicationEventListener와 @Async로 회원가입 시 회원 저장과 이메일 전송의 강결합 + 레이턴시 증가 문제 개선하기](#1-applicationeventlistener와-async로-회원가입-시-회원-저장과-이메일-전송의-강결합--레이턴시-증가-문제-개선하기)
@@ -350,6 +351,8 @@ where ..
 
 ### TO-BE
 ![image](https://github.com/youngreal/inflearn/assets/59333182/471695a2-5aaf-47ed-9123-dc2ee347cfad)
+![image](https://github.com/youngreal/inflearn/assets/59333182/0d70cc47-4e90-4324-96d6-24109904e583)
+
 
 
  200vuser / 1sec / 1loop
@@ -367,9 +370,11 @@ where ..
 2000vuser / 10sec / 1loop (3초미만의 응답속도를 보이는 최대구간)
 ![image](https://github.com/youngreal/inflearn/assets/59333182/99dd1c54-9cc1-433d-ac74-bbd030fa95a5)
 
+- API응답속도 3초미만인 최대 처리량이 3배가량 상승했습니다. 
+
 ### 잠재적 문제 & 한계
 - 특정 서버에서 장애발생시 해당 서버에서 카운팅된 조회수가 손실될수 있습니다. 조회수는 어느정도 손실되도 괜찮은 성질이므로 감당 가능합니다.
-- redis를 도입해서 인기글테이블의 존재대신, redis에 캐싱하게되면 현재 커넥션 풀 대기상황을 좀더 완화하여 더 많은 트래픽을 처리할 수 있습니다. 하지만 서버를 scale-out해서 더 많은 처리량을 얻어낼수도있습니다. 스프링서버 scale-out을 먼저할지 redis를 먼저 도입해볼지 어려웠습니다. 
+- redis를 도입해서 인기글테이블의 존재대신, redis에 캐싱하게되면 현재 커넥션 풀 대기상황을 좀더 완화하여 **더 많은 트래픽을 처리할 수** 있습니다. 하지만 서버를 scale-out해서 더 많은 처리량을 얻어낼수도있습니다. 스프링서버 scale-out을 먼저할지 redis를 먼저 도입해볼지 결정하기가 선뜻 어려웠습니다. 
 
 ## 5. LIKE %word%로 게시글 검색 시 full table scan이 발생해 레이턴시가 증가하는 문제를 fulltext-search로 개선하기
 
