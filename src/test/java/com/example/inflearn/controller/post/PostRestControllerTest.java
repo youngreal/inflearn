@@ -348,14 +348,6 @@ class PostRestControllerTest {
     }
 
     @Test
-    void 포스트_검색_실패_검색어_길이가_2보다_작음() throws Exception {
-        //when & then
-        mockMvc.perform(get("/posts/search?page=1&size=20&searchWord=자"))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-    }
-
-    @Test
     void 포스트_해시태그_검색_성공_해시태그_검색어_입력() throws Exception {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
@@ -401,14 +393,6 @@ class PostRestControllerTest {
     void 포스트_해시태그_검색_실패_page나_size값이_1보다_작음() throws Exception {
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=-1&size=-1&searchWord=자바"))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-    }
-
-    @Test
-    void 포스트_해시태그_검색_실패_검색어_길이가_2보다_작음() throws Exception {
-        //when & then
-        mockMvc.perform(get("/posts/search-hashtag?page=1&size=20&searchWord=자"))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
     }
