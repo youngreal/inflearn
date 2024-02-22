@@ -33,10 +33,10 @@ todo 글 수정시 해시태그 수정/삭제가 발생해야하는데 이는 �
 public class PostService {
 
     private final HashtagService hashtagService;
+    private final PostMemoryService postMemoryService;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
     private final PopularPostRepository popularPostRepository;
-    private final PostMemoryService postMemoryService;
 
     public void write(PostDto dto, long id) {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);

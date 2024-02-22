@@ -267,7 +267,7 @@ class PostRestControllerTest {
         PostDto postDto3 = createDto("게시글제목3", "게시글본문3");
 
         PostPaging paging = new PostPaging(1, 20, null);
-        given(postQueryService.getPostsPerPage(eq(paging.page()), eq(paging.size()), any())).willReturn(List.of(postDto,postDto2,postDto3));
+        given(postQueryService.postsPerPage(eq(paging.page()), eq(paging.size()), any())).willReturn(List.of(postDto,postDto2,postDto3));
         given(postQueryService.getPageCount(paging.page(), paging.size())).willReturn(3L);
 
         //when & then
@@ -296,8 +296,8 @@ class PostRestControllerTest {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바");
-        given(postQueryService.searchPost(postSearch)).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithSearchWord(postSearch)).willReturn(3L);
+        given(postQueryService.searchPosts(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.pageCountWithSearchWord(postSearch)).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바"))
@@ -313,8 +313,8 @@ class PostRestControllerTest {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바", "like");
-        given(postQueryService.searchPost(any(PostSearch.class))).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
+        given(postQueryService.searchPosts(any(PostSearch.class))).willReturn(List.of(postDto));
+        given(postQueryService.pageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바&sort=like"))
@@ -330,8 +330,8 @@ class PostRestControllerTest {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"자바");
-        given(postQueryService.searchPost(any(PostSearch.class))).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
+        given(postQueryService.searchPosts(any(PostSearch.class))).willReturn(List.of(postDto));
+        given(postQueryService.pageCountWithSearchWord(any(PostSearch.class))).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search?page=3&size=20&searchWord=자바&sort=12345"))
@@ -352,8 +352,8 @@ class PostRestControllerTest {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"aws");
-        given(postQueryService.searchPostWithHashtag(postSearch)).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
+        given(postQueryService.searchPostsWithHashtag(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.pageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=aws"))
@@ -369,8 +369,8 @@ class PostRestControllerTest {
         //given
         PostDto postDto = createDto("게시글제목1", "게시글본문1");
         PostSearch postSearch = PostSearch.of(3,20,"aws", "like");
-        given(postQueryService.searchPostWithHashtag(postSearch)).willReturn(List.of(postDto));
-        given(postQueryService.getPageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
+        given(postQueryService.searchPostsWithHashtag(postSearch)).willReturn(List.of(postDto));
+        given(postQueryService.pageCountWithHashtagSearchWord(postSearch)).willReturn(3L);
 
         //when & then
         mockMvc.perform(get("/posts/search-hashtag?page=3&size=20&searchWord=aws&sort=like"))

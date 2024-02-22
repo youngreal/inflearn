@@ -13,11 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Service
@@ -28,38 +26,32 @@ public class PostQueryService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
 
-    public List<PostDto> searchPost(PostSearch postSearch) {
-        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
-            throw new SearchWordLengthException();
-        }
-
+    public List<PostDto> searchPosts(PostSearch postSearch) {
+        validateSearchWord(postSearch);
         List<PostDto> postDtos = postMapper.search(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort());
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
-    public List<PostDto> searchPostWithHashtag(PostSearch postSearch) {
-        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
-            throw new SearchWordLengthException();
-        }
-
+    public List<PostDto> searchPostsWithHashtag(PostSearch postSearch) {
+        validateSearchWord(postSearch);
         List<Long> postIds = postRepository.findPostIdsByHashtagSearchWord(postSearch.searchWord());
         List<PostDto> postDtos = postRepository.searchWithHashtag(postSearch.searchWord(), paginationService.calculateOffSet(postSearch.page()), postSearch.size(), postSearch.sort(), postIds);
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
-    public List<PostDto> getPostsPerPage(int pageNumber, int postQuantityPerPage, String sort) {
+    public List<PostDto> postsPerPage(int pageNumber, int postQuantityPerPage, String sort) {
         List<PostDto> postDtos = postRepository.getPostsPerPage(paginationService.calculateOffSet(pageNumber), postQuantityPerPage, sort);
         setHashtagsWithJoin(postDtos);
         return postDtos;
     }
 
-    public Long getPageCountWithSearchWord(PostSearch postSearch) {
+    public Long pageCountWithSearchWord(PostSearch postSearch) {
         return postRepository.countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
     }
 
-    public Long getPageCountWithHashtagSearchWord(PostSearch postSearch) {
+    public Long pageCountWithHashtagSearchWord(PostSearch postSearch) {
         return postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
     }
 
@@ -74,9 +66,15 @@ public class PostQueryService {
         return pageCount.size();
     }
 
-    public Map<Long, Long> updatePopularPostsForSchedulerTest() {
+    public Map<Long, Long> updatePopularPostsForScheduler() {
         return popularPosts().stream()
                 .collect(toMap(PostDto::getPostId, PostDto::getLikeCount));
+    }
+
+    private void validateSearchWord(PostSearch postSearch) {
+        if (postSearch.searchWord().length() < SEARCH_WORD_MIN_LENGTH) {
+            throw new SearchWordLengthException();
+        }
     }
 
     private List<PostDto> popularPosts() {

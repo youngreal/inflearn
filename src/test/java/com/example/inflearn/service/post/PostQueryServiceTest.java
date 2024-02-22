@@ -11,7 +11,6 @@ import com.example.inflearn.domain.member.Member;
 import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.dto.CommentDto;
-import com.example.inflearn.infra.redis.LikeCountRedisRepository;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.mapper.post.PostMapper;
 import com.example.inflearn.infra.repository.post.PostRepository;
@@ -58,7 +57,7 @@ class PostQueryServiceTest {
         given(postRepository.getPostsPerPage(paginationService.calculateOffSet(page),size,sort)).willReturn(List.of(post,post2,post3));
 
         // when
-        List<PostDto> actual = sut.getPostsPerPage(page, size,sort);
+        List<PostDto> actual = sut.postsPerPage(page, size,sort);
 
         // then
         assertThat(actual).hasSize(3);
@@ -81,7 +80,7 @@ class PostQueryServiceTest {
         given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
 
         // when
-        List<PostDto> actual = sut.searchPost(postSearch);
+        List<PostDto> actual = sut.searchPosts(postSearch);
 
         // then
         assertThat(actual).isEqualTo(List.of(postDto));
@@ -100,7 +99,7 @@ class PostQueryServiceTest {
         given(postRepository.countPageWithSearchWord(postSearch.searchWord(),paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
-        Long actual = sut.getPageCountWithSearchWord(postSearch);
+        Long actual = sut.pageCountWithSearchWord(postSearch);
 
         // then
         then(postRepository).should().countPageWithSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));
@@ -121,7 +120,7 @@ class PostQueryServiceTest {
         given(postRepository.postHashtagsByPostDtos(any())).willReturn(postHashtagDtos);
 
         // when
-        List<PostDto> actual = sut.searchPostWithHashtag(postSearch);
+        List<PostDto> actual = sut.searchPostsWithHashtag(postSearch);
 
         // then
         assertThat(actual).isEqualTo(List.of(postDto));
@@ -140,7 +139,7 @@ class PostQueryServiceTest {
         given(postRepository.countPageWithHashtagSearchWord(postSearch.searchWord(),paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()))).willReturn(1L);
 
         // when
-        Long actual = sut.getPageCountWithHashtagSearchWord(postSearch);
+        Long actual = sut.pageCountWithHashtagSearchWord(postSearch);
 
         // then
         then(postRepository).should().countPageWithHashtagSearchWord(postSearch.searchWord(), paginationService.offsetForTotalPageNumbers(postSearch.page()), paginationService.sizeForTotalPageNumbers(postSearch.size()));

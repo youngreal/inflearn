@@ -140,7 +140,7 @@ public class PostRestController {
      */
     @GetMapping("/posts")
     public PostResponseWithPageCount getPosts(@ModelAttribute @Valid PostPaging postPaging) {
-        List<PostResponse> posts = postQueryService.getPostsPerPage(postPaging.page(), postPaging.size(), postPaging.sort()).stream()
+        List<PostResponse> posts = postQueryService.postsPerPage(postPaging.page(), postPaging.size(), postPaging.sort()).stream()
                 .map(PostResponse::from)
                 .toList();
 
@@ -202,21 +202,21 @@ public class PostRestController {
         파라미터 타입을 풀어서쓸까, 객체로 넘길까 고민하다가 파라미터로 넘기게되면 PostSearch가 변경되는경우 아래의 레이어에도 변경의 영향이 미칠수있으며
          객체로 넘기게되면 PostSearch에 추가요구사항(필드추가)이 생기더라도 이 아래의 레이어에선 코드변경이 없을수도 있는경우가 있기때문에 우선 객체로 넘기는 방식을 선택해본다.
          */
-        List<PostResponse> posts = postQueryService.searchPost(postSearch).stream()
+        List<PostResponse> posts = postQueryService.searchPosts(postSearch).stream()
                 .map(PostResponse::from)
                 .toList();
 
-        long pageCount = postQueryService.getPageCountWithSearchWord(postSearch);
+        long pageCount = postQueryService.pageCountWithSearchWord(postSearch);
         return new PostResponseWithPageCount(posts, pageCount);
     }
 
     @GetMapping("/posts/search-hashtag")
     public PostResponseWithPageCount searchedPostsWithHashtag(@ModelAttribute @Valid PostSearch postSearch) {
-        List<PostResponse> posts = postQueryService.searchPostWithHashtag(postSearch).stream()
+        List<PostResponse> posts = postQueryService.searchPostsWithHashtag(postSearch).stream()
                 .map(PostResponse::from)
                 .toList();
 
-        long pageCount = postQueryService.getPageCountWithHashtagSearchWord(postSearch);
+        long pageCount = postQueryService.pageCountWithHashtagSearchWord(postSearch);
         return new PostResponseWithPageCount(posts, pageCount);
     }
 

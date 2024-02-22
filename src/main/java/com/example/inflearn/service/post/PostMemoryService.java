@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 public class PostMemoryService {
-
     // postId, viewCount
     private final Map<Long, Long> viewCountStore = new ConcurrentHashMap<>();
     // postId, likeCount
