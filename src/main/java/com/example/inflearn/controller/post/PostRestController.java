@@ -1,6 +1,5 @@
 package com.example.inflearn.controller.post;
 
-import com.example.inflearn.common.exception.DuplicatedHashtagException;
 import com.example.inflearn.common.security.LoginedMember;
 import com.example.inflearn.service.comment.CommentService;
 import com.example.inflearn.service.like.LikeService;
@@ -16,9 +15,7 @@ import com.example.inflearn.controller.post.dto.request.PostUpdateRequest;
 import com.example.inflearn.controller.post.dto.request.PostWriteRequest;
 import com.example.inflearn.controller.post.dto.response.PostResponseWithPageCount;
 import jakarta.validation.Valid;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,14 +42,7 @@ public class PostRestController {
             LoginedMember loginedMember,
             @RequestBody @Valid PostWriteRequest request
     ) {
-
-        if (request.hashtags() == null || request.hashtags().isEmpty()) {
-            postService.write(request.toDto(), loginedMember.id());
-
-        } else {
-            Set<String> hashtags = validateDuplicatedHashtag(request.hashtags());
-            postService.write(request.toDtoWithHashtag(hashtags), loginedMember.id());
-        }
+        postService.write(request.toDto(request.hashtags()), loginedMember.id());
     }
 
     //todo 글 수정시 해시태그 유무 DB에서 꺼낼때는 DB에없었는데, 동시에 해시태그가 삽입된다면? 동시성 문제 발생할수있다.
@@ -63,14 +53,7 @@ public class PostRestController {
             @RequestBody @Valid PostUpdateRequest request,
             @PathVariable long postId
     ) {
-
-        if (request.hashtags() == null || request.hashtags().isEmpty()) {
-            postService.update(request.toDto(), loginedMember.id(), postId);
-
-        } else {
-            Set<String> hashtags = validateDuplicatedHashtag(request.hashtags());
-            postService.update(request.toDtoWithHashtag(hashtags), loginedMember.id(), postId);
-        }
+        postService.update(request.toDto(request.hashtags()), loginedMember.id(), postId);
     }
 
     /*
@@ -242,17 +225,4 @@ public class PostRestController {
     public void reply(LoginedMember loginedMember, @RequestBody @Valid PostReplyContents postReplyContents, @PathVariable long parentCommentId) {
         commentService.saveReply(loginedMember.id(), parentCommentId, postReplyContents.contents());
     }
-
-    private Set<String> validateDuplicatedHashtag(List<String> requestHashtag) {
-        Set<String> hashtags = new HashSet<>();
-        for (String hashtag : requestHashtag) {
-            if (hashtags.contains(hashtag)) {
-                throw new DuplicatedHashtagException();
-            }
-            hashtags.add(hashtag);
-        }
-
-        return hashtags;
-    }
-    //todo 삭제API
 }

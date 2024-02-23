@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -83,7 +84,7 @@ class PostRestControllerTest {
     @Test
     void 중복_없는_해시태그_입력시_게시글_작성_성공한다() throws Exception {
         //given
-        PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
+        PostWriteRequest request = postRequest("글제목1", "글내용1", Set.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -97,13 +98,13 @@ class PostRestControllerTest {
                 .andDo(print());
 
         //then
-        then(postService).should().write(request.toDtoWithHashtag(any()), eq(member.getId()));
+        then(postService).should().write(request.toDto(any()), eq(member.getId()));
     }
 
     @Test
     void 해시태그를_입력하지_않아도_게시글_작성_성공한다() throws Exception {
         //given
-        PostWriteRequest request = postRequest("글제목1", "글내용1", List.of());
+        PostWriteRequest request = postRequest("글제목1", "글내용1", Set.of());
         Member member = member(1L, "asdf1234@naver.com", "12345678");
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -124,7 +125,7 @@ class PostRestControllerTest {
     @Test
     void 로그인_하지_않은_회원은_게시글_작성에_실패한다() throws Exception {
         //given
-        PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
+        PostWriteRequest request = postRequest("", "", Set.of("Java","Spring"));
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
@@ -143,30 +144,9 @@ class PostRestControllerTest {
     @Test
     void 빈_제목이나_빈_내용을_입력한_게시글은_작성에_실패한다() throws Exception {
         //given
-        PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
+        PostWriteRequest request = postRequest("", "", Set.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
 
-        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
-
-        //when
-        mockMvc.perform(post("/posts")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        //then
-        then(postService).shouldHaveNoInteractions();
-    }
-
-    @Test
-    void 중복_해시태그를_입력하면_게시글_작성에_실패한다() throws Exception {
-        //given
-        PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
-        Member member = member(1L, "asdf1234@naver.com", "12345678");
-
-        given(memberService.signUp(any(Member.class))).willReturn(member);
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
 
         //when
@@ -184,7 +164,7 @@ class PostRestControllerTest {
     @Test
     void 게시글_수정_성공() throws Exception {
         //given
-        PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring"));
+        PostWriteRequest request = postRequest("글제목1", "글내용1", Set.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -204,27 +184,7 @@ class PostRestControllerTest {
     @Test
     void 비어있는_제목이나_본문으로_게시글을_수정요청하면_실패한다() throws Exception {
         //given
-        PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
-        Member member = member(1L, "asdf1234@naver.com", "12345678");
-
-        given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
-
-        //when
-        mockMvc.perform(put("/posts/1")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        //then
-        then(postService).shouldHaveNoInteractions();
-    }
-
-    @Test
-    void 게시글_수정_실패_중복_해시태그_입력() throws Exception {
-        //given
-        PostWriteRequest request = postRequest("글제목1", "글내용1", List.of("Java","Spring","Java"));
+        PostWriteRequest request = postRequest("", "", Set.of("Java","Spring"));
         Member member = member(1L, "asdf1234@naver.com", "12345678");
 
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.of(member));
@@ -244,7 +204,7 @@ class PostRestControllerTest {
     @Test
     void 게시글_수정_실패_권한이_없는_유저() throws Exception {
         //given
-        PostWriteRequest request = postRequest("", "", List.of("Java","Spring"));
+        PostWriteRequest request = postRequest("", "", Set.of("Java","Spring"));
         given(memberRepository.findByLoginToken(cookie.getValue())).willReturn(Optional.empty());
 
         //when
@@ -563,7 +523,7 @@ class PostRestControllerTest {
                 .build();
     }
 
-    private PostWriteRequest postRequest(String title, String contents, List<String> hashtags) {
+    private PostWriteRequest postRequest(String title, String contents, Set<String> hashtags) {
         return PostWriteRequest.builder()
                 .title(title)
                 .contents(contents)

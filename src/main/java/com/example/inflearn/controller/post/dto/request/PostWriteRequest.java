@@ -1,9 +1,8 @@
 package com.example.inflearn.controller.post.dto.request;
 
+import com.example.inflearn.common.annotation.validation.hashtag.AllowNullButNoBlank;
 import com.example.inflearn.domain.post.PostDto;
 import jakarta.validation.constraints.NotBlank;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import lombok.Builder;
 
@@ -13,19 +12,11 @@ public record PostWriteRequest(
         String title,
         @NotBlank
         String contents,
-        List<String> hashtags
         @AllowNullButNoBlank
+        Set<String> hashtags
 ) {
 
-    public PostDto toDto() {
-        return PostDto.builder()
-                .title(this.title)
-                .contents(this.contents)
-                .hashtags(new HashSet<>())
-                .build();
-    }
-
-    public PostDto toDtoWithHashtag(Set<String> hashtags) {
+    public PostDto toDto(Set<String> hashtags) {
         return PostDto.builder()
                 .title(this.title)
                 .contents(this.contents)

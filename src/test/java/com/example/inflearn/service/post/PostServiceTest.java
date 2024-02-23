@@ -85,7 +85,7 @@ class PostServiceTest {
     @Test
     void 게시글_작성_성공_해시태그_없는경우() {
         // given
-        PostDto postDto = writeDto("글제목1", "글내용1", new HashSet<>());
+        PostDto postDto = writeDto("글제목1", "글내용1", null);
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
         // when
@@ -117,12 +117,12 @@ class PostServiceTest {
         // given
         long requestPostId = 1L;
         Post post = createPost(member, "글제목1", "글내용1");
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", List.of("java", "spring"));
+        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", Set.of("java", "spring"));
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
 
         // when
-        sut.update(dto.toDtoWithHashtag(input),member.getId(), requestPostId);
+        sut.update(dto.toDto(input),member.getId(), requestPostId);
 
         // then
         then(hashtagService).should().saveHashtagsWhenPostUpdate(any(Post.class), anySet());
@@ -145,26 +145,26 @@ class PostServiceTest {
     @Test
     void 게시글_수정_실패_존재하지_않는_유저() {
         // given
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());
+        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
         long requestPostId = 1L;
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistMemberException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
     }
 
     @Test
     void 게시글_수정_실패_존재하지_않는_게시글() {
         // given
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());
+        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
         long requestPostId = 1L;
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(requestPostId)).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistPostException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+        assertThrows(DoesNotExistPostException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
     }
 
     @Test
@@ -172,14 +172,14 @@ class PostServiceTest {
         // given
         Member member2 = createMember(2L, "qwer1234@naver.com","12345678");
         Post post = createPost(member2,"글제목1", "글내용1");
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new ArrayList<>());
+        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
         long requestPostId = 1L;
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
 
         // when & then
-        assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(), member.getId(), requestPostId));
+        assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
     }
 
     @Test
@@ -249,7 +249,7 @@ class PostServiceTest {
                 .build();
     }
 
-    private PostUpdateRequest updateDto(String title, String contents, List<String> hashtags) {
+    private PostUpdateRequest updateDto(String title, String contents, Set<String> hashtags) {
         return PostUpdateRequest.builder()
                 .title(title)
                 .contents(contents)
