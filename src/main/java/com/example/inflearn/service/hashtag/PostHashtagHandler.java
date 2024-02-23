@@ -18,16 +18,15 @@ HashtagService에서 전부 이 로직을 실행하면 테스트하기가 어려
 @Component
 public class PostHashtagHandler {
 
-    public Set<Hashtag> hashtagsForInsert(Post post, Set<Hashtag> inputHashtags, Set<Hashtag> existingHashtagsInDB) {
-        Set<Hashtag> hashtagsForInsert = calculateHashtagsForInsert(inputHashtags, existingHashtagsInDB);
-        //todo 어떻게 테스트하지?
-        addPostHashtagToPostAndHashtag(post, existingHashtagsInDB, hashtagsForInsert);
+    public Set<Hashtag> hashtagsForInsert(Post post, Set<Hashtag> newHashtags, Set<Hashtag> beforeHashtagsInDb) {
+        Set<Hashtag> hashtagsForInsert = calculateHashtagsForInsert(newHashtags, beforeHashtagsInDb);
+        addPostHashtagToPostAndHashtag(post, beforeHashtagsInDb, hashtagsForInsert);
         return hashtagsForInsert;
     }
 
-    public Set<Hashtag> hashtagsWhenPostUpdate(Post post, Set<Hashtag> inputStringHashtags, Set<Hashtag> existingHashtagsInDB) {
-        Set<Hashtag> hashtagsForInsert = calculateHashtagsForInsert(inputStringHashtags, existingHashtagsInDB);
-        addPostHashtagsWhenPostUpdate(post, inputStringHashtags, hashtagsForInsert, existingHashtagsInDB);
+    public Set<Hashtag> hashtagsWhenPostUpdate(Post post, Set<Hashtag> newHashtags, Set<Hashtag> beforeHashtagsInDb) {
+        Set<Hashtag> hashtagsForInsert = calculateHashtagsForInsert(newHashtags, beforeHashtagsInDb);
+        addPostHashtagsWhenPostUpdate(post, newHashtags, hashtagsForInsert, beforeHashtagsInDb);
         return hashtagsForInsert;
     }
 
@@ -40,9 +39,9 @@ public class PostHashtagHandler {
         return getHashtagsForDelete(hashtagsInPost, inputStringHashtags);
     }
 
-    private Set<Hashtag> calculateHashtagsForInsert(Set<Hashtag> inputHashtags, Set<Hashtag> existingHashtagsInDB) {
-        Set<Hashtag> hashtagsForInsert = new HashSet<>(inputHashtags);
-        hashtagsForInsert.removeAll(existingHashtagsInDB);
+    private Set<Hashtag> calculateHashtagsForInsert(Set<Hashtag> newHashtags, Set<Hashtag> beforeHashtagsInDb) {
+        Set<Hashtag> hashtagsForInsert = new HashSet<>(newHashtags);
+        hashtagsForInsert.removeAll(beforeHashtagsInDb);
         return hashtagsForInsert;
     }
 

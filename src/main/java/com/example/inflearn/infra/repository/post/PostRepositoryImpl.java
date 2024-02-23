@@ -226,7 +226,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
-    public PostDto postDetail2(long postId) {
+    public PostDto postDetailWithoutCountQuery(long postId) {
         return jpaQueryFactory.select(Projections.fields(PostDto.class,
                                 post.id.as("postId"),
                                 member.nickname,

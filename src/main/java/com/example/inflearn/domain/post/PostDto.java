@@ -68,7 +68,7 @@ public class PostDto {
         return postDtos;
     }
 
-    public Post toEntityForWrite() {
+    public Post toEntity() {
         return Post.builder()
                 .title(this.title)
                 .contents(this.contents)
