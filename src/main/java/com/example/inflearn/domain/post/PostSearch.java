@@ -1,6 +1,6 @@
 package com.example.inflearn.domain.post;
 
-import com.example.inflearn.common.annotation.SortEnum;
+import com.example.inflearn.common.annotation.validation.sort.SortEnum;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 

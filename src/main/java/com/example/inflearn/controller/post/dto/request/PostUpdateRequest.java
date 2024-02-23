@@ -14,6 +14,7 @@ public record PostUpdateRequest(
         List<String> hashtags,
         @NotBlank
         String contents
+        @AllowNullButNoBlank
 ) {
 
     public PostDto toDto() {

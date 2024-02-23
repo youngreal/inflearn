@@ -1,12 +1,10 @@
-package com.example.inflearn.common.annotation;
+package com.example.inflearn.common.annotation.validation.sort;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.Arrays;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-public class EnumValidator implements ConstraintValidator<SortEnum, String> {
+public class SortConditionValidator implements ConstraintValidator<SortEnum, String> {
 
     private SortEnum annotation;
 

@@ -1,6 +1,6 @@
 package com.example.inflearn.controller.post.dto.request;
 
-import com.example.inflearn.common.annotation.SortEnum;
+import com.example.inflearn.common.annotation.validation.sort.SortEnum;
 import com.example.inflearn.domain.post.PostSort;
 import jakarta.validation.constraints.Min;
 
