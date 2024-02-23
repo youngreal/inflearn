@@ -14,6 +14,7 @@ import com.example.inflearn.infra.repository.post.PostRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,25 +35,18 @@ public class PostService {
 
     private final HashtagService hashtagService;
     private final PostMemoryService postMemoryService;
-    private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final PostRepository postRepository;
     private final PopularPostRepository popularPostRepository;
 
-    public void write(PostDto dto, long id) {
+    public void write(PostDto postDto, long id) {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
-        Post post = dto.toEntityForWrite();
-
-        if (dto.getHashtags() == null) {
-            post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
-        } else {
-            hashtagService.saveHashtags(post, dto.getHashtags());
-        }
-
-        post.addMember(member);
+        Post post = postDto.toEntity();
+        updatePostAndHashtagEntity(postDto.getHashtags(), post, member);
         postRepository.save(post);
     }
 
-    public void update(PostDto dto, long memberId, long postId) {
+    public void update(PostDto postDto, long memberId, long postId) {
         Member member = memberRepository.findById(memberId).orElseThrow(DoesNotExistMemberException::new);
         Post post = postRepository.findById(postId).orElseThrow(DoesNotExistPostException::new);
 
@@ -60,15 +54,13 @@ public class PostService {
             throw new UnAuthorizationException("글 수정 권한이 없습니다");
         }
 
-        List<PostHashtag> beforePostHashtags = new ArrayList<>(post.getPostHashtags());
-        hashtagService.saveHashtagsWhenPostUpdate(post, dto.getHashtags());
-        hashtagService.deleteHashtags(beforePostHashtags, dto.getHashtags());
-        post.updateTitleAndContents(dto.getTitle(), dto.getContents());
+        updateHashtagEntity(postDto.getHashtags(), post);
+        post.updateTitleAndContents(postDto.getTitle(), postDto.getContents());
     }
 
     public PostDto postDetail(long postId) {
         if (isPopularPost(postId)) {
-            updateViewCountInMemory(postId);
+            postMemoryService.addViewCount(postId);
             return popularPostDetail(postId);
         } else {
             updateViewCountInDb(postId);
@@ -86,13 +78,23 @@ public class PostService {
         }
     }
 
+    private void updateHashtagEntity(Set<String> hashtags, Post post) {
+        List<PostHashtag> beforePostHashtags = new ArrayList<>(post.getPostHashtags());
+        hashtagService.saveHashtagsWhenPostUpdate(post, hashtags);
+        hashtagService.deleteHashtags(beforePostHashtags, hashtags);
+    }
+
+    private void updatePostAndHashtagEntity(Set<String> hashtags, Post post, Member member) {
+        post.addMember(member);
+        if (hashtags == null) {
+            post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
+        } else {
+            hashtagService.saveHashtags(post, hashtags);
+        }
+    }
 
     private boolean isPopularPost(long postId) {
         return popularPostRepository.findByPostId(postId) != null;
-    }
-
-    private void updateViewCountInMemory(long postId) {
-        postMemoryService.addViewCount(postId);
     }
 
     private void updateViewCountInDb(long postId) {
@@ -108,7 +110,7 @@ public class PostService {
     }
 
     private PostDto popularPostDetail(long postId) {
-        PostDto postDetail = postRepository.postDetail2(postId);
+        PostDto postDetail = postRepository.postDetailWithoutCountQuery(postId);
         postDetail.inputLikeCount(postMemoryService.likeCount(postId));
         postDetail.inputCommentCount(postMemoryService.commentCount(postId));
         postDetail.inputHashtags(postRepository.postHashtagsBy(postDetail));

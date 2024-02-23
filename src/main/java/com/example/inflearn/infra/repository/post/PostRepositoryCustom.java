@@ -19,7 +19,7 @@ public interface PostRepositoryCustom {
 
     PostDto postDetail(long postId);
 
-    PostDto postDetail2(long postId);
+    PostDto postDetailWithoutCountQuery(long postId);
 
     Long likeCountWithScheduler(long postId);
 

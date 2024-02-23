@@ -11,12 +11,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 public class PostMemoryService {
-    // postId, viewCount
-    private final Map<Long, Long> viewCountStore = new ConcurrentHashMap<>();
-    // postId, likeCount
-    private final Map<Long, Long> likeCountStore = new HashMap<>();
-    // postId, commentCount
-    private final Map<Long, Long> commentCountStore = new HashMap<>();
+
+    private final Map<Long, Long> viewCountStore = new ConcurrentHashMap<>(); // postId, viewCount
+    private final Map<Long, Long> likeCountStore = new HashMap<>(); // postId, likeCount
+    private final Map<Long, Long> commentCountStore = new HashMap<>(); // postId, commentCount
 
     public void addViewCount(Long postId) {
         viewCountStore.compute(postId, (key, value) -> (value == null) ? 1 : value + 1);
