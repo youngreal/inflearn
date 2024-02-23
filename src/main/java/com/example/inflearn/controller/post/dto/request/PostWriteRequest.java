@@ -14,6 +14,7 @@ public record PostWriteRequest(
         @NotBlank
         String contents,
         List<String> hashtags
+        @AllowNullButNoBlank
 ) {
 
     public PostDto toDto() {

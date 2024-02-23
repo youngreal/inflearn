@@ -42,7 +42,7 @@ public class PostService {
         Member member = memberRepository.findById(id).orElseThrow(DoesNotExistMemberException::new);
         Post post = dto.toEntityForWrite();
 
-        if (dto.getHashtags().isEmpty()) {
+        if (dto.getHashtags() == null) {
             post.addPostHashtag(PostHashtag.createPostHashtag(post, null));
         } else {
             hashtagService.saveHashtags(post, dto.getHashtags());
