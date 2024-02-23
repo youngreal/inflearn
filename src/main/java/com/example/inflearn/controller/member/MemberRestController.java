@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Validated
-@Slf4j
 @RestController
 public class MemberRestController {
 
@@ -35,8 +33,6 @@ public class MemberRestController {
         Member member = memberService.signUp(memberJoinRequest.toEntity());
         return MemberJoinResponse.from(member);
     }
-
-    //todo 프론트에서 RequestParam으로 받는게 편할까? DTO로 받는게 편할까?
 
     @GetMapping("/check-email-token")
     public ResponseEntity<Void> checkEmail(
@@ -50,7 +46,6 @@ public class MemberRestController {
 
     @GetMapping("/resend-email")
     public void resendEmail(@RequestParam String email) {
-        //todo 이메일 재전송 제한시간? 20분에1번 설정?
         memberService.resendEmail(email);
     }
 

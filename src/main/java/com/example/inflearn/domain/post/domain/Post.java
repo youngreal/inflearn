@@ -78,7 +78,6 @@ public class Post {
         this.member = member;
     }
 
-    //todo 조금 애매하고 헷갈릴수있는 로직
     public void addPostHashtag(PostHashtag postHashtag) {
         this.postHashtags.add(postHashtag);
     }
