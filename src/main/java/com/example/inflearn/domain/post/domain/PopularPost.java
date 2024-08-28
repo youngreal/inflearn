@@ -20,4 +20,13 @@ public class PopularPost {
     private long postId;
 
     private long likeCount;
+
+    private PopularPost(long postId, long likeCount) {
+        this.postId = postId;
+        this.likeCount = likeCount;
+    }
+
+    public static PopularPost of(long postId) {
+        return new PopularPost(postId, 0);
+    }
 }

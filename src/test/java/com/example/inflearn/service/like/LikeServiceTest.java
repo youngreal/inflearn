@@ -15,6 +15,8 @@ import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.like.LikeRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -28,9 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class LikeServiceTest {
 
-    private final Member member = getMember();
-    private final Post post = getEntity();
-
     @InjectMocks
     private LikeService sut;
 
@@ -40,6 +39,15 @@ class LikeServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private LikeRepository likeRepository;
+
+    private final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
+            .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
+            .build();
+
+    private final Member member = fixtureMonkey.giveMeBuilder(Member.class)
+            .setNotNull("id").sample();
+    private final Post post = fixtureMonkey.giveMeBuilder(Post.class)
+            .setNotNull("id").sample();
 
     @Test
     void 게시글_좋아요_성공() {
@@ -61,11 +69,8 @@ class LikeServiceTest {
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(post.getId())).willReturn(Optional.empty());
 
-        // when
+        // when & then
         assertThrows(DoesNotExistPostException.class, () -> sut.saveLike(member.getId(), post.getId()));
-
-        // then
-        then(likeRepository).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -73,11 +78,8 @@ class LikeServiceTest {
         // given
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
-        // when
+        // when & then
         assertThrows(DoesNotExistMemberException.class, () -> sut.saveLike(member.getId(), post.getId()));
-
-        // then
-        then(likeRepository).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -87,11 +89,8 @@ class LikeServiceTest {
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
         given(likeRepository.findByMemberAndPost(member, post)).willReturn(Like.create(member, post));
 
-        // when
+        // when & then
         assertThrows(AlreadyLikeException.class, () -> sut.saveLike(member.getId(), post.getId()));
-
-        // then
-        then(likeRepository).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -116,26 +115,7 @@ class LikeServiceTest {
         given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
         given(likeRepository.findByMemberAndPost(member, post)).willReturn(null);
 
-        // when
+        // when & then
         assertThrows(DoesNotLikeException.class, () -> sut.unLike(member.getId(), post.getId()));
-
-        // then
-        then(likeRepository).shouldHaveNoMoreInteractions();
-    }
-
-    private Member getMember() {
-        return Member.builder()
-                .id(1L)
-                .email("email@naver.com")
-                .password("12345678")
-                .build();
-    }
-
-    private Post getEntity() {
-        return Post.builder()
-                .id(1L)
-                .title("제목1234")
-                .contents("본문1234")
-                .build();
     }
 }

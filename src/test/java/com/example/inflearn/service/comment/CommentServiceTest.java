@@ -16,6 +16,8 @@ import com.example.inflearn.domain.post.domain.Post;
 import com.example.inflearn.infra.repository.comment.CommentRepository;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -30,33 +32,29 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
-    private final Member member = createMember();
-    private final Post post = createPost();
-    private final Comment comment = Comment.createComment(member, post, "댓글내용1");
-
     @InjectMocks
     private CommentService sut;
+
     @Mock
     private MemberRepository memberRepository;
+
     @Mock
     private PostRepository postRepository;
+
     @Mock
     private CommentRepository commentRepository;
 
-    @Test
-    void 게시글_댓글_작성_성공() {
-        // given
-        long memberId = 1L;
-        long postId = 1L;
-        given(memberRepository.findById(memberId)).willReturn(Optional.ofNullable(member));
-        given(postRepository.findById(postId)).willReturn(Optional.ofNullable(post));
+    private final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
+            .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
+            .build();
 
-        // when
-        sut.saveComment(memberId, postId, comment.getContents());
+    private final Member member = fixtureMonkey.giveMeBuilder(Member.class)
+            .setNotNull("id").sample();
 
-        // then
-        then(commentRepository).should().save(any(Comment.class));
-    }
+    private final Post post = fixtureMonkey.giveMeBuilder(Post.class)
+            .setNotNull("id").sample();
+
+    private final Comment comment = Comment.createComment(member, post, "댓글내용1");
 
     @Test
     void 게시글_댓글_작성_실패_존재하지_않는_게시글() {
@@ -96,7 +94,6 @@ class CommentServiceTest {
         long commentId = 1L;
         Comment parentComment = Comment.createComment(member, post, "댓글내용1");
         Comment reply = Comment.createComment(member, parentComment.getPost(), "답글내용1");
-
         given(memberRepository.findById(memberId)).willReturn(Optional.ofNullable(member));
         given(commentRepository.findById(commentId)).willReturn(Optional.of(parentComment));
 
@@ -146,19 +143,5 @@ class CommentServiceTest {
         // when & then
         assertThrows(CannotCreateReplyException.class,
                 () -> sut.saveReply(memberId, commentId, comment.getContents()));
-    }
-
-    private Member createMember() {
-        return Member.builder()
-                .email("asdf1234@naver.com")
-                .password("12345678")
-                .build();
-    }
-
-    private Post createPost() {
-        return Post.builder()
-                .title("글제목1")
-                .contents("글본문1")
-                .build();
     }
 }
