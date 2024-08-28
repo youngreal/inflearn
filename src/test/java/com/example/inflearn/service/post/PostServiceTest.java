@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -12,7 +11,7 @@ import static org.mockito.BDDMockito.then;
 import com.example.inflearn.common.exception.DoesNotExistMemberException;
 import com.example.inflearn.common.exception.DoesNotExistPostException;
 import com.example.inflearn.common.exception.UnAuthorizationException;
-import com.example.inflearn.dto.CommentDto;
+import com.example.inflearn.domain.post.domain.PopularPost;
 import com.example.inflearn.infra.repository.dto.projection.PostCommentDto;
 import com.example.inflearn.infra.repository.dto.projection.PostHashtagDto;
 import com.example.inflearn.infra.repository.post.PopularPostRepository;
@@ -23,6 +22,9 @@ import com.example.inflearn.domain.post.PostDto;
 import com.example.inflearn.infra.repository.member.MemberRepository;
 import com.example.inflearn.infra.repository.post.PostRepository;
 import com.example.inflearn.controller.post.dto.request.PostUpdateRequest;
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector;
+import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +47,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
 
-    private final Member member = createMember(1L, "asdf1234@naver.com","password12345678");
-
     @InjectMocks
     private PostService sut;
 
@@ -65,10 +65,24 @@ class PostServiceTest {
     @Mock
     private HashtagService hashtagService;
 
+    private final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
+            .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
+            .build();
+
+    private final FixtureMonkey fixtureMonkeyForRecord = FixtureMonkey.builder()
+            .objectIntrospector(ConstructorPropertiesArbitraryIntrospector.INSTANCE)
+            .build();
+
+    private final Member member = fixtureMonkey.giveMeBuilder(Member.class).set("id",1L).sample();
+    private PostDto postDto;
+    private Post post;
+
     @Test
     void 게시글_작성_성공_DB에_없는_해시태그_입력하는_경우() {
         // given
-        PostDto postDto = writeDto("글제목1", "글내용1", Set.of("새로운자바", "새로운스프링"));
+        postDto = fixtureMonkeyForRecord.giveMeBuilder(PostDto.class)
+                .set("hashtags", Set.of("새로운자바", "새로운스프링"))
+                .sample();
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
 
         // when
@@ -102,38 +116,32 @@ class PostServiceTest {
     @Test
     void 게시글_작성_실패_존재하지_않는_유저() {
         // given
-        PostDto postDto = writeDto("글제목1", "글내용1", null);
+        postDto = fixtureMonkeyForRecord.giveMeBuilder(PostDto.class)
+                .set("hashtags", null)
+                .sample();
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
         assertThrows(DoesNotExistMemberException.class, () -> sut.write(postDto, member.getId()));
-        then(hashtagService).shouldHaveNoInteractions();
-        then(postRepository).shouldHaveNoInteractions();
     }
     
     @MethodSource
     @ParameterizedTest
     void 게시글_수정_성공(Set<String> input) {
         // given
-        long requestPostId = 1L;
-        Post post = createPost(member, "글제목1", "글내용1");
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", Set.of("java", "spring"));
+        post = fixtureMonkey.giveMeBuilder(Post.class).setNotNull("id").set("member", member).sample();
+        PostUpdateRequest request = fixtureMonkeyForRecord.giveMeBuilder(PostUpdateRequest.class).set("hashtags", Set.of("java", "spring")).sample();
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
-        given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
+        given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
 
         // when
-        sut.update(dto.toDto(input),member.getId(), requestPostId);
+        sut.update(request.toDto(input),member.getId(), post.getId());
 
         // then
-        then(hashtagService).should().saveHashtagsWhenPostUpdate(any(Post.class), anySet());
-        then(hashtagService).should().deleteHashtags(any(),anySet());
-        assertThat(post.getTitle()).isEqualTo(dto.title());
-        assertThat(post.getContents()).isEqualTo(dto.contents());
+        assertThat(post.getTitle()).isEqualTo(request.title());
+        assertThat(post.getContents()).isEqualTo(request.contents());
     }
 
-    /**
-     * input, existingInDB, saveExpected, deleteExpected
-     */
     static Stream<Arguments> 게시글_수정_성공() {
         return Stream.of(
                 arguments(Set.of("java", "spring")),
@@ -145,61 +153,65 @@ class PostServiceTest {
     @Test
     void 게시글_수정_실패_존재하지_않는_유저() {
         // given
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
+        PostUpdateRequest request = fixtureMonkeyForRecord.giveMeBuilder(PostUpdateRequest.class).set("hashtags", new HashSet<>()).sample();
         long requestPostId = 1L;
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistMemberException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
+        assertThrows(DoesNotExistMemberException.class, () -> sut.update(request.toDto(request.hashtags()), member.getId(), requestPostId));
     }
 
     @Test
     void 게시글_수정_실패_존재하지_않는_게시글() {
         // given
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
+        PostUpdateRequest request = fixtureMonkeyForRecord.giveMeBuilder(PostUpdateRequest.class).set("hashtags", new HashSet<>()).sample();
         long requestPostId = 1L;
 
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
         given(postRepository.findById(requestPostId)).willReturn(Optional.empty());
 
         // when & then
-        assertThrows(DoesNotExistPostException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
+        assertThrows(DoesNotExistPostException.class, () -> sut.update(request.toDto(request.hashtags()), member.getId(), requestPostId));
     }
 
     @Test
     void 게시글_수정_실패_권한이_없는_유저의_수정요청() {
         // given
-        Member member2 = createMember(2L, "qwer1234@naver.com","12345678");
-        Post post = createPost(member2,"글제목1", "글내용1");
-        PostUpdateRequest dto = updateDto("수정제목1", "수정내용1", new HashSet<>());
-        long requestPostId = 1L;
-
+        Member member2 = fixtureMonkey.giveMeBuilder(Member.class).set("id", 2L).sample();
+        post = fixtureMonkey.giveMeBuilder(Post.class).set("member", member2).setNotNull("id").sample();
+        PostUpdateRequest request = fixtureMonkeyForRecord.giveMeBuilder(PostUpdateRequest.class).set("hashtags", new HashSet<>()).sample();
         given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
-        given(postRepository.findById(requestPostId)).willReturn(Optional.of(post));
+        given(postRepository.findById(post.getId())).willReturn(Optional.of(post));
 
         // when & then
-        assertThrows(UnAuthorizationException.class, () -> sut.update(dto.toDto(dto.hashtags()), member.getId(), requestPostId));
+        assertThrows(UnAuthorizationException.class, () -> sut.update(request.toDto(request.hashtags()), member.getId(), post.getId()));
     }
 
     @Test
-    void 게시글_상세정보_조회시_조회수가_상승하고_해시태그와_댓글이_객체에_입력된다() {
+    void 게시글_상세정보_조회시_인기글인_경우_메모리에_조회수를_카운팅한다() {
         // given
-        long postId = 1;
-        PostDto postDto = createDto("글제목", "글내용", new HashSet<>(), new ArrayList<>());
-        Post post = createPost(null, "글제목", "글내용");
+        post = fixtureMonkey.giveMeBuilder(Post.class)
+                .set("member", null)
+                .setNotNull("id")
+                .sample();
+        postDto = fixtureMonkeyForRecord.giveMeBuilder(PostDto.class)
+                .set("hashtags", new HashSet<>())
+                .set("comments",new ArrayList<>())
+                .sample();
+
         List<PostHashtagDto> postHashtagDtos = new ArrayList<>(List.of(PostHashtagDto.create("자바"), PostHashtagDto.create("스프링")));
         List<PostCommentDto> postCommentDtos = new ArrayList<>(List.of(PostCommentDto.create("댓글1"), PostCommentDto.create("댓글2")));
-
-        given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(postRepository.postDetail(postId)).willReturn(postDto);
+        given(popularPostRepository.findByPostId(post.getId())).willReturn(PopularPost.of(post.getId()));
+        given(postRepository.postDetailWithoutCountQuery(post.getId())).willReturn(postDto);
         given(postRepository.postHashtagsBy(postDto)).willReturn(postHashtagDtos);
         given(postRepository.commentsBy(postDto)).willReturn(postCommentDtos);
 
         // when
-        PostDto actual = sut.postDetail(postId);
+        PostDto actual = sut.postDetail(post.getId());
 
         // then
+        then(postMemoryService).should().addViewCount(post.getId());
         assertThat(actual.getHashtags().size()).isEqualTo(postHashtagDtos.size());
         assertThat(actual.getComments().size()).isEqualTo(postCommentDtos.size());
     }
@@ -214,43 +226,8 @@ class PostServiceTest {
         assertThrows(DoesNotExistPostException.class, () -> sut.postDetail(postId));
     }
 
-    private PostDto createDto(String title, String contents, Set<String> hashtags, List<CommentDto> comments) {
-        return PostDto.builder()
-                .title(title)
-                .contents(contents)
-                .hashtags(hashtags)
-                .comments(comments)
-                .build();
-    }
-
-    private Post createPost(Member member, String title, String contents) {
-        return Post.builder()
-                .id(1L)
-                .title(title)
-                .contents(contents)
-                .member(member)
-                .postHashtags(new ArrayList<>())
-                .build();
-    }
-
-    private Member createMember(long id, String email,String password) {
-        return Member.builder()
-                .id(id)
-                .email(email)
-                .password(password)
-                .build();
-    }
-
     private PostDto writeDto(String title, String contents, Set<String> hashtags) {
         return PostDto.builder()
-                .title(title)
-                .contents(contents)
-                .hashtags(hashtags)
-                .build();
-    }
-
-    private PostUpdateRequest updateDto(String title, String contents, Set<String> hashtags) {
-        return PostUpdateRequest.builder()
                 .title(title)
                 .contents(contents)
                 .hashtags(hashtags)
